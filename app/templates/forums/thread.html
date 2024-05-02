@@ -1,0 +1,17 @@
+{% extends "layout/alternating_color_table.html" %}
+
+{% block beforeTableContent %}
+  <h2 class="title">{{title|e}}</h2>
+{% endblock %}
+
+{% block tableContent %}
+  {% for post in posts %}
+  <tr><td class="">
+    <a class=" alternating-colors-table-links " href="/forums/{{thread_id}}/{{post.id}}">{{post.title|e}}</a>
+  </td></tr>
+  {% endfor %}
+{% endblock %}
+
+{% block postTableContent %}
+  <a class="primary-button" href="/forums/{{thread_id}}/create">Create Post</a>
+{% endblock %}

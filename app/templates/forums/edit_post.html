@@ -1,0 +1,36 @@
+{% extends "layout/oneDiv.html" %}
+
+{% block oneDivContent %}
+<div class="content-section">
+    <form class="form" method="POST" action="/forums/{{thread_id}}/{{post_id}}/edit">
+        <div class="form-section">
+            <label for="title">Title</label>
+            <input
+            class="form-input"
+            type="text"
+            name="title"
+            id="title"
+            value="{{post.title|e}}">
+        </div>
+        <div class="form-section">
+            <label for="content">Content</label>
+            <textarea
+            class="form-input"
+            name="content"
+            id="content">{{post.content|e}}</textarea>
+        </div>
+        <div class="form-section">
+            <label for="tags">Tags</label>
+            <input
+            class="form-input"
+            type="text"
+            name="tags"
+            value="{{post.tags|e}}"
+            id="tags">
+        </div>
+        <button class="primary-button">Post</button>
+    </form>
+</div>
+{% endblock %}
+
+

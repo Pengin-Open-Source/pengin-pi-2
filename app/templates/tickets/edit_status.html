@@ -1,0 +1,15 @@
+{% extends "layout/oneDiv.html" %}
+
+{% block oneDivContent %}
+  <form class="form" method="POST" action="/tickets/edit-status/{{ticket_id}}">
+      <div class="form-section">
+        <label for="status">Change Ticket Status:</label>
+        <select id="status" name="status" class="form-input">
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+          <option value="resolved">Resolved</option>
+        </select> 
+      </div>
+      <button class="primary-button">Change Status</button>
+  </form>
+{% endblock %}
