@@ -1,0 +1,23 @@
+{% load macros %}
+{% macro chatgui() %}
+
+
+{% endmacro %}
+
+
+{% macro chatbutton() %} 
+
+    <div>
+        <button id="open-message-btn" onclick="openMessageModal()">Chat</button>
+    </div>
+
+    <script> function openMessageModal() {
+        //     messageModal.classList.add("show");
+        //     addEventListenersToRoomButtons();
+        // 
+        alert("Test that we can display a button here");
+    }
+
+    </script>
+
+{% endmacro %}

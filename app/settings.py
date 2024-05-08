@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'calendar',
     'messenger',
     'webmaster',
-    'markdownit',
+    'macros',
+
 ]
 
 MIDDLEWARE = [
@@ -63,15 +64,15 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'app', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'public', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'blogs', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'calendar', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'webmaster', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'forums', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'tickets', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'jobs', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'messenger', 'templates'),
-            ],
+                 os.path.join(BASE_DIR, 'app', 'public', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'blogs', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'calendar', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'webmaster', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'forums', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'tickets', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'jobs', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'messenger', 'templates'),
+                 ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
