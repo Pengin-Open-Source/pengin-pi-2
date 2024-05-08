@@ -1,0 +1,88 @@
+{% load static %}
+<!-- Template inheritance: this template is the parent, while others are the children-->
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  {% block tags %}{% endblock %}
+  <link rel="stylesheet" type="text/css" href="{% static 'main.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'styles/calendar.css' %}">
+  {% if title %}
+  <title>{{company_name|escape}} - {{ title|escape }} </title>
+  {% else %}
+  <title>{{company_name|escape}} </title>
+  {% endif %}
+  <script>
+    document.cookie = "time_zone=" + Intl.DateTimeFormat().resolvedOptions().timeZone;
+  </script>
+  <link rel="icon" type="image/png" href="/static/images/Favicon.png" />
+</head>
+
+<body>
+  <header>
+    <nav class="header-navbar-container">
+      <a class="home-link" href="/">{{company_name|escape}}</a>
+      <div class="hamburger">
+        <img onclick="hamburgerToggle()" class="icon" src="{% static 'icons/menu-icon.svg' %}" alt="Hamburger Icon">
+      </div>
+      <div id="nav-id" class="header-navigation">
+        <div class="main-nav-links">
+          <a class="header-link" href="/about">About Us </a>
+          <a class="header-link" href="/products">Products</a>
+          <a class="header-link" href="/forums">Forums</a>
+          <a class="header-link" href="/blog">Blog</a>
+          <a class="header-link" href="/tickets?status=all">Tickets</a>
+          <a class="header-link" href="/calendar">Calendar</a>
+          <a class="header-link" href="/jobs">Jobs</a>
+          {% if is_admin %}
+          <div class="dropdown">
+            <div class="dropdown-btn">Tools</div>
+            <div class="dropdown-content">
+              <a href="/company">Company</a>
+              <a href="/orders/editor">Orders</a>
+              <a href="/customers/editor">Customers</a>
+              <a href="/blog/create">New Blog</a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="main-nav-links">
+          {% if current_user.is_authenticated %}
+          <a class="header-link" href="/profile">Profile</a>
+          <a class="header-link" href="{% url 'auth:logout' %}">Logout</a>
+          {% endif %}
+          {% if not current_user.is_authenticated %}
+          <a class="header-link" href="/login">Login</a>
+          <a class="header-link" href="/signup">Sign Up</a>
+          {% endif %}
+        </div>
+      </div>
+      </div>
+    </nav>
+  </header>
+  <main>
+
+    {% block content %}{% endblock %}
+    <div id="message-layout">
+      {% include "chat_overlay/overlay.html" %}
+    </div>
+  </main>
+  <footer>
+    <p>Tobu Pengin {{copyright|escape}}</p>
+    {# if chat_bool #}
+    {% include "chat_overlay/chatbutton.html" %}
+    {# endif #}
+  </footer>
+
+  <script src="{% static 'javascript/scripts.js' %}"></script>
+  <script src="{% static 'javascript/dayjs/1.11.10/dayjs.min.js' %}"></script>
+  <script src="{% static 'javascript/dayjs/plugin/weekday.js' %}"></script>
+  <script src="{% static 'javascript/dayjs/plugin/weekOfYear.js' %}"></script>
+  <script src="{% static 'javascript/calendar.js' %}"></script>  
+
+  {% block captchaScript %} {% endblock %}
+</body>
+
+</html>

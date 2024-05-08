@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'calendar',
     'messenger',
     'webmaster',
+    'markdownit',
 ]
 
 MIDDLEWARE = [
@@ -61,15 +62,15 @@ ROOT_URLCONF = 'public.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates'),
-            os.path.join(BASE_DIR, 'public', 'templates'),
-            os.path.join(BASE_DIR, 'blogs', 'templates'),
-            os.path.join(BASE_DIR, 'calendar', 'templates'),
-            os.path.join(BASE_DIR, 'webmaster', 'templates'),
-            os.path.join(BASE_DIR, 'forums', 'templates'),
-            os.path.join(BASE_DIR, 'tickets', 'templates'),
-            os.path.join(BASE_DIR, 'jobs', 'templates'),
-            os.path.join(BASE_DIR, 'messenger', 'templates'),
+        'DIRS': [os.path.join(BASE_DIR, 'app', 'templates'),
+            os.path.join(BASE_DIR, 'app', 'public', 'templates'),
+            os.path.join(BASE_DIR, 'app', 'blogs', 'templates'),
+            os.path.join(BASE_DIR, 'app', 'calendar', 'templates'),
+            os.path.join(BASE_DIR, 'app', 'webmaster', 'templates'),
+            os.path.join(BASE_DIR, 'app', 'forums', 'templates'),
+            os.path.join(BASE_DIR, 'app', 'tickets', 'templates'),
+            os.path.join(BASE_DIR, 'app', 'jobs', 'templates'),
+            os.path.join(BASE_DIR, 'app', 'messenger', 'templates'),
             ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -131,7 +132,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = 'app/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
