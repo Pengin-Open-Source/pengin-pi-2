@@ -1,5 +1,5 @@
 {% extends "layout/fullPageScroll.html" %}
-{% comment %} {% load markdownit %} {% endcomment %}
+{% load markdownit %}
 {% block tags %}
   {% if home.tags %}
       <meta name="keywords" content="{{home.tags|escape}}">
@@ -14,7 +14,7 @@
 {% block pageContent %}
     <article>
       <div class="home-container">
-        {% comment %} <div class="commonmark">{{home.article|markdownit|safe}}</div> {% endcomment %}
+        <div class="commonmark">{{home.article|markdownit|safe}}</div>
         <div class="image-container">
             <img src="{{image|escape}}" alt="Home Image" style="width: 100%; height: auto">
         </div>
