@@ -8,9 +8,9 @@ const chatConversationSection = document.getElementById('chat-conversation-secti
 
 // Open chat window
 function openMessageModal() {
-    /*     messageModal.classList.add("show");
-        addEventListenersToRoomButtons(); */
-    alert("Test that we can display a button from a JS file");
+    messageModal.classList.add("show");
+    addEventListenersToRoomButtons();
+    //alert("Test that we can display a button from a JS file");
 }
 
 // Close chat window
