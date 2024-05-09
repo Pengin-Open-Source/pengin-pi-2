@@ -8,8 +8,9 @@ const chatConversationSection = document.getElementById('chat-conversation-secti
 
 // Open chat window
 function openMessageModal() {
-    messageModal.classList.add("show");
-    addEventListenersToRoomButtons();
+    /*     messageModal.classList.add("show");
+        addEventListenersToRoomButtons(); */
+    alert("Test that we can display a button from a JS file");
 }
 
 // Close chat window
@@ -85,7 +86,7 @@ function updateRoomList(rooms) {
 function selectRoom(room_id) {
     $('div.message-holder').empty();
     $('div.message-load-button-container').empty();
-    socketio.emit("join_room", {room_id: room_id});
+    socketio.emit("join_room", { room_id: room_id });
 }
 
 // Scroll to last message
@@ -187,7 +188,7 @@ function noMoreMessages() {
 }
 
 // Add new message in the page
-function createMessage(message, before=false) {
+function createMessage(message, before = false) {
 
     const currentUserName = document.getElementById('current-user').dataset.name;
     const isSender = message.author_name === currentUserName;
@@ -227,14 +228,14 @@ function createMessage(message, before=false) {
 function sendMessage() {
     const message = $("#chat_message")[0];
     if (message.value === "") return;
-    socketio.emit("save_message", {content: message.value, room_id: room_id});
+    socketio.emit("save_message", { content: message.value, room_id: room_id });
     message.value = "";
 }
 
 // Listening for new saved data from the server
 socketio.on('saved_message', (message) => {
     // Trigger function to add message in page
-    createMessage({author_name: message.author_name, content: message.content, timestamp: message.timestamp});
+    createMessage({ author_name: message.author_name, content: message.content, timestamp: message.timestamp });
     scrollToLastMessage();
 });
 

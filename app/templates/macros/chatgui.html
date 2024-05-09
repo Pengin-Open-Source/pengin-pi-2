@@ -1,8 +1,74 @@
-{% load macros %}
+{% load macros static %}
 {% macro chatgui() %}
+    {# empty div to send flask_login.current_user name and id to javascript #}
+    {# optionally, can use fetch from JS instead #}
+    <div id="current-user" data-name="{{ current_user.name }}"></div>
+    <div id="message-display" class="full-page-message">
+        <div class="full-page-scroll-container">
+            <div class="top-bar">
+                <h2 class="section-title">Chat</h2>
+                <div class="main-nav-links"></div>
+                <div class="right-nav-container">
+                    <button id="close-message-btn" onclick="closeMessageModal()">
+                        <strong>&times;</strong>
+                    </button>
+                </div>
+            </div>
+            <div class="full-page-scroll-content">
+                <div class="content-section">
+                    <div class="content-section-div-1">
+                        <div class="content-section-p" id="user-section">
+                            <button type="button" class="top-bar-title collapsible">Users</button>
+                            <div class="message-grid-container" id="user-container">
+                                {% for user in chat_users %}
+                                    <div type="submit" class="message-grid-item btn-select-user" data-user-id="{{ user.id }}">
+                                    {{ user.name }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="content-section-p" id="group-section">
+                            <button type="button" class="top-bar-title collapsible">Chats</button>
+                            <div class="message-grid-container" id="group-container">
+                                {% for chat in chats %}
+                                    <div type="submit" class="message-grid-item btn-select-chat" data-room-id="{{ chat.id }}">
+                                        {{ chat.name }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div id="chat-conversation-section" class="content-section-div-2 hide">
+                        <div class="chat-header">
+                            <div class="chat-list-members">
+                            </div>
+                            <button class="chat-close-button" type="button" onclick="closeChatConversation()">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="message-container">
+                            <div class="message-load-button-container"></div>
+                            <div class="message-holder">
+                                <!-- Content Now Dynamically Filled in by JS SCRIPT-->
+                            </div>
+                        </div>
+                        <form id="chat-form" class="message-form" onsubmit="sendMessage();return false">
+                            <div class="message-form-section">
+                                <textarea rows="3" class="message_text" name="chat_message" id="chat_message"
+                                    placeholder="Text your message..."> </textarea>
+                                <input type="submit" value="Send" />
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'javascript/jquery/1.12.4/jquery.min.js'    %}"></script>
+    <script src="{% static 'javascript/socket.io/4.0.1/socket.io.js'   %}"></script>
+    <script src="{% static 'javascript/chat.js'  %}"></script> 
 
-
-{% endmacro %}
+{% endmacro %}  
 
 
 {% macro chatbutton() %} 
@@ -11,13 +77,8 @@
         <button id="open-message-btn" onclick="openMessageModal()">Chat</button>
     </div>
 
-    <script> function openMessageModal() {
-        //     messageModal.classList.add("show");
-        //     addEventListenersToRoomButtons();
-        // 
-        alert("Test that we can display a button here");
-    }
-
-    </script>
+    <script src="{% static 'javascript/jquery/1.12.4/jquery.min.js'    %}"></script>
+    <script src="{% static 'javascript/socket.io/4.0.1/socket.io.js'   %}"></script>
+    <script src="{% static 'javascript/chat.js'  %}"></script> 
 
 {% endmacro %}
