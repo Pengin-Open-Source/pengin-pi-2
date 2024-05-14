@@ -1,2 +1,4 @@
 Django
 django-markdown-it
+mysqlclient
+python-dotenv

@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -44,7 +46,9 @@ INSTALLED_APPS = [
     'calendar',
     'messenger',
     'webmaster',
+    'macros',
     'markdownit',
+
 ]
 
 MIDDLEWARE = [
@@ -55,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'public.urls'
@@ -63,15 +68,15 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'app', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'public', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'blogs', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'calendar', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'webmaster', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'forums', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'tickets', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'jobs', 'templates'),
-            os.path.join(BASE_DIR, 'app', 'messenger', 'templates'),
-            ],
+                 os.path.join(BASE_DIR, 'app', 'public', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'blogs', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'calendar', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'webmaster', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'forums', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'tickets', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'jobs', 'templates'),
+                 os.path.join(BASE_DIR, 'app', 'messenger', 'templates'),
+                 ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,6 +84,10 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'context_processors.login_processor',
+                'context_processors.filtered_chat_users',
+                'context_processors.filtered_chat_rooms',
+
             ],
         },
     },
@@ -91,10 +100,20 @@ WSGI_APPLICATION = 'wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite',
+    # }
+
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ.get('DATABASE_NAME'),
+        'USER': os.environ.get('DATABASE_USER'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
+        'HOST': os.environ.get('DATABASE_HOST'),
+        'PORT': os.environ.get('DATABASE_PORT', '3306'),
     }
+
 }
 
 
@@ -134,6 +153,11 @@ USE_TZ = True
 
 STATIC_URL = 'app/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'app/static',
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
