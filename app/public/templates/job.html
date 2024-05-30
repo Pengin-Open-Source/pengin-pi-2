@@ -1,0 +1,45 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load markdownit %}
+
+{% block pageDropDowns %}
+  {% if is_admin %}
+    <a href="/jobs/{{ job.id }}/edit">Edit Job</a>
+    <form method="post" action="/jobs/{{ job.id }}/delete">
+      {% csrf_token %}
+      <button type="submit">Delete</button>
+    </form>
+  {% else %}
+    <a href="/applications/my-applications">My Applications</a>
+  {% endif %}
+{% endblock %}
+
+{% block pageContent %}
+    <p>Job Title: {{ job.job_title }}</p>
+    <p>Posted on {{ job.date_posted|date:"F d, Y" }}</p>
+    <div class="commonmark">Description: {{ job.short_description|markdownit }}</div>
+    <p>Department: {{ job.department }}</p>
+    <p>Salary: {{ job.salary }}</p>
+    <p>Location: {{ job.location }}</p>
+    <p>Hiring Manager: {{ job.hiring_manager }}</p>
+    <div class="commonmark">More about this job: {{ job.long_description|markdownit }}</div>
+
+    {% if not is_admin %}
+      {% if not user_applied %}
+        <form method="get" action="/applications/{{ job.id }}/application">
+          <button type="submit">Apply</button>
+        </form>
+      {% else %}
+        <p>You have already applied for this job. <a href="/applications/{{ job.id }}/application/{{ user_application_id }}">View Application</a></p>
+      {% endif %}
+    {% else %}
+      {% if applications.count == 0 %}
+        <p>This job has received 0 applications.</p>
+      {% elif applications.count == 1 %}
+        <p>This job has received 1 application.</p>
+        <a href="/applications/{{ job.id }}/job-applications">View Applications</a>
+      {% else %}
+        <p>This job has received {{ applications.count }} applications.</p>
+        <a href="/applications/{{ job.id }}/job-applications">View Applications</a>
+      {% endif %}
+    {% endif %}
+{% endblock %}
