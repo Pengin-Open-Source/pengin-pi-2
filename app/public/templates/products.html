@@ -1,0 +1,24 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load macros %}
+
+{% block pageDropDowns %}
+  {% if is_admin %}
+    <a href="/products/create">New Product</a>
+  {% endif %}
+{% endblock %}
+
+{% block pageContent %}
+  <div class="product-grid">
+    {% for product in products %}
+      <a href="/products/{{ product.id }}">
+        {% if product.name %}
+          <div>{{ product.name }}</div>
+        {% endif %}
+        <div class="product-item">
+          <img src="{{ product.card_image_url }}" alt="Product Image">
+        </div>    
+      </a>
+    {% endfor %}
+  </div>
+  {% paginate products %}
+{% endblock %}

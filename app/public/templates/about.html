@@ -1,11 +1,13 @@
 {% extends "layout/fullPageScroll.html" %}
+{% load markdownit %}
+
 {% block tags %}
   {% if about.tags %}
-      <meta name="keywords" content="{{about.tags|e}}">
+      <meta name="keywords" content="{{ about.tags|escape }}">
   {% endif %}
 {% endblock %}
 
-{% block pageDropDowns%}
+{% block pageDropDowns %}
     <a href="/about/edit">Edit About Page</a>
 {% endblock %}
 
@@ -14,57 +16,56 @@
         <div class="about-article-container">
             <div class="image-container commonmark">
                 {% if about.article %}
-                    {{about.article|commonmark|e}}
+                    {{ about.article|markdownit|escape }}
                 {% endif %}
             </div>
             <div class="image-container">
                 {% if image %}
-                    <img src="{{image|e}}" alt="About Image" style="width: 100%; height: auto">
+                    <img src="{{ image|escape }}" alt="About Image" style="width: 100%; height: auto">
                 {% endif %}
             </div>
         </div>
         <div class="address">
             {% if about.address1 %}
-                <p>{{about.address1|e}}</p>
+                <p>{{ about.address1|escape }}</p>
             {% endif %}
             {% if about.address2 %}
-                <p>{{about.address2|e}}</p>
+                <p>{{ about.address2|escape }}</p>
             {% endif %}
             {% if about.city %}
-                <p>{{about.city|e}}</p>
+                <p>{{ about.city|escape }}</p>
             {% endif %}
             {% if about.state %}
-                <p>{{about.state|e}}</p>
+                <p>{{ about.state|escape }}</p>
             {% endif %}
             {% if about.country %}
-                <p>{{about.country|e}}</p>
+                <p>{{ about.country|escape }}</p>
             {% endif %}
-            
         </div>
         <div class="social-media">
             <!-- https://www.iconfinder.com/collections/collection/1672006 Icons -->
             {% if about.facebook %}
-                <a href="{{about.facebook|e}}"><img class="icon" src="{{ url_for ('static', filename = 'icons/facebook.png')}}" alt="FaceBook"></a>
+                <a href="{{ about.facebook|escape }}"><img class="icon" src="{% static 'icons/facebook.png' %}" alt="FaceBook"></a>
             {% endif %}
             {% if about.twitter %}
-                <a href="{{about.twitter|e}}"><img class="icon" src="{{ url_for ('static', filename = 'icons/twitter.png')}}" alt="Twitter"></a>
+                <a href="{{ about.twitter|escape }}"><img class="icon" src="{% static 'icons/twitter.png' %}" alt="Twitter"></a>
             {% endif %}
             {% if about.instagram %}
-                <a href="{{about.instagram|e}}"><img class="icon" src="{{ url_for ('static', filename = 'icons/insta.png')}}" alt="Instagram"></a>
+                <a href="{{ about.instagram|escape }}"><img class="icon" src="{% static 'icons/insta.png' %}" alt="Instagram"></a>
             {% endif %}
             {% if about.linkedin %}
-                <a href="{{about.linkedin|e}}"><img class="icon" src="{{ url_for ('static', filename = 'icons/linkedin.png')}}" alt="LinkedIn"></a>
+                <a href="{{ about.linkedin|escape }}"><img class="icon" src="{% static 'icons/linkedin.png' %}" alt="LinkedIn"></a>
             {% endif %}
             {% if about.whatsapp %}
-                <a href="{{about.whatsapp|e}}"><img class="icon" src="{{ url_for ('static', filename = 'icons/whatsapp.png')}}" alt="Whatsapp"></a>
+                <a href="{{ about.whatsapp|escape }}"><img class="icon" src="{% static 'icons/whatsapp.png' %}" alt="Whatsapp"></a>
             {% endif %}
             {% if about.youtube %}
-                <a href="{{about.youtube|e}}"><img class="icon" src="{{ url_for ('static', filename = 'icons/youtube.png')}}" alt="Youtube"></a>
+                <a href="{{ about.youtube|escape }}"><img class="icon" src="{% static 'icons/youtube.png' %}" alt="Youtube"></a>
             {% endif %}
         </div>
         <div class="address">
             {% if about.phone %}
-                <p>Telephone: {{about.phone|e}}</p>
+                <p>Telephone: {{ about.phone|escape }}</p>
             {% endif %}
         </div>
     </article>
