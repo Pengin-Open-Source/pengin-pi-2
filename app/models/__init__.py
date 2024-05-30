@@ -1,3 +1,7 @@
+"""
+Relationships file
+Add all cross application relationships in this file    
+"""
 from django.db import models
 
 # Import all your models here
@@ -15,6 +19,7 @@ from app.models.application import Application, StatusCode
 
 
 # Define relationships between models
+
 # Company
 Company.customer = models.OneToOneField(Customer, on_delete=models.CASCADE, related_name='company')
 
