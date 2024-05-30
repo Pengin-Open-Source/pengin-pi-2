@@ -65,14 +65,15 @@
   <main>
 
     {% block content %}{% endblock %}
+    <div id = "message-layout">
+      {% include "chat_overlay/overlay.html" %}
+    </div>
     
   </main>
   <footer>
     <p>Tobu Pengin {{copyright|escape}}</p>
     {# if chat_bool #}
-    <div id="message-layout">
-      {% include "chatgui.html" %}
-    </div>
+    {% include "chat_overlay/chatbutton.html" %}
     {# endif #}
   </footer>
 
