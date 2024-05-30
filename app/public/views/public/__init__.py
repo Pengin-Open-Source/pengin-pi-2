@@ -1,19 +1,52 @@
 from django.http import HttpResponse, HttpRequest
-from models import BlogPost, Product, Job
+from models import BlogPost, Product, Job, Home, About
 from util import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from app.util.s3 import conn
+from django.conf import settings
+from botocore.exceptions import ParamValidationError
+from app.util.defaults import default
+import logging
 
 
 # Define the home view
 def home(request):
-    return render(request, 'home.html')
+    home = Home.objects.first() or default.Home()
+    is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
+    try:
+        image = conn.get_URL(home.image)
+    except ParamValidationError:
+        image = default.image
+
+    if home:
+        logging.info("S3 Image accessed: " + home.image)
+
+    return render(request, "home.html", {
+        'is_admin': is_admin,
+        'home': home,
+        'image': image
+    })
 
 # Define the about view
 def about(request):
-    return render(request, 'about.html')
+    about = About.objects.first() or default.About()
+    is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
+    try:
+        image = conn.get_URL(about.image)
+    except ParamValidationError:
+        image = default.image
+
+    if about:
+        logging.info("Image S3 URL accessed:" + about.image)
+
+    return render(request, "about.html", {
+        'about': about,
+        'is_admin': is_admin,
+        'image': image,
+        'primary_title': "About Us"
+    })
 
 # Define the blog view
 def blogs(request):
@@ -68,7 +101,7 @@ def products(request: HttpRequest):
     for product in products:
         product.card_image_url = conn.get_URL(product.card_image_url)
 
-    return render(request, "products/products.html", {
+    return render(request, "products.html", {
         "is_admin": is_admin,
         "products": products,
         "page": page,
@@ -81,7 +114,7 @@ def product(request: HttpRequest, product_id: int):
     product.stock_image_url = conn.get_URL(product.stock_image_url)
     is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
 
-    return render(request, "products/product.html", {
+    return render(request, "product.html", {
         "is_admin": is_admin,
         "product": product,
         "page": 1,
@@ -99,7 +132,7 @@ def jobs(request: HttpRequest):
     jobs_paginated = paginate(Job, page=page, key='job_title', pages=jobs_per_page)
     is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
     
-    return render(request, 'jobs/jobs.html', {
+    return render(request, 'jobs.html', {
         'is_admin': is_admin,
         'jobs': jobs_paginated,
         'page': page,
@@ -115,7 +148,7 @@ def job(request: HttpRequest, job_id: int):
     user_application_id = applications.filter(user_id=request.user.id).values_list('id', flat=True).first()
     is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
     
-    return render(request, 'jobs/job.html', {
+    return render(request, 'job.html', {
         'is_admin': is_admin,
         'job': job,
         'applications': applications,
