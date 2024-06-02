@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpRequest
-from models import BlogPost, Product, Job, Home, About
+from shared_models import BlogPost, Product, Job, Home, About
 from util import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, get_object_or_404
@@ -30,6 +30,8 @@ def home(request):
     })
 
 # Define the about view
+
+
 def about(request):
     about = About.objects.first() or default.About()
     is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
@@ -49,6 +51,8 @@ def about(request):
     })
 
 # Define the blog view
+
+
 def blogs(request):
     if request.method == "POST":
         page = int(request.POST.get('page_number', 1))
@@ -60,7 +64,7 @@ def blogs(request):
 
     # Check if the user is a staff member (admin)
     is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
-    
+
     return render(request, 'blogs.html', {
         'posts': posts,
         'primary_title': 'Blog',
@@ -68,18 +72,20 @@ def blogs(request):
         'left_title': 'Blog Posts'
     })
 
+
 def post(request, post_id):
     post = get_object_or_404(BlogPost, pk=post_id)
-    
+
     if request.method == "POST":
         page = int(request.POST.get('page_number', 1))
     else:
         page = 1
-    
-    posts = paginate(BlogPost.objects.all(), page=page, key="title", per_page=10)
+
+    posts = paginate(BlogPost.objects.all(), page=page,
+                     key="title", per_page=10)
     author_date = post.date  # TODO: Replace with correct attribute
     is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
-    
+
     return render(request, 'post.html', {
         'page': page,
         'post': post,
@@ -109,6 +115,8 @@ def products(request: HttpRequest):
     })
 
 # Define the product view
+
+
 def product(request: HttpRequest, product_id: int):
     product = get_object_or_404(Product, id=product_id)
     product.stock_image_url = conn.get_URL(product.stock_image_url)
@@ -122,6 +130,8 @@ def product(request: HttpRequest, product_id: int):
     })
 
 # Define the jobs view
+
+
 def jobs(request: HttpRequest):
     jobs_per_page = 9
     if request.method == 'POST':
@@ -129,9 +139,10 @@ def jobs(request: HttpRequest):
     else:
         page = 1
 
-    jobs_paginated = paginate(Job, page=page, key='job_title', pages=jobs_per_page)
+    jobs_paginated = paginate(
+        Job, page=page, key='job_title', pages=jobs_per_page)
     is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
-    
+
     return render(request, 'jobs.html', {
         'is_admin': is_admin,
         'jobs': jobs_paginated,
@@ -140,14 +151,17 @@ def jobs(request: HttpRequest):
     })
 
 # Define the job view
+
+
 def job(request: HttpRequest, job_id: int):
     job = get_object_or_404(Job, id=job_id)
 
     applications = job.applications.all()
     user_applied = applications.filter(user_id=request.user.id).exists()
-    user_application_id = applications.filter(user_id=request.user.id).values_list('id', flat=True).first()
+    user_application_id = applications.filter(
+        user_id=request.user.id).values_list('id', flat=True).first()
     is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
-    
+
     return render(request, 'job.html', {
         'is_admin': is_admin,
         'job': job,
