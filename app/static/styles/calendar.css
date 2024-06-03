@@ -1,0 +1,130 @@
+body {
+  font-family: sans-serif;
+  font-weight: 100;
+  --grey-100: #e4e9f0;
+  --grey-200: #cfd7e3;
+  --grey-300: #b5c0cd;
+  --grey-800: #3e4e63;
+  --grid-gap: 1px;
+  --day-label-size: 20px;
+}
+
+ol,
+li {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.calendar-month {
+  position: relative;
+  background-color: var(--grey-200);
+  border: solid 1px var(--grey-200);
+}
+
+.calendar-month-header {
+  display: flex;
+  justify-content: space-between;
+  background-color: #fff;
+  padding: 10px;
+}
+
+.calendar-month-header-selected-month {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.calendar-month-header-selectors {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 80px;
+}
+
+.calendar-month-header-selectors > * {
+  cursor: pointer;
+}
+
+.day-of-week {
+  color: var(--grey-800);
+  font-size: 18px;
+  background-color: #fff;
+  padding-bottom: 5px;
+  padding-top: 10px;
+}
+
+.day-of-week,
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.day-of-week > * {
+  text-align: center;
+  padding-right: 5px;
+}
+
+.days-grid {
+  height: 100%;
+  position: relative;
+  grid-column-gap: var(--grid-gap);
+  grid-row-gap: var(--grid-gap);
+  border-top: solid 1px var(--grey-200);
+}
+
+.calendar-month {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/*.calendar-week {*/
+/*  !*display: flex;*!*/
+/*}*/
+
+.calendar-day {
+  position: relative;
+  min-height: 100px;
+  font-size: 16px;
+  background-color: #fff;
+  color: var(--grey-800);
+  border: 1px solid #ccc; /* Just for visualization */
+  height: 100px; /* Set a fixed height for all cells */
+}
+
+.calendar-day > .calendar-day-of-month {
+  top: 0;
+  left: 0;
+  position: absolute;
+  text-align: center;
+  width: 100%;
+}
+
+.calendar-day--not-current {
+  background-color: var(--grey-100);
+  color: var(--grey-300);
+}
+
+.calendar-day--today {
+  padding-top: 4px;
+}
+
+.calendar-day--today > .calendar-day-of-month {
+  color: #fff;
+  border-radius: 9999px;
+  background-color: var(--grey-800);
+}
+
+.calendar-day-events > .events-list {
+  font-size: .7rem;
+  padding-left: 0;
+  top: 1rem;
+  position: absolute;
+  width: 100%;
+}
+
+.calendar-day-event {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 3px;
+}
