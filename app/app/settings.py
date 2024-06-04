@@ -103,6 +103,11 @@ DATABASES = {
 }
 
 
+# User model we use:
+
+# I'd have to migrate if I used this
+# AUTH_USER_MODEL = 'models.User'
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
