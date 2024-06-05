@@ -1,0 +1,20 @@
+{% macro render_pagination(items, endpoint) %}
+  {% if items.paginator.num_pages > 1 %}
+    <div class="page-items">
+      {{ items.start_index }} - {{ items.end_index }} of {{ items.paginator.count }}
+    </div>
+    <div class="pagination">
+      <form class="form" method="GET" action="{{ endpoint }}" enctype="multipart/form-data">
+        <div class="pagination-list">
+          {% for page_num in items.paginator.page_range %}
+            {% if page_num != items.number %}
+              <div><input type="submit" name="page" value="{{ page_num }}" class="form-input"></div>
+            {% else %}
+              <div>{{ page_num }}</div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </form>
+    </div>
+  {% endif %}
+{% endmacro %}
