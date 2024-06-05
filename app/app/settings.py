@@ -93,20 +93,26 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DATABASE_NAME'),
-        'USER': os.environ.get('DATABASE_USER'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
-        'HOST': os.environ.get('DATABASE_HOST'),
-        'PORT': os.environ.get('DATABASE_PORT', '3306'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite',
     }
+
+
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': os.environ.get('DATABASE_NAME'),
+    #     'USER': os.environ.get('DATABASE_USER'),
+    #     'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
+    #     'HOST': os.environ.get('DATABASE_HOST'),
+    #     'PORT': os.environ.get('DATABASE_PORT', '3306'),
+    # }
 }
 
 
 # User model we use:
 
-# I'd have to migrate if I used this
-# AUTH_USER_MODEL = 'models.User'
+
+AUTH_USER_MODEL = 'models.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
