@@ -1,0 +1,22 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load markdownit %}
+{% block tags %}
+  {% if home.tags %}
+      <meta name="keywords" content="{{home.tags|escape}}">
+  {% endif %}
+{% endblock %}
+
+{% block pageDropDowns %}
+  <a href="/home/edit">Edit Home Page</a>
+{% endblock %}
+
+
+{% block pageContent %}
+    <article>
+      <div class="home-container">
+        <div class="commonmark">{{home.article|markdownit|safe}}</div>
+        <div class="image-container">
+            <img src="{{image|escape}}" alt="Home Image" style="width: 100%; height: auto">
+        </div>
+    </article>
+{% endblock %}
