@@ -1,18 +1,18 @@
 from .models import About
 from django.shortcuts import render
-from django.contrib.auth.decorators import user_passes_test
 from util.s3 import File
 from botocore.exceptions import ParamValidationError
 from util.defaults import default
 import logging
+from util.security.authtools import is_admin_provider
 
 
 conn = File()
 
 # Define the about view
+@is_admin_provider()
 def about(request):
     about = About.objects.first() or default.About()
-    is_admin = request.user.is_authenticated and request.user.is_staff
     try:
         image = conn.get_URL(about.image)
     except ParamValidationError:
