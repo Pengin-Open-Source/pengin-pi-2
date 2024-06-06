@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'products',
     'jobs',
     'messenger',
+    'customers',
     'relationships',
     'macros',
     'markdownit',
@@ -103,6 +104,9 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+
+AUTH_USER_MODEL = 'relationships.User'
 
 
 # Password validation

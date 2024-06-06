@@ -20,7 +20,7 @@ class Job(models.Model):
 
 class StatusCode(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    code = models.CharField(max_length=20, unique=True, nullable=False)
+    code = models.CharField(max_length=20, unique=True, null=False)
 
     def __str__(self):
         return str(self.code)
