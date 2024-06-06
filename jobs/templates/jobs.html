@@ -1,5 +1,5 @@
 {% extends "layout/fullPageScroll.html" %}
-{% load paginate %}
+{% load macros %}
 
 {% block pageDropDowns %}
   {% if is_admin %}
@@ -18,5 +18,24 @@
       </a>
     {% endfor %}
   </div>
-  {% paginate jobs %}
+  
+  <!-- Pagination links -->
+  <div class="pagination">
+    {% if jobs.has_previous %}
+      <a href="?page={{ jobs.previous_page_number }}">Previous</a>
+    {% endif %}
+    
+    {% for num in jobs.paginator.page_range %}
+      {% if num == jobs.number %}
+        <span class="current">{{ num }}</span>
+      {% else %}
+        <a href="?page={{ num }}">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+    
+    {% if jobs.has_next %}
+      <a href="?page={{ jobs.next_page_number }}">Next</a>
+    {% endif %}
+  </div>
 {% endblock %}
+

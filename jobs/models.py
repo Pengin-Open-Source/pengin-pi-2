@@ -11,6 +11,7 @@ class Job(models.Model):
     salary = models.CharField(max_length=100)
     location = models.CharField(max_length=100)
     hiring_manager = models.CharField(max_length=100)
+    priority = models.IntegerField(default=10000)
     date_posted = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
