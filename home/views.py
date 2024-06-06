@@ -1,4 +1,4 @@
-from models import Home
+from .models import Home
 from django.shortcuts import render
 from django.contrib.auth.decorators import user_passes_test
 from util.s3 import conn

@@ -1,10 +1,8 @@
 import os
-
 import boto3
-
 # from app.util.log import log
 from dotenv import load_dotenv
-from app.util.defaults import default
+from util.defaults import default
 from uuid import uuid4 as id
 
 
