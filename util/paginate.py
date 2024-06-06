@@ -2,11 +2,12 @@ from django.core.paginator import Paginator, EmptyPage
 from django.db.models import Count
 from math import ceil
 
-def paginate(queryset, page, per_page=10, filters=None):
+
+def paginate(queryset, page, per_page=10, key=None):
     """
     Paginate Method for Django QuerySets
     This paginate method takes a Django QuerySet, a page number,
-    and optional parameters: per_page, filters.
+    and optional parameters: per_page, key.
     
     Required Inputs:
         queryset: Django QuerySet
@@ -14,15 +15,15 @@ def paginate(queryset, page, per_page=10, filters=None):
     
     Optional Parameters:
         per_page: int, number of items per page, default is 10
-        filters: dict, dictionary of filtering conditions, default is None
+        key: str, name of the attribute to be used for ordering, default is None
     
     Outputs:
         Paginated Django QuerySet
     """
-    if filters is None:
-        filters = {}
-        
-    paginator = Paginator(queryset, per_page)
+    if key:
+        paginator = Paginator(queryset().order_by(key), per_page)
+    else:
+        paginator = Paginator(queryset(), per_page)
     try:
         page_obj = paginator.page(page)
     except EmptyPage:

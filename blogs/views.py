@@ -1,23 +1,20 @@
-from models import BlogPost
-from util import paginate  # Assuming you have a pagination utility
+from .models import BlogPost
+from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import user_passes_test
+from util.security.auth_tools import is_admin_provider
 
 
 # Define the blog view
-def blogs(request):
+@is_admin_provider
+def blogs(request, is_admin):
     if request.method == "POST":
         page = int(request.POST.get('page_number', 1))
     else:
         page = 1
-
     # Use your custom paginate function
-    posts = paginate(BlogPost, page=page, key="title", pages=10)
-
-    # Check if the user is a staff member (admin)
-    is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
-    
+    posts = paginate(BlogPost.objects.all, page=page, key="-date", per_page=10)
+ 
     return render(request, 'blogs.html', {
         'posts': posts,
         'primary_title': 'Blog',
@@ -25,7 +22,8 @@ def blogs(request):
         'left_title': 'Blog Posts'
     })
 
-def post(request, post_id):
+@is_admin_provider
+def post(request, post_id, is_admin):
     post = get_object_or_404(BlogPost, pk=post_id)
     
     if request.method == "POST":
@@ -35,7 +33,6 @@ def post(request, post_id):
     
     posts = paginate(BlogPost.objects.all(), page=page, key="title", per_page=10)
     author_date = post.date  # TODO: Replace with correct attribute
-    is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
     
     return render(request, 'post.html', {
         'page': page,
