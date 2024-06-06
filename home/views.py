@@ -1,11 +1,13 @@
 from .models import Home
 from django.shortcuts import render
 from django.contrib.auth.decorators import user_passes_test
-from util.s3 import conn
+from util.s3 import File
 from botocore.exceptions import ParamValidationError
 from util.defaults import default
 import logging
 
+
+conn = File()
 
 # Define the home view
 def home(request):
