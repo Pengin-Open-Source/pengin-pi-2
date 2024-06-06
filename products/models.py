@@ -7,6 +7,7 @@ class Product(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     price = models.CharField(max_length=100)
+    priority = models.IntegerField(default=10000)
     article = models.TextField()
     card_image_url = models.CharField(max_length=500)
     stock_image_url = models.CharField(max_length=500)

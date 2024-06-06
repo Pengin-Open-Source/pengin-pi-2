@@ -10,7 +10,7 @@ def paginate(queryset, page, per_page=10, key=None):
     and optional parameters: per_page, key.
     
     Required Inputs:
-        queryset: Django QuerySet
+        Queryset Instance: Unevaluated Django QuerySet
         page: int, the page number to be retrieved
     
     Optional Parameters:

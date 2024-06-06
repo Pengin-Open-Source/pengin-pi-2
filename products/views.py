@@ -1,21 +1,23 @@
 from django.http import HttpRequest
-from models import Product
-from util import paginate  # Assuming you have a pagination utility
+from .models import Product
+from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import user_passes_test
-from util.s3 import conn
+from util.s3 import File
+from util.security.auth_tools import is_admin_provider
+
+conn = File()
 
 
 # Define the products view
-def products(request: HttpRequest):
+@is_admin_provider
+def products(request: HttpRequest, is_admin):
     if request.method == "POST":
         page = int(request.POST.get("page_number", 1))
     else:
         page = 1
 
-    products = paginate(Product, page=page, key="name", pages=9)
-    is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
+    products = paginate(Product.objects.all, page=page, key="priority", per_page=9)
     for product in products:
         product.card_image_url = conn.get_URL(product.card_image_url)
 
