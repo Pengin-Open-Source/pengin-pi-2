@@ -1,8 +1,7 @@
 from django.db import models
 import uuid
 from datetime import datetime
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -42,25 +41,27 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         app_label = 'main'  # Explicitly set the app_label
     
+    # Define unique related_name for groups and user_permissions
+    groups = models.ManyToManyField(
+    Group,
+    verbose_name='groups',  # Wrapped in quotes
+    blank=True,
+    related_name='%(app_label)s_%(class)s_groups',  # Unique related_name
+    related_query_name="user",
+    help_text=(
+        'The groups this user belongs to. A user will get all permissions '
+        'granted to each of their groups.'
+    ),
+    )
+
+    user_permissions = models.ManyToManyField(
+        Permission,
+        verbose_name='user permissions',  # Wrapped in quotes
+        blank=True,
+        related_name='%(app_label)s_%(class)s_user_permissions',  # Unique related_name
+        related_query_name="user",
+        help_text='Specific permissions for this user.',
+    )
     
     def __str__(self):
         return self.email
-
-
-class Role(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=50, unique=True)
-
-    def __str__(self):
-        return self.name
-
-
-class UserRoles(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    def __str__(self):
-        return str(self.id)
-
-
-
-

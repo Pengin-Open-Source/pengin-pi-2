@@ -6,3 +6,6 @@ django-macros
 boto3
 werkzeug
 django-ratelimit
+redis
+hiredis
+django-redis

@@ -23,8 +23,14 @@
 
         <div class="form-section">
             <label>Password</label>
-            <input class="form-input" type="password" name="password" placeholder="Your Password">
+            <input class="form-input" type="password" name="password1" placeholder="Your Password">
         </div>
+        
+        <div class="form-section">
+            <label>Confirm Password</label>
+            <input class="form-input" type="password" name="password2" placeholder="Confirm Password">
+        </div>
+        
         <button class="primary-button g-recaptcha" type="submit" data-sitekey="{{ site_key }}" data-callback="onSubmit" data-action="submit">Sign Up</button>
     </form>
 {% endblock %}
