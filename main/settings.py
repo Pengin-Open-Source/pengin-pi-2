@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'macros',
     # Add your apps here
     'global_admin',
+    'main',
     'home',
     'about',
     'events',

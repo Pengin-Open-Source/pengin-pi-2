@@ -4,3 +4,4 @@ mysqlclient
 python-dotenv
 django-macros
 boto3
+werkzeug

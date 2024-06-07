@@ -2,9 +2,40 @@ from django.http import HttpRequest
 from .models import Product
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from util.s3 import File
-from util.security.auth_tools import is_admin_provider
+from util.security.auth_tools import is_admin_provider, is_admin_required
+from .forms import ProductForm
+from werkzeug.utils import secure_filename
+# views.py
+
+conn = File()
+
+@is_admin_required
+def create_product(request):
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save(commit=False)
+
+            large_file = request.FILES.get('file_large')
+            small_file = request.FILES.get('file_small')
+
+            if large_file:
+                large_file.filename = secure_filename(large_file.name)
+                product.stock_image_url = conn.create(large_file)
+
+            if small_file:
+                small_file.filename = secure_filename(small_file.name)
+                product.card_image_url = conn.create(small_file)
+
+            product.save()
+            return redirect('products')  # Replace with your product list view name
+
+    else:
+        form = ProductForm()
+
+    return render(request, 'products/product_create.html', {'form': form, 'primary_title': "Create Product"})
 
 conn = File()
 
@@ -29,14 +60,15 @@ def products(request: HttpRequest, is_admin):
     })
 
 # Define the product view
-def product(request: HttpRequest, product_id: int):
+@is_admin_provider
+def product(request: HttpRequest, product_id: int, is_admin):
     product = get_object_or_404(Product, id=product_id)
     product.stock_image_url = conn.get_URL(product.stock_image_url)
-    is_admin = user_passes_test(lambda u: u.is_staff)(request.user)
-
+    
     return render(request, "product.html", {
         "is_admin": is_admin,
         "product": product,
         "page": 1,
         "primary_title": product.name,
     })
+    
