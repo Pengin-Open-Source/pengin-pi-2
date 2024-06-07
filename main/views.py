@@ -1,6 +1,6 @@
 # views.py
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from util.mail import send_mail
@@ -8,9 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from .forms import LoginForm, SignUpForm, PasswordResetForm, SetPasswordForm
 from .models.users import User
-from util.s3 import File  # assuming util.s3 is a custom utility module
 from datetime import datetime, timedelta
-import re
 import uuid
 
 def generate_uuid():
