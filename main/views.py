@@ -10,6 +10,8 @@ from .forms import LoginForm, SignUpForm, PasswordResetForm, SetPasswordForm
 from .models.users import User
 from datetime import datetime, timedelta
 import uuid
+from django_ratelimit.decorators import ratelimit
+
 
 def generate_uuid():
     return str(uuid.uuid4())
@@ -19,6 +21,7 @@ class LoginView(View):
         form = LoginForm()
         return render(request, 'authentication/login.html', {'form': form, 'primary_title': 'Login'})
 
+    @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request):
         form = LoginForm(data=request.POST)
         if form.is_valid():
@@ -33,6 +36,7 @@ class SignupView(View):
         form = SignUpForm()
         return render(request, 'authentication/signup.html', {'form': form, 'primary_title': 'Sign Up', 'site_key': os.getenv("SITE_KEY")})
 
+    @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request):
         form = SignUpForm(request.POST)
         if form.is_valid():
@@ -55,6 +59,7 @@ class PasswordResetRequestView(View):
         form = PasswordResetForm()
         return render(request, 'authentication/generate_prt_form.html', {'form': form, 'primary_title': 'Forgot Password', 'site_key': os.getenv("SITE_KEY")})
 
+    @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request):
         form = PasswordResetForm(request.POST)
         if form.is_valid():
@@ -80,6 +85,7 @@ class PasswordResetView(View):
             return render(request, 'authentication/reset_password_form.html', {'form': form, 'email': user.email, 'token': token, 'site_key': os.getenv("SITE_KEY"), 'primary_title': 'Reset Password'})
         return redirect('generate_prt')
 
+    @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request, token):
         form = SetPasswordForm(request.POST)
         if form.is_valid():

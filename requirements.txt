@@ -5,3 +5,4 @@ python-dotenv
 django-macros
 boto3
 werkzeug
+django-ratelimit
