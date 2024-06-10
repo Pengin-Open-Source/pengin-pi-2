@@ -42,12 +42,12 @@ conn = File()
 
 # Define the products view
 @is_admin_provider
-def products(request, is_admin):
-    product_list = Product.objects.all().order_by("priority")
-    for prod in product_list:
+def product_list(request, is_admin):
+    products = Product.objects.all().order_by("priority")
+    for prod in products:
         prod.card_image_url = conn.get_URL(prod.card_image_url)
 
-    paginator = Paginator(product_list, 9)
+    paginator = Paginator(products, 9)
     page_number = request.GET.get("page", 1)
     page_products = paginator.get_page(page_number)
 
@@ -59,7 +59,7 @@ def products(request, is_admin):
 
 # Define the product view
 @is_admin_provider
-def product(request: HttpRequest, product_id: int, is_admin):
+def product_detail(request, product_id: int, is_admin):
     product = get_object_or_404(Product, id=product_id)
     product.stock_image_url = conn.get_URL(product.stock_image_url)
     
