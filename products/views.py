@@ -64,7 +64,6 @@ def product_detail(request, product_id: int, is_admin):
     return render(request, "product.html", {
         "is_admin": is_admin,
         "product": product,
-        "page": 1,
         "primary_title": product.name,
     })
     
