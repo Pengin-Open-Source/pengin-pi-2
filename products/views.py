@@ -42,7 +42,7 @@ conn = File()
 
 # Define the products view
 @is_admin_provider
-def products(request: HttpRequest, is_admin):
+def products(request, is_admin):
     product_list = Product.objects.all().order_by("priority")
     for prod in product_list:
         prod.card_image_url = conn.get_URL(prod.card_image_url)
