@@ -10,7 +10,7 @@
 {% block pageContent %}
   <div class="product-grid">
     {% for product in page_products %}
-      <a href="/products/{{ product.id }}">
+      <a href="{% url 'products:detail-product' product.id %}">
         {% if product.name %}
           <div>{{ product.name }}</div>
         {% endif %}

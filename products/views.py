@@ -11,8 +11,11 @@ from werkzeug.utils import secure_filename
 
 conn = File()
 
+
 @is_admin_required
 def create_product(request):
+    form = ProductForm()
+
     if request.method == "POST":
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
@@ -30,14 +33,9 @@ def create_product(request):
                 product.card_image_url = conn.create(small_file)
 
             product.save()
-            return redirect('products')  # Replace with your product list view name
+            return redirect('products:detail-product', product_id=product.id)
 
-    else:
-        form = ProductForm()
-
-    return render(request, 'products/product_create.html', {'form': form, 'primary_title': "Create Product"})
-
-conn = File()
+    return render(request, 'product_create.html', {'form': form, 'primary_title': "Create Product"})
 
 
 # Define the products view
