@@ -1,5 +1,6 @@
 # do not push .sqlite files to GitHub
 *.sqlite
+*.sqlite3
 *__pycache__
 *.py[cod]
 auth
