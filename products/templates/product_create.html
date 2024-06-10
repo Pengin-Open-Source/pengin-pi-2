@@ -1,7 +1,6 @@
-<!-- templates/products/product_create.html -->
-{% extends "base.html" %}
+{% extends "layout/fullPageScroll.html" %}
 
-{% block content %}
+{% block pageContent %}
   <form class="form" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="product-edit-container">
