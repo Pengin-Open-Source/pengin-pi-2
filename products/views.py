@@ -1,6 +1,6 @@
 from django.http import HttpRequest
 from .models import Product
-from util.paginate import paginate  # Assuming you have a pagination utility
+from django.core.paginator import Paginator
 # Define the blog post view
 from django.shortcuts import render, get_object_or_404, redirect
 from util.s3 import File
@@ -43,19 +43,17 @@ conn = File()
 # Define the products view
 @is_admin_provider
 def products(request: HttpRequest, is_admin):
-    if request.method == "POST":
-        page = int(request.POST.get("page_number", 1))
-    else:
-        page = 1
+    product_list = Product.objects.all().order_by("priority")
+    for prod in product_list:
+        prod.card_image_url = conn.get_URL(prod.card_image_url)
 
-    products = paginate(Product.objects.all, page=page, key="priority", per_page=9)
-    for product in products:
-        product.card_image_url = conn.get_URL(product.card_image_url)
+    paginator = Paginator(product_list, 9)
+    page_number = request.GET.get("page", 1)
+    page_products = paginator.get_page(page_number)
 
     return render(request, "products.html", {
         "is_admin": is_admin,
-        "products": products,
-        "page": page,
+        "page_products": page_products,
         "primary_title": "Products",
     })
 
