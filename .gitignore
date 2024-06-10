@@ -1,9 +1,11 @@
 # do not push .sqlite files to GitHub
 *.sqlite
+*.sqlite3
 *__pycache__
 *.py[cod]
 auth
 venv
+venv_312
 .githubs
 *.log
 instance
@@ -15,5 +17,5 @@ public-endpoint.json
 app/static/robots.txt
 app/static/sitemap.xml
 *.DS_Store
-#migrations
+migrations
 Favicon.png
