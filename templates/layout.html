@@ -49,11 +49,11 @@
           {% endif %}
         </div>
         <div class="main-nav-links">
-          {% if current_user.is_authenticated %}
+          {% if user.is_authenticated %}
           <a class="header-link" href="/profile">Profile</a>
-          <a class="header-link" href="{% url 'auth:logout' %}">Logout</a>
+          <a class="header-link" href="{% url 'logout' %}">Logout</a>
           {% endif %}
-          {% if not current_user.is_authenticated %}
+          {% if not  user.is_authenticated %}
           <a class="header-link" href="/login">Login</a>
           <a class="header-link" href="/signup">Sign Up</a>
           {% endif %}
