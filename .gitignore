@@ -16,5 +16,6 @@ public-endpoint.json
 app/static/robots.txt
 app/static/sitemap.xml
 *.DS_Store
+.idea
 #migrations
 Favicon.png
