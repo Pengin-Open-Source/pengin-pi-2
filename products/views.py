@@ -72,7 +72,7 @@ def create_edit_product(request, product_id=None):
     return render(request, "product_form.html", context)
 
 
-# Define the products view
+# List all products with pagination
 @is_admin_provider
 def product_list(request, is_admin):
     products = Product.objects.all().order_by("priority")
@@ -92,9 +92,10 @@ def product_list(request, is_admin):
         "primary_title": "Products",
     })
 
-# Define the product view
+
+# Display product details
 @is_admin_provider
-def product_detail(request, product_id: int, is_admin):
+def product_detail(request, product_id, is_admin):
     product = get_object_or_404(Product, id=product_id)
     try:
         product.stock_image_url = conn.get_URL(product.stock_image_url)
