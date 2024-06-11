@@ -76,8 +76,11 @@ def create_edit_product(request, product_id=None):
 @is_admin_provider
 def product_list(request, is_admin):
     products = Product.objects.all().order_by("priority")
-    for prod in products:
-        prod.card_image_url = conn.get_URL(prod.card_image_url)
+    for product in products:
+        try:
+            product.card_image_url = conn.get_URL(product.card_image_url)
+        except ParamValidationError:
+            product.card_image_url = None
 
     paginator = Paginator(products, 9)
     page_number = request.GET.get("page", 1)
@@ -93,8 +96,11 @@ def product_list(request, is_admin):
 @is_admin_provider
 def product_detail(request, product_id: int, is_admin):
     product = get_object_or_404(Product, id=product_id)
-    product.stock_image_url = conn.get_URL(product.stock_image_url)
-    
+    try:
+        product.stock_image_url = conn.get_URL(product.stock_image_url)
+    except ParamValidationError:
+        product.stock_image_url = None
+
     return render(request, "product.html", {
         "is_admin": is_admin,
         "product": product,
