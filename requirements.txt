@@ -9,3 +9,4 @@ django-ratelimit
 redis
 hiredis
 django-redis
+pillow
