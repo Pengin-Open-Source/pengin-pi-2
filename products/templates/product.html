@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block pageContent %}
-    <p>{{ product.price|escape }}</p>
-    <div class="commonmark">{{ product.description|markdownit|escape }}</div>
+    <p>{{ product.price }}</p>
+    <div class="commonmark">{{ product.description|markdownit }}</div>
     <img src="{{ product.stock_image_url|escape }}" alt="Product Image">
 {% endblock %}
