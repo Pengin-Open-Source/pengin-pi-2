@@ -1,0 +1,14 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+    <p>Do you really want to delete this product?</p>
+    <p>{{ product.name }}</p>
+    <form method="get" action="{% url 'products:detail-product' product.id %}">
+        {% csrf_token %}
+        <button type="submit">Cancel</button>
+    </form>
+    <form method="post" action="{% url 'products:delete-product' product.id %}">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+    </form>
+{% endblock %}

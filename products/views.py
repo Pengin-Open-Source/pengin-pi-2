@@ -107,4 +107,14 @@ def product_detail(request, product_id, is_admin):
         "product": product,
         "primary_title": product.name,
     })
-    
+
+
+@is_admin_required
+def delete_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    if request.method == 'POST':
+        product.delete()
+        return redirect('products:list-products')
+
+    return render(request, 'product_confirm_delete.html', {'product': product})
+
