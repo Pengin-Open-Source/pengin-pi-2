@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import product_list, product_detail, create_product
+from .views import product_list, product_detail, create_edit_product
 
 # Add namespace to urls
 app_name = 'products'
