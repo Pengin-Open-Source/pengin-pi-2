@@ -1,4 +1,4 @@
-from .models import BlogPost
+from blogs.models import BlogPost
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, get_object_or_404
@@ -14,7 +14,7 @@ def blogs(request, is_admin):
         page = 1
     # Use your custom paginate function
     posts = paginate(BlogPost.objects.all, page=page, key="-date", per_page=10)
- 
+
     return render(request, 'blogs.html', {
         'posts': posts,
         'primary_title': 'Blog',
@@ -22,18 +22,20 @@ def blogs(request, is_admin):
         'left_title': 'Blog Posts'
     })
 
+
 @is_admin_provider
 def post(request, post_id, is_admin):
     post = get_object_or_404(BlogPost, pk=post_id)
-    
+
     if request.method == "POST":
         page = int(request.POST.get('page_number', 1))
     else:
         page = 1
-    
-    posts = paginate(BlogPost.objects.all(), page=page, key="title", per_page=10)
+
+    posts = paginate(BlogPost.objects.all(), page=page,
+                     key="title", per_page=10)
     author_date = post.date  # TODO: Replace with correct attribute
-    
+
     return render(request, 'post.html', {
         'page': page,
         'post': post,
