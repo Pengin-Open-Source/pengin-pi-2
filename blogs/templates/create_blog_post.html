@@ -1,0 +1,9 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+    <form class="form" method="POST" action="% url 'blogs.create_post'  %}">
+    {% crsf_token %}
+    {{ form }}
+    <button class ="primary-button" type="submit"> Create Blog Post </button>
+    </form>
+{% endblock %}
