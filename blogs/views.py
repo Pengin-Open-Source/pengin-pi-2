@@ -1,11 +1,13 @@
 from blogs.models import BlogPost
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from util.security.auth_tools import is_admin_provider
-
-
+from django.contrib.auth.decorators import login_required
+from blogs.forms import BlogForm
 # Define the blog view
+
+
 @is_admin_provider
 def blogs(request, is_admin):
     if request.method == "POST":
@@ -43,3 +45,17 @@ def post(request, post_id, is_admin):
         'is_admin': is_admin,  # Assuming you have authentication
         'blog_author_date': author_date,
     })
+
+
+@is_admin_provider
+def create_post(request):
+    if request.method == 'POST':
+        form = BlogForm(request.POST)
+        if form.is_valid():
+            blog_post = form.save()
+            BlogPost.objects.create(blog_post)
+            return redirect('blogs')
+    else:
+        form = BlogPost()
+
+    return render(request 'blogs/create_post_html', {'form': form})
