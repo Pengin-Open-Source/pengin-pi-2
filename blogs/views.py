@@ -58,4 +58,4 @@ def create_post(request):
     else:
         form = BlogPost()
 
-    return render(request 'blogs/create_post_html', {'form': form})
+    return render(request, 'blogs/create_post_html', {'form': form})
