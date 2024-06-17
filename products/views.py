@@ -87,6 +87,7 @@ def edit_product(request, product_id):
         "stock_image_url": product.stock_image_url,
         "primary_title": f"Edit Product: {product.name}",
         "action": "update", "form": form,
+        "product_id": product_id,
     }
     return render(request, "product_form.html", context)
 
