@@ -139,5 +139,9 @@ def delete_product(request, product_id):
         product.delete()
         return redirect('products:list-products')
 
-    return render(request, 'product_confirm_delete.html', {'product': product})
+    context = {
+        "primary_title": f"Delete Product: {product.name}",
+        "product": product,
+    }
+    return render(request, 'product_confirm_delete.html', context)
 
