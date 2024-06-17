@@ -37,7 +37,6 @@ def save_product(request, form):
     return product
 
 
-# Refactor all function-based views into class-based views
 class CreateProduct(View):
     form = ProductForm()
     template_name = "product_form.html"
@@ -101,55 +100,66 @@ class EditProduct(View):
 
 
 # List all products with pagination
-@login_required
-@is_admin_provider
-def product_list(request, is_admin):
-    products = Product.objects.all().order_by("priority")
-    for product in products:
-        try:
-            product.card_image_url = conn.get_URL(product.card_image_url)
-        except ParamValidationError:
-            product.card_image_url = None
+class ListProduct(View):
+    template_name = "products.html"
 
-    paginator = Paginator(products, 9)
-    page_number = request.GET.get("page", 1)
-    page_products = paginator.get_page(page_number)
+    @method_decorator(login_required)
+    @method_decorator(is_admin_provider)
+    def get(self, request, is_admin):
+        products = Product.objects.all().order_by("priority")
+        for product in products:
+            try:
+                product.card_image_url = conn.get_URL(product.card_image_url)
+            except ParamValidationError:
+                product.card_image_url = None
 
-    return render(request, "products.html", {
-        "is_admin": is_admin,
-        "page_products": page_products,
-        "primary_title": "Products",
-    })
+        paginator = Paginator(products, 9)
+        page_number = request.GET.get("page", 1)
+        page_products = paginator.get_page(page_number)
+
+        return render(request, self.template_name, {
+            "is_admin": is_admin,
+            "page_products": page_products,
+            "primary_title": "Products",
+        })
 
 
 # Display product details
-@login_required
-@is_admin_provider
-def product_detail(request, product_id, is_admin):
-    product = get_object_or_404(Product, id=product_id)
-    try:
-        product.stock_image_url = conn.get_URL(product.stock_image_url)
-    except ParamValidationError:
-        product.stock_image_url = None
+class DetailProduct(View):
+    template_name = "product.html"
 
-    return render(request, "product.html", {
-        "is_admin": is_admin,
-        "product": product,
-        "primary_title": product.name,
-    })
+    @method_decorator(login_required)
+    @method_decorator(is_admin_provider)
+    def get(self, request, product_id, is_admin):
+        product = get_object_or_404(Product, id=product_id)
+        try:
+            product.stock_image_url = conn.get_URL(product.stock_image_url)
+        except ParamValidationError:
+            product.stock_image_url = None
+
+        return render(request, self.template_name, {
+            "is_admin": is_admin,
+            "product": product,
+            "primary_title": product.name,
+        })
 
 
-@login_required
-@is_admin_required
-def delete_product(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    if request.method == 'POST':
+class DeleteProduct(View):
+    template_name = "product_confirm_delete.html"
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def get(self, request, product_id):
+        product = get_object_or_404(Product, id=product_id)
+        context = {
+            "primary_title": f"Delete Product: {product.name}",
+            "product": product,
+        }
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request, product_id):
+        product = get_object_or_404(Product, id=product_id)
         product.delete()
         return redirect('products:list-products')
-
-    context = {
-        "primary_title": f"Delete Product: {product.name}",
-        "product": product,
-    }
-    return render(request, 'product_confirm_delete.html', context)
-
