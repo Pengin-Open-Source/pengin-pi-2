@@ -48,7 +48,7 @@ def post(request, post_id, is_admin):
 
 
 @is_admin_provider
-def create_post(request):
+def create_post(request, is_admin):
     if request.method == 'POST':
         form = BlogForm(request.POST)
         if form.is_valid():
@@ -56,6 +56,6 @@ def create_post(request):
             BlogPost.objects.create(blog_post)
             return redirect('blogs')
     else:
-        form = BlogPost()
+        form = BlogForm()
 
-    return render(request, 'blogs/create_post_html', {'form': form})
+    return render(request, 'create_blog_post.html', {'form': form, 'is_admin': is_admin})
