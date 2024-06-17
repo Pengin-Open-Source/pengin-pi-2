@@ -10,7 +10,6 @@ urlpatterns = [
     path('create/', create_product, name='create-product'),
     path('<uuid:product_id>/edit/', edit_product, name='edit-product'),
     path('<uuid:product_id>/delete/', delete_product, name='delete-product'),
-    # path('<int:product_id>/add_image/', add_image, name='add_image'),
 ]
 
 
