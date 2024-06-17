@@ -57,5 +57,6 @@ def create_post(request, is_admin):
             return redirect('blogs')
     else:
         form = BlogForm()
-
-    return render(request, 'create_blog_post.html', {'form': form, 'is_admin': is_admin})
+        form_rendered_for_create = form.render(
+            "configure_form_for_create.html")
+        return render(request, 'create_blog_post.html', {'form': form_rendered_for_create, 'is_admin': is_admin})
