@@ -4,8 +4,8 @@ from .models import Product
 
 
 class ProductForm(forms.ModelForm):
-    file_large = forms.ImageField(required=False)
-    file_small = forms.ImageField(required=False)
+    file_large = forms.FileField(required=False)
+    file_small = forms.FileField(required=False)
 
     class Meta:
         model = Product
