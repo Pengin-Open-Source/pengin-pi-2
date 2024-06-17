@@ -1,6 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
+from django.utils.decorators import method_decorator
+from django.views import View
 from botocore.exceptions import ParamValidationError
 from werkzeug.utils import secure_filename
 from .models import Product
@@ -35,60 +37,67 @@ def save_product(request, form):
     return product
 
 
-@login_required
-@is_admin_required
-def create_product(request):
-
-    # If the request method is POST, create a form with the request data
-    if request.method == "POST":
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            product = save_product(request, form)
-            return redirect('products:detail-product', product_id=product.id)
-
-    # If the request method is GET, create a blank form
+# Refactor all function-based views into class-based views
+class CreateProduct(View):
     form = ProductForm()
-
+    template_name = "product_form.html"
     context = {
         "primary_title": "Create Product",
         "action": "create",
         "form": form,
     }
-    return render(request, "product_form.html", context)
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, self.context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request):
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = save_product(request, form)
+            return redirect('products:detail-product', product_id=product.id)
+        self.context["form"] = form
+        return render(request, self.template_name, self.context)
 
 
-@login_required
-@is_admin_required
-def edit_product(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+class EditProduct(View):
+    template_name = "product_form.html"
 
-    # If the request method is POST, create a form with the request data and the product instance
-    if request.method == "POST":
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def get(self, request, product_id):
+        product = get_object_or_404(Product, id=product_id)
+        form = ProductForm(instance=product)
+
+        try:
+            product.card_image_url = conn.get_URL(product.card_image_url)
+        except ParamValidationError:
+            product.card_image_url = None
+        try:
+            product.stock_image_url = conn.get_URL(product.stock_image_url)
+        except ParamValidationError:
+            product.stock_image_url = None
+
+        context = {
+            "card_image_url": product.card_image_url,
+            "stock_image_url": product.stock_image_url,
+            "primary_title": f"Edit Product: {product.name}",
+            "action": "update", "form": form,
+            "product_id": product_id,
+        }
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request, product_id):
+        product = get_object_or_404(Product, id=product_id)
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             product = save_product(request, form)
             return redirect('products:detail-product', product_id=product.id)
-
-    # If the request method is GET, create a form with the product instance
-    form = ProductForm(instance=product)
-
-    try:
-        product.card_image_url = conn.get_URL(product.card_image_url)
-    except ParamValidationError:
-        product.card_image_url = None
-    try:
-        product.stock_image_url = conn.get_URL(product.stock_image_url)
-    except ParamValidationError:
-        product.stock_image_url = None
-
-    context = {
-        "card_image_url": product.card_image_url,
-        "stock_image_url": product.stock_image_url,
-        "primary_title": f"Edit Product: {product.name}",
-        "action": "update", "form": form,
-        "product_id": product_id,
-    }
-    return render(request, "product_form.html", context)
+        return redirect('products:edit-product', product_id=product.id)
 
 
 # List all products with pagination
