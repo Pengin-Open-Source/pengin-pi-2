@@ -12,65 +12,82 @@ from util.security.auth_tools import is_admin_provider, is_admin_required
 conn = File()
 
 
+def save_product(request, form):
+    """
+    Save the product to the database
+    :param request: HttpRequest
+    :param form: ProductForm
+    :return: Product
+    """
+    product = form.save(commit=False)
+
+    large_file = request.FILES.get('file_large')
+    small_file = request.FILES.get('file_small')
+
+    if large_file:
+        large_file.filename = secure_filename(large_file.name)
+        product.stock_image_url = conn.create(large_file)
+
+    if small_file:
+        small_file.filename = secure_filename(small_file.name)
+        product.card_image_url = conn.create(small_file)
+
+    product.save()
+    return product
+
+
 @login_required
 @is_admin_required
-def create_edit_product(request, product_id=None):
-    context = {}
-    # Check if product_id is provided: if so, get and edit the product
-    if product_id:
-        product = get_object_or_404(Product, id=product_id)
-        try:
-            product.card_image_url = conn.get_URL(product.card_image_url)
-        except ParamValidationError:
-            product.card_image_url = None
-        try:
-            product.stock_image_url = conn.get_URL(product.stock_image_url)
-        except ParamValidationError:
-            product.stock_image_url = None
+def create_product(request):
 
-        context["card_image_url"] = product.card_image_url
-        context["stock_image_url"] = product.stock_image_url
+    # If the request method is POST, create a form with the request data
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = save_product(request, form)
+            return redirect('products:detail-product', product_id=product.id)
 
-        # If the request method is POST, create a form with the request data and the product instance
-        if request.method == "POST":
-            form = ProductForm(request.POST, request.FILES, instance=product)
-        # If the request method is GET, create a form with the product instance
-        else:
-            form = ProductForm(instance=product)
-        context["primary_title"] = f'Edit Product: {product.name}'
-        context["action"] = "update"
+    # If the request method is GET, create a blank form
+    form = ProductForm()
 
-    # Create a new product
-    else:
-        # If the request method is POST, create a form with the request data
-        if request.method == "POST":
-            form = ProductForm(request.POST, request.FILES)
-        # If the request method is GET, create a blank form
-        else:
-            form = ProductForm()
-        context["primary_title"] = "Create Product"
-        context["action"] = "create"
+    context = {
+        "primary_title": "Create Product",
+        "action": "create",
+        "form": form,
+    }
+    return render(request, "product_form.html", context)
 
-    context["form"] = form
 
-    # If the request method is POST and the form is valid, save the product
-    if request.method == "POST" and form.is_valid():
-        product = form.save(commit=False)
+@login_required
+@is_admin_required
+def edit_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
 
-        large_file = request.FILES.get('file_large')
-        small_file = request.FILES.get('file_small')
+    # If the request method is POST, create a form with the request data and the product instance
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            product = save_product(request, form)
+            return redirect('products:detail-product', product_id=product.id)
 
-        if large_file:
-            large_file.filename = secure_filename(large_file.name)
-            product.stock_image_url = conn.create(large_file)
+    # If the request method is GET, create a form with the product instance
+    form = ProductForm(instance=product)
 
-        if small_file:
-            small_file.filename = secure_filename(small_file.name)
-            product.card_image_url = conn.create(small_file)
+    try:
+        product.card_image_url = conn.get_URL(product.card_image_url)
+    except ParamValidationError:
+        product.card_image_url = None
+    try:
+        product.stock_image_url = conn.get_URL(product.stock_image_url)
+    except ParamValidationError:
+        product.stock_image_url = None
 
-        product.save()
-        return redirect('products:detail-product', product_id=product.id)
-
+    context = {
+        "card_image_url": product.card_image_url,
+        "stock_image_url": product.stock_image_url,
+        "primary_title": f"Edit Product: {product.name}",
+        "action": "update", "form": form,
+    }
     return render(request, "product_form.html", context)
 
 
