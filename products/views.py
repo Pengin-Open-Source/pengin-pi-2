@@ -1,16 +1,18 @@
-from django.http import HttpRequest
-from .models import Product
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.http import HttpRequest
 from django.shortcuts import render, get_object_or_404, redirect
 from botocore.exceptions import ParamValidationError
+from werkzeug.utils import secure_filename
+from .models import Product
+from .forms import ProductForm
 from util.s3 import File
 from util.security.auth_tools import is_admin_provider, is_admin_required
-from .forms import ProductForm
-from werkzeug.utils import secure_filename
 
 conn = File()
 
 
+@login_required
 @is_admin_required
 def create_edit_product(request, product_id=None):
     context = {}
@@ -73,6 +75,7 @@ def create_edit_product(request, product_id=None):
 
 
 # List all products with pagination
+@login_required
 @is_admin_provider
 def product_list(request, is_admin):
     products = Product.objects.all().order_by("priority")
@@ -94,6 +97,7 @@ def product_list(request, is_admin):
 
 
 # Display product details
+@login_required
 @is_admin_provider
 def product_detail(request, product_id, is_admin):
     product = get_object_or_404(Product, id=product_id)
@@ -109,6 +113,7 @@ def product_detail(request, product_id, is_admin):
     })
 
 
+@login_required
 @is_admin_required
 def delete_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
