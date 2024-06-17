@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
 
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -17,6 +18,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -37,31 +39,32 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
-    
+
     class Meta:
         app_label = 'main'  # Explicitly set the app_label
-    
+
     # Define unique related_name for groups and user_permissions
     groups = models.ManyToManyField(
-    Group,
-    verbose_name='groups',  # Wrapped in quotes
-    blank=True,
-    related_name='%(app_label)s_%(class)s_groups',  # Unique related_name
-    related_query_name="user",
-    help_text=(
-        'The groups this user belongs to. A user will get all permissions '
-        'granted to each of their groups.'
-    ),
+        Group,
+        verbose_name='groups',  # Wrapped in quotes
+        blank=True,
+        related_name='%(app_label)s_%(class)s_groups',  # Unique related_name
+        related_query_name="user",
+        help_text=(
+            'The groups this user belongs to. A user will get all permissions '
+            'granted to each of their groups.'
+        ),
     )
 
     user_permissions = models.ManyToManyField(
         Permission,
         verbose_name='user permissions',  # Wrapped in quotes
         blank=True,
-        related_name='%(app_label)s_%(class)s_user_permissions',  # Unique related_name
+        # Unique related_name
+        related_name='%(app_label)s_%(class)s_user_permissions',
         related_query_name="user",
         help_text='Specific permissions for this user.',
     )
-    
+
     def __str__(self):
-        return self.email
+        return str(self.email)
