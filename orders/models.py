@@ -6,12 +6,36 @@ from products.models import Product
 from companies.models import Company
 
 
+# ### Customer Models ###
 class Customer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=False)
 
 
+class ShippingAddress(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    address1 = models.CharField(max_length=50)
+    address2 = models.CharField(max_length=50)
+    city = models.CharField(max_length=50)
+    zipcode = models.CharField(max_length=50)
+    state = models.CharField(max_length=50)
+    country = models.CharField(max_length=50)
+    phone = models.CharField(max_length=50, unique=True)
+    email = models.EmailField(max_length=50, unique=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
+
+
+class Contract(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    contract_type = models.CharField(max_length=100)
+    content = models.TextField()
+    service_date = models.DateTimeField(null=True)
+    expiration_date = models.DateTimeField(null=True)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
+
+
+# ### Order Models ###
 class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     order_date = models.DateTimeField(null=True)
@@ -25,6 +49,8 @@ class OrderList(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, null=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=False)
 
+
+# ### Order Workflow Models ###
 
 # class OrderChangeRequest(models.Model):
 #     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
@@ -53,25 +79,3 @@ class OrderList(models.Model):
 #     timestamp = models.DateTimeField(null=True)
 #     author = models.ForeignKey('User', on_delete=models.CASCADE, null=False)
 #     type = models.CharField(choices=TYPE_CHOICES, max_length=36)
-
-
-class ShippingAddress(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    address1 = models.CharField(max_length=50)
-    address2 = models.CharField(max_length=50)
-    city = models.CharField(max_length=50)
-    zipcode = models.CharField(max_length=50)
-    state = models.CharField(max_length=50)
-    country = models.CharField(max_length=50)
-    phone = models.CharField(max_length=50, unique=True)
-    email = models.EmailField(max_length=50, unique=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
-
-
-class Contract(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    contract_type = models.CharField(max_length=100)
-    content = models.TextField()
-    service_date = models.DateTimeField(null=True)
-    expiration_date = models.DateTimeField(null=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
