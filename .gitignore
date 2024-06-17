@@ -19,3 +19,4 @@ app/static/sitemap.xml
 *.DS_Store
 migrations
 Favicon.png
+.idea
