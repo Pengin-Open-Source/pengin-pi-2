@@ -1,6 +1,5 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.http import HttpRequest
 from django.shortcuts import render, get_object_or_404, redirect
 from botocore.exceptions import ParamValidationError
 from werkzeug.utils import secure_filename
