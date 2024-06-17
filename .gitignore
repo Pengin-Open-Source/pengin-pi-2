@@ -5,6 +5,7 @@
 *.py[cod]
 auth
 venv
+venv_312
 .githubs
 *.log
 instance
