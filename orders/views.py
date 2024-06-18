@@ -10,7 +10,7 @@ from .forms import OrderForm
 
 
 class ListOrders(View):
-    template_name = "orders/list_orders.html"
+    template_name = "orders/order_list.html"
 
     @method_decorator(login_required)
     @method_decorator(is_admin_provider)
@@ -49,7 +49,7 @@ class ListOrders(View):
     #         # "customers": customers,
     #     }
     #
-    #     return render(request, 'orders/list_orders.html', context)
+    #     return render(request, 'orders/order_list.html', context)
 
 
 class CreateOrder(View):
@@ -74,3 +74,53 @@ class CreateOrder(View):
             return redirect('orders:detail-order', order_id=order.id)
         self.context["form"] = form
         return render(request, self.template_name, self.context)
+
+
+class EditOrder(View):
+    template_name = "orders/order_form.html"
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def get(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        form = OrderForm(instance=order)
+
+        context = {
+            "card_image_url": order.card_image_url,
+            "stock_image_url": order.stock_image_url,
+            "primary_title": f"Edit Order: {order.name}",
+            "action": "update", "form": form,
+            "order_id": order_id,
+        }
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        form = OrderForm(request.POST, request.FILES, instance=order)
+        if form.is_valid():
+            order.save()
+            return redirect('orders:detail-order', order_id=order.id)
+        return redirect('orders:edit-order', order_id=order.id)
+
+
+class DeleteOrder(View):
+    template_name = "orders/order_confirm_delete.html"
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def get(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        context = {
+            "primary_title": f"Delete Order: {order.name}",
+            "order": order,
+        }
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        order.delete()
+        return redirect('orders:list-orders')
