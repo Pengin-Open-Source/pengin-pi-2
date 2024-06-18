@@ -11,9 +11,3 @@ class Home(models.Model):
 
     def __str__(self):
         return self.company_name
-    
-    class Meta:
-        permissions = [
-            ("change_home", "Can change home"),
-            ("add_home", "Can add home"),
-        ]

@@ -21,11 +21,6 @@ class About(models.Model):
     article = models.TextField()
     tags = models.CharField(max_length=150)
     
-    class Meta:
-        permissions = [
-            ("change_about", "Can change about"),
-            ("add_about", "Can add about"),
-        ]
 
     def __str__(self):
         return self.name

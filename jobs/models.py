@@ -17,9 +17,3 @@ class Job(models.Model):
     def __str__(self):
         return self.job_title
     
-    class Meta:
-        permissions = [
-            ("change_job", "Can change job"),
-            ("add_job", "Can add job"),
-            ("delete_job", "Can delete job"),
-        ]
