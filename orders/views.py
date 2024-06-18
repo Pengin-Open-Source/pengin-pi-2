@@ -178,7 +178,7 @@ class DeleteOrder(View):
     def get(self, request, order_id):
         order = get_object_or_404(Order, id=order_id)
         context = {
-            "primary_title": f"Delete Order: {order.name}",
+            "primary_title": f"Delete Order: {order.order_date} by {order.customer.name}",
             "order": order,
         }
         return render(request, self.template_name, context)
