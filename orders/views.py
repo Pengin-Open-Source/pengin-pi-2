@@ -64,7 +64,7 @@ class DetailOrder(View):
         return render(request, self.template_name, {
             "is_admin": is_admin,
             "order": order,
-            "primary_title": f"{order.customer.user.name} Order, {order.order_date}",
+            "primary_title": f"{order.customer.name} Order, {order.order_date}",
         })
 
 
