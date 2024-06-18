@@ -1,14 +1,14 @@
 from django.urls import path
-from .views import home, home_create, home_edit
+from .views import HomeView, HomeCreate, HomeEdit
 
 
 urlpatterns = [
-    path('', home, name='home'),
-    path('home/', home, name='home'),
-    path('index/', home, name='home'),
-    path('index.html', home, name='home'),
-    path('home/edit/', home_edit, name='home_edit'),
-    path('home/create/', home_create, name='home_create'),
+    path('', HomeView.as_view(), name='home_view'),
+    path('home/edit/', HomeEdit.as_view(), name='home_edit'),
+    path('home/create/', HomeCreate.as_view(), name='home_create'),
+    path('home/', HomeView.as_view(), name='home_view'),
+    path('index/', HomeView.as_view(), name='home_view'),
+    path('index.html', HomeView.as_view(), name='home_view'),
     ]
 
 
