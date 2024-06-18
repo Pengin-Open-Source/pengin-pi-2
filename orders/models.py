@@ -54,6 +54,7 @@ class Order(models.Model):
     order_date = models.DateTimeField(null=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
     is_cancelled = models.BooleanField(default=False)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
 
 
 class OrderList(models.Model):
