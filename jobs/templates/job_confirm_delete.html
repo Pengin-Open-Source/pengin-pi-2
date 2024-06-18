@@ -1,0 +1,9 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+  <form class="form" method="POST" action="{% url 'delete_job' job.id %}">
+    {% csrf_token %}
+    <p>Are you sure you want to delete "{{ job.job_title }}"?</p>
+    <button class="primary-button" type="submit">Confirm Delete</button>
+  </form>
+{% endblock %}
