@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from util.security.auth_tools import is_admin_provider, is_admin_required
 
-from .models import Order
+from .models import Order, Customer, Product, OrderList
 from .forms import OrderForm
 
 
