@@ -1,0 +1,13 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+    <p>Do you really want to delete this order?</p>
+    <p>{{ order.customer.user.name }}{{ order.order_date }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <a href="{% url "orders:detail-order" order.id %}">
+            <button class="primary-button" type="button">Cancel</button>
+        </a>
+        <button class="primary-button" type="submit">Delete</button>
+    </form>
+{% endblock %}

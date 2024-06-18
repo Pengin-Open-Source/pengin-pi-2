@@ -52,6 +52,22 @@ class ListOrders(View):
     #     return render(request, 'orders/order_list.html', context)
 
 
+# Display order details
+class DetailOrder(View):
+    template_name = "orders/order_detail.html"
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_provider)
+    def get(self, request, order_id, is_admin):
+        order = get_object_or_404(Order, id=order_id)
+
+        return render(request, self.template_name, {
+            "is_admin": is_admin,
+            "order": order,
+            "primary_title": f"{order.customer.user.name} Order, {order.order_date}",
+        })
+
+
 class CreateOrder(View):
     form = OrderForm()
     template_name = "orders/order_form.html"
