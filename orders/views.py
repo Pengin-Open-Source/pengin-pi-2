@@ -69,27 +69,48 @@ class DetailOrder(View):
 
 
 class CreateOrder(View):
-    form = OrderForm()
     template_name = "orders/order_form.html"
-    context = {
-        "primary_title": "Create Order",
-        "action": "create",
-        "form": form,
-    }
+
+    def get_context_data(self):
+        products = Product.objects.all()
+        customers = Customer.objects.all()
+
+        return {
+            "primary_title": "Create Order",
+            "action": "create",
+            "form": OrderForm(),
+            "products": products,
+            "customers": customers,
+        }
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, self.context)
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
 
     @method_decorator(login_required)
-    @method_decorator(is_admin_required)
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         form = OrderForm(request.POST)
+
         if form.is_valid():
-            order = form.save()
-            return redirect('orders:detail-order', order_id=order.id)
-        self.context["form"] = form
-        return render(request, self.template_name, self.context)
+            new_order = form.save(commit=False)
+            new_order.author = request.user
+            new_order.save()
+
+            # Create OrdersList objects with products and quantities for each
+            product_ids = request.POST.getlist('product')
+            quantities = request.POST.getlist('quantity')
+            orders_list = [
+                OrderList(order=new_order, product=product_id, quantity=quantity)
+                for product_id, quantity in zip(product_ids, quantities)
+            ]
+            OrderList.objects.bulk_create(orders_list)
+
+            return redirect('orders:detail-order', order_id=new_order.id)
+
+        context = self.get_context_data()
+        context['form'] = form
+        return render(request, self.template_name, context)
 
 
 class EditOrder(View):
