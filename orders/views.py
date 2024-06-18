@@ -5,7 +5,8 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from util.security.auth_tools import is_admin_provider, is_admin_required
 
-from .models import Order, Customer
+from .models import Order
+from .forms import OrderForm
 
 
 class ListOrders(View):
@@ -52,6 +53,24 @@ class ListOrders(View):
 
 
 class CreateOrder(View):
-    def get(self, request):
-        pass
-        # return render(request, 'orders/create_order.html', {'primary_title': 'Create Order'})
+    form = OrderForm()
+    template_name = "orders/order_form.html"
+    context = {
+        "primary_title": "Create Order",
+        "action": "create",
+        "form": form,
+    }
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, self.context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request):
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            order = form.save()
+            return redirect('orders:detail-order', order_id=order.id)
+        self.context["form"] = form
+        return render(request, self.template_name, self.context)
