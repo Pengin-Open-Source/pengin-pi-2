@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>My Applications</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date Applied</th>
+        <th>Job Title</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for application in applications %}
+        <tr>
+          <td>{{ application.date_applied }}</td>
+          <td><a href="{% url 'application_detail' job_id=application.job_id application_id=application.id %}">{{ application.job.job_title }}</a></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="2">You have not applied to any jobs.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
