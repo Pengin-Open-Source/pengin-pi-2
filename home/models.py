@@ -1,7 +1,7 @@
 from django.db import models
 import uuid
 
-
+    
 class Home(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     company_name = models.CharField(max_length=100)
@@ -11,3 +11,9 @@ class Home(models.Model):
 
     def __str__(self):
         return self.company_name
+    
+    class Meta:
+        permissions = [
+            ("change_home", "Can change home"),
+            ("add_home", "Can add home"),
+        ]
