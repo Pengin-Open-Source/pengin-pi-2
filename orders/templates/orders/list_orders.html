@@ -1,0 +1,34 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+  <a href="{%  url "orders:create-order" %}">New Order</a>
+{% endblock %}
+
+
+{% block beforeTableContent %}
+    <div class="title-underline">
+      <a class="text-button" href="/orders?is_cancelled=false">active</a>|
+      <a class="text-button" href="/orders?is_cancelled=true">cancelled</a>
+    </div>
+{% endblock %}
+{% block pageContent %}
+
+    {% for order in page_orders %}
+    <table>
+      <thead>
+        <tr>
+          <th>Order Date</th>
+          <th>Order ID</th>
+          <th>Customer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ order.order_date|date:"F d, Y" }}</td>
+          <td><a href="{% url 'detail-detail' order.id %}">{{ order.id }}</a></td>
+          <td>{{ order.customer.user.name|default:'Unknown User' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    {% endfor %}
+{% endblock %}
