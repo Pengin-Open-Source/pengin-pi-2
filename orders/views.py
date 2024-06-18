@@ -116,30 +116,58 @@ class CreateOrder(View):
 class EditOrder(View):
     template_name = "orders/order_form.html"
 
+    def get_context_data(self, order):
+        products = Product.objects.all()
+        customers = Customer.objects.all()
+
+        order_items = OrderList.objects.filter(order=order)
+
+        return {
+            "primary_title": "Edit Order",
+            "action": "update",
+            "form": OrderForm(instance=order),
+            "products": products,
+            "customers": customers,
+            "order": order,
+            "order_items": order_items,
+        }
+
     @method_decorator(login_required)
     @method_decorator(is_admin_required)
-    def get(self, request, order_id):
+    def get(self, request, order_id, *args, **kwargs):
         order = get_object_or_404(Order, id=order_id)
-        form = OrderForm(instance=order)
-
-        context = {
-            "card_image_url": order.card_image_url,
-            "stock_image_url": order.stock_image_url,
-            "primary_title": f"Edit Order: {order.name}",
-            "action": "update", "form": form,
-            "order_id": order_id,
-        }
+        context = self.get_context_data(order)
         return render(request, self.template_name, context)
 
     @method_decorator(login_required)
     @method_decorator(is_admin_required)
-    def post(self, request, order_id):
+    def post(self, request, order_id, *args, **kwargs):
         order = get_object_or_404(Order, id=order_id)
-        form = OrderForm(request.POST, request.FILES, instance=order)
+        form = OrderForm(request.POST, instance=order)
+
         if form.is_valid():
+            # Update the author of the order?
+            # order = form.save(commit=False)
+            # order.author = request.user
             order.save()
+
+            # Clear the existing OrdersList entries
+            OrderList.objects.filter(order=order).delete()
+
+            # Create new OrdersList objects with updated products and quantities
+            product_ids = request.POST.getlist('product')
+            quantities = request.POST.getlist('quantity')
+            orders_list = [
+                OrderList(order=order, product=product_id, quantity=quantity)
+                for product_id, quantity in zip(product_ids, quantities)
+            ]
+            OrderList.objects.bulk_create(orders_list)
+
             return redirect('orders:detail-order', order_id=order.id)
-        return redirect('orders:edit-order', order_id=order.id)
+
+        context = self.get_context_data(order)
+        context['form'] = form
+        return render(request, self.template_name, context)
 
 
 class DeleteOrder(View):
