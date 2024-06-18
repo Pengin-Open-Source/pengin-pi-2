@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'leads',
     'products',
     'jobs',
+    'applications',
+    'profiles',
     'relationships',
 ]
 
