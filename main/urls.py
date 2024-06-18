@@ -26,6 +26,7 @@ urlpatterns = [
     path('', include('blogs.urls')),
     path('products/', include('products.urls')),
     path('', include('jobs.urls')),
+    path('forums/', include('forums.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('signup/', SignupView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),

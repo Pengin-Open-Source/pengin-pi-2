@@ -1,0 +1,9 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+    <form class="form" method="POST" action="{% url 'forums:create_post' thread_id=thread_id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="primary-button" type="submit">Post</button>
+    </form>
+{% endblock %}
