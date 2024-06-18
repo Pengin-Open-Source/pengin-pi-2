@@ -1,6 +1,7 @@
 from django.db import models, transaction
 import uuid
 from datetime import datetime
+from django.utils import timezone
 
 
 class BlogPost(models.Model):
@@ -8,7 +9,7 @@ class BlogPost(models.Model):
     title = models.CharField(max_length=100, unique=True)
     author = models.CharField(max_length=100)
     edited_by = models.CharField(max_length=100, unique=True)
-    date = models.DateTimeField(default=datetime.utcnow)
+    date = models.DateTimeField(default=timezone.now)
     content = models.TextField()
     tags = models.CharField(max_length=150)
     method = models.CharField(max_length=10)
@@ -33,7 +34,7 @@ class BlogHistory(models.Model):
     post_id = models.UUIDField(db_index=True)
     title = models.CharField(max_length=100)
     user = models.CharField(max_length=100)
-    date = models.DateTimeField(default=datetime.utcnow)
+    date = models.DateTimeField(default=timezone.now)
     content = models.TextField()
     tags = models.CharField(max_length=150)
     method = models.CharField(max_length=10)
