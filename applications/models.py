@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from jobs.models import Job  # Import Job model from your project structure
+import uuid
 
 class Application(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
