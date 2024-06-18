@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 import uuid
 
@@ -9,8 +10,20 @@ from companies.models import Company
 # ### Customer Models ###
 class Customer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
+    name = models.CharField(max_length=50, null=True, blank=False)
+
+    def clean(self):
+        if self.user and self.company:
+            raise ValidationError('Customer cannot have both user and company relationships.')
+        if not self.user and not self.company:
+            raise ValidationError('Customer must have either a user or a company relationship.')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        self.name = self.company.name if self.company else self.user.name
+        super().save(*args, **kwargs)
 
 
 class ShippingAddress(models.Model):
