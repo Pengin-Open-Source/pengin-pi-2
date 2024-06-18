@@ -2,6 +2,7 @@
 from django import forms
 from .models import Product
 
+
 class ProductForm(forms.ModelForm):
     file_large = forms.ImageField(required=False)
     file_small = forms.ImageField(required=False)

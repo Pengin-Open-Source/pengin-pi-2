@@ -1,0 +1,56 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+  <form class="form" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="product-edit-container">
+      <div class="form-section">
+        {{ form.name.label_tag }}
+        {{ form.name }}
+      </div>
+      <div class="form-section">
+        {{ form.price.label_tag }}
+        {{ form.price }}
+      </div>
+    </div>
+    <div class="form-section">
+      {{ form.tags.label_tag }}
+      {{ form.tags }}
+  </div>
+    <div class="form-section product-edit-description ">
+        {{ form.description.label_tag }}
+        {{ form.description }}
+    </div>
+    <div class="product-edit-container">
+      <div class=" upload-image-container">
+        {{ form.file_large.label_tag }}
+        {{ form.file_large }}
+
+        {% if action == "update" %}
+          {% include 'partials/current_image.html' with alt="Stock Image" src=stock_image_url %}
+        {% endif %}
+
+      </div>
+      <div class=" upload-image-container">
+        {{ form.file_small.label_tag }}
+        {{ form.file_small }}
+
+        {% if action == "update" %}
+          {% include 'partials/current_image.html' with alt="Card Image" src=card_image_url%}
+        {% endif %}
+
+      </div>
+    </div>
+      {% if action == "update" %}
+        <a href="{% url "products:detail-product" product_id %}">
+          <button class="primary-button" type="button">Cancel</button>
+        </a>
+        <button class="primary-button" type="submit">Save changes</button>
+      {% else %}
+        <a href="{% url "products:list-products" %}">
+          <button class="primary-button" type="button">Cancel</button>
+        </a>
+        <button class="primary-button" type="submit">Add Product</button>
+      {% endif %}
+  </form>
+{% endblock %}
