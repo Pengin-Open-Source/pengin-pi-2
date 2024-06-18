@@ -9,16 +9,13 @@
 
 {% block pageDropDowns %}
   {% if is_admin %}
-    <a href="{% url 'edit_product' product.id %}">Edit Product</a>
-    <form method="post" action="{% url 'delete_product' product.id %}">
-      {% csrf_token %}
-      <button type="submit">Delete</button>
-    </form>
+    <a href="{% url 'products:edit-product' product.id %}">Edit Product</a>
+    <a href="{% url 'products:delete-product' product.id %}">Delete Product</a>
   {% endif %}
 {% endblock %}
 
 {% block pageContent %}
-    <p>{{ product.price|escape }}</p>
-    <div class="commonmark">{{ product.description|markdownit|escape }}</div>
+    <p>{{ product.price }}</p>
+    <div class="commonmark">{{ product.description|markdownit }}</div>
     <img src="{{ product.stock_image_url|escape }}" alt="Product Image">
 {% endblock %}
