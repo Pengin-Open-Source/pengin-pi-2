@@ -56,9 +56,9 @@ def create_post(request, is_admin):
             BlogPost.objects.create(blog_post)
             return redirect('blogs')
     else:
-
-        prefilled = {'author': request.user.name, 'method': 'SAVE'}
-        form = BlogForm(initial=prefilled)
+        prefill_data = {'author': request.user.name, 'method': 'SAVE'}
+        hide_fields = ['method']
+        form = BlogForm(hide_fields=hide_fields, prefill_data=prefill_data)
 
         form_rendered_for_create = form.render(
             "configure_form_for_create.html")
