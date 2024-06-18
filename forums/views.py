@@ -1,7 +1,7 @@
 # forums/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Thread, ForumPost, ForumComment, ThreadRoles
+from .models import Thread, ForumPost, ForumComment, Role
 from .forms import ThreadForm, ForumPostForm, ForumCommentForm
 
 @login_required
@@ -21,7 +21,7 @@ def create_thread(request):
             # Assuming role is provided in POST data
             role_id = request.POST.get('role')
             role = get_object_or_404(Role, id=role_id)
-            ThreadRoles.objects.create(thread=thread, role=role)
+            Role.objects.create(thread=thread, role=role)
             return redirect('forums')
     else:
         form = ThreadForm()
