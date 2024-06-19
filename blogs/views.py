@@ -20,7 +20,7 @@ def blogs(request, is_admin):
     return render(request, 'blogs.html', {
         'posts': posts,
         'primary_title': 'Blog',
-        'is_admin': is_admin,
+        'is_admin': is_admin,  # Can I remove this now that we have is_admin_provider?
         'left_title': 'Blog Posts'
     })
 
@@ -56,10 +56,13 @@ def create_post(request, is_admin):
             form.set_cleaned_data_field('method', 'CREATE')
             blog_post = form.save()
             BlogPost.objects.create(blog_post)
-            return redirect('blogs')
+            return "Success"
+        else:
+            return render(request, 'create_blog_post.html', {'form': form, 'is_admin': is_admin})
     else:
+
         prefill_data = {'author': request.user.name}
-        remove_fields = ['edited_by', 'date']
+        remove_fields = ['edited_by']
         form = BlogForm(remove_fields=remove_fields, prefill_data=prefill_data)
 
         form_rendered_for_create = form.render(

@@ -18,6 +18,7 @@ class BlogPost(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
+            poster = 'If you see this there was a problem'
             super().save(*args, **kwargs)
             if self.method == 'CREATE':
                 poster = self.author
