@@ -52,13 +52,15 @@ def create_post(request, is_admin):
     if request.method == 'POST':
         form = BlogForm(request.POST)
         if form.is_valid():
+            # add these fields to the form
+            form.set_cleaned_data_field('method', 'CREATE')
             blog_post = form.save()
             BlogPost.objects.create(blog_post)
             return redirect('blogs')
     else:
-        prefill_data = {'author': request.user.name, 'method': 'SAVE'}
-        hide_fields = ['method']
-        form = BlogForm(hide_fields=hide_fields, prefill_data=prefill_data)
+        prefill_data = {'author': request.user.name}
+        remove_fields = ['edited_by', 'date']
+        form = BlogForm(remove_fields=remove_fields, prefill_data=prefill_data)
 
         form_rendered_for_create = form.render(
             "configure_form_for_create.html")

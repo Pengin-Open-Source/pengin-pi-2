@@ -10,7 +10,7 @@ class BlogForm(forms.ModelForm):
         # LIST of fields to hide.
         # Don't make it an attribute of BlogForm,  we don't want these fields in the template at all
         # and the form gets passed to the template
-        remove_fields = kwargs.pop('hide_fields', [])
+        remove_fields = kwargs.pop('remove_fields', [])
         # DICT with fields to prefill and their prefill data
         self.prefill_data = kwargs.pop('prefill_data', {})
         super().__init__(*args, **kwargs)
