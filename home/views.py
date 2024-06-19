@@ -5,6 +5,7 @@ from django.utils.decorators import method_decorator
 from util.security.auth_tools import is_admin_required
 from .models import Home
 from .forms import HomeForm
+from werkzeug.utils import secure_filename
 from util.s3 import File
 from botocore.exceptions import ParamValidationError
 from util.defaults import default
@@ -12,10 +13,20 @@ import logging
 
 conn = File()
 
+def save_home(request, form):
+    home = form.save(commit=False)
+    image = request.FILES.get('image')
+    
+    if image:
+        image.filename = secure_filename(image.name)
+        home.image = conn.create(image)
+        
+    home.save()
+    return home
+
 @method_decorator(login_required, name='dispatch')
 class HomeView(View):
     def get(self, request):
-        conn = File()  # Instantiate File object
         home = Home.objects.first() or default.Home()
         try:
             image = conn.get_URL(home.image)
@@ -31,12 +42,10 @@ class HomeView(View):
             'image': image,
         })
 
-
 @method_decorator(login_required, name='dispatch')
 @method_decorator(is_admin_required, name='dispatch')
 class HomeEdit(View):
     def get(self, request):
-        conn = File()  # Instantiate File object
         home_instance = Home.objects.first()
         form = HomeForm(instance=home_instance)
         
@@ -51,14 +60,10 @@ class HomeEdit(View):
         return render(request, 'edit.html', context)
     
     def post(self, request):
-        conn = File()  # Instantiate File object
         home_instance = Home.objects.first()
         form = HomeForm(request.POST, request.FILES, instance=home_instance)
         if form.is_valid():
-            # Upload file to S3 if it exists in request.FILES
-            if 'image' in request.FILES:
-                home_instance.image = conn.create(request.FILES['image'])
-            form.save()
+            home_instance = save_home(request, form)
             return redirect('home_view')
 
         context = {
@@ -71,12 +76,10 @@ class HomeEdit(View):
         }
         return render(request, 'edit.html', context)
 
-
 @method_decorator(login_required, name='dispatch')
 @method_decorator(is_admin_required, name='dispatch')
 class HomeCreate(View):
     def get(self, request):
-        conn = File()  # Instantiate File object
         form = HomeForm()
 
         context = {
@@ -87,12 +90,9 @@ class HomeCreate(View):
         return render(request, 'create.html', context)
     
     def post(self, request):
-        conn = File()  # Instantiate File object
         form = HomeForm(request.POST, request.FILES)
         if form.is_valid():
-            home_instance = form.save(commit=False)
-            home_instance.image = conn.create(request.FILES['image'])
-            home_instance.save()
+            home_instance = save_home(request, form)
             return redirect('home_view')
 
         context = {
