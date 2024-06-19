@@ -1,0 +1,25 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}  {# Load static files #}
+{% import "macros/paginate.html" as pagination %}  {# Import pagination macro #}
+
+{% block pageDropDowns %}
+    <a href="{% url 'edit_company_members' company_id=company.id %}">Edit Members</a>
+{% endblock %}
+
+{% block pageContent %}
+<div class="content-section">
+  <h1 class="profile-title">Members of {{ company.name }}</h1>
+  <div class="member-list">
+    <ul>
+      {% for user in users %}
+        {% if user.id in members_ids_list %}
+          <li>{{ user.name }} - {{ user.email }}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+    {% if users.has_other_pages %}
+      {{ pagination.render_pagination(users, "/company/" + company.id + "/members") }}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

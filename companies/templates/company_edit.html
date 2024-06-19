@@ -1,0 +1,59 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+  <a href="{% url 'edit_company_members' company_id=company.id %}">Edit Members</a>
+{% endblock %}
+
+{% block pageContent %}
+    <form class="form" method="POST" action="{% url 'edit_company_info_post' company_id=company.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="id" value="{{ company.id }}">
+
+      <div class="form-section">
+          <label>Company Name*</label>
+          <input class="form-input" type="text" name="name" value="{{ company.name }}" placeholder="Company Name" required>
+      </div>
+
+      <div class="form-section">
+          <label>Address 1*</label>
+          <input class="form-input" type="text" name="address1" value="{{ company.address1 }}" placeholder="Address 1" required>
+      </div>
+
+      <div class="form-section">
+          <label>Address 2</label>
+          <input class="form-input" type="text" name="address2" value="{{ company.address2 }}" placeholder="Address 2">
+      </div>
+
+      <div class="form-section">
+          <label>City*</label>
+          <input class="form-input" type="text" name="city" value="{{ company.city }}" placeholder="City" required>
+      </div>
+
+      <div class="form-section">
+          <label>State*</label>
+          <input class="form-input" type="text" name="state" value="{{ company.state }}" placeholder="State">
+      </div>
+
+      <div class="form-section">
+          <label>ZIP*</label>
+          <input class="form-input" type="text" name="zipcode" value="{{ company.zipcode }}" placeholder="ZIP" required>
+      </div>
+
+      <div class="form-section">
+          <label>Country*</label>
+          <input class="form-input" type="text" name="country" value="{{ company.country }}" placeholder="Country" required>
+      </div>
+
+      <div class="form-section">
+          <label>Phone</label>
+          <input class="form-input" type="text" name="phone" value="{{ company.phone }}" placeholder="Phone">
+      </div>
+
+      <div class="form-section">
+          <label>Email</label>
+          <input class="form-input" type="text" name="email" value="{{ company.email }}" placeholder="Email">
+      </div>
+
+      <button class="primary-button" type="submit">Save</button>
+    </form>
+{% endblock %}

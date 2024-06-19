@@ -1,0 +1,19 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}  {# Load static files #}
+{% import "macros/paginate.html" as pagination %}  {# Import pagination macro #}
+
+{% block pageDropDowns %}
+  {% include "right_window/profile_info.html" %}
+{% endblock %}
+
+{% block pageContent %}
+  <p>Please click on a link below to view a specific company's information.</p>
+  <ul class="company-list">
+    {% for company in companies %}
+      <li><a href="{% url 'display_company_info' company_id=company.id %}">{{ company.name }}</a></li>
+    {% endfor %}
+  </ul>
+  {% if companies.has_other_pages %}
+    {{ pagination.render_pagination(companies, "") }}
+  {% endif %}
+{% endblock %}

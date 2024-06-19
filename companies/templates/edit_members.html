@@ -1,0 +1,29 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}  {# Load static files #}
+{% import "macros/paginate.html" as pagination %}  {# Import pagination macro #}
+
+{% block pageDropDowns %}
+  <a class="primary-button" href="{% url 'edit_company_members' company_id=company.id %}">Edit Company</a>
+{% endblock %}
+
+{% block pageContent %}
+  <div class="content-section">
+    <h1 class="profile-title">Edit Company Members</h1>
+    <form class="form" method="POST" action="{% url 'edit_company_members_post' company_id=company.id %}">
+      <input type="hidden" name="page-number" value="{{ page }}"/>
+      <div class="member-grid">
+        {% for user in users %}
+          <div>
+            <input type="checkbox" id="{{ user.id }}" name="member-checkbox" value="{{ user.id }}"
+                   {% if user.id in members_ids_list %} checked {% endif %} />
+            <label for="{{ user.id }}">{{ user.name }}</label>
+          </div>
+        {% endfor %}
+      </div>
+      <button class="primary-button" type="submit">Save</button>
+    </form>
+    {% if users.has_other_pages %}
+      {{ pagination.render_pagination(users, "/company/" ~ company.id ~ "/members/edit") }}
+    {% endif %}
+  </div>
+{% endblock %}

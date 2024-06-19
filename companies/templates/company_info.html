@@ -1,0 +1,69 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}  {# Load static files #}
+{% import "macros/paginate.html" as pagination %}  {# Import pagination macro #}
+
+{% block pageDropDowns %}
+    <a href="{% url 'edit_company_info_post' company_id=company.id %}">Edit Company</a>
+    <a href="{% url 'display_company_members' company_id=company.id %}">View Members</a>
+{% endblock %}
+
+{% block pageContent %}
+    <div class="company-info-table">
+        <table>
+            <tr>
+                <th>Company Name</th>
+                <td>{{ company.name }}</td>
+            </tr>
+            <tr>
+                <th>Address 1</th>
+                <td>{{ company.address1 }}</td>
+            </tr>
+            <tr>
+                <th>Address 2</th>
+                <td>{{ company.address2 }}</td>
+            </tr>
+            <tr>
+                <th>City</th>
+                <td>{{ company.city }}</td>
+            </tr>
+            <tr>
+                <th>State</th>
+                <td>{{ company.state }}</td>
+            </tr>
+            <tr>
+                <th>ZIP Code</th>
+                <td>{{ company.zipcode }}</td>
+            </tr>
+            <tr>
+                <th>Country</th>
+                <td>{{ company.country }}</td>
+            </tr>
+            <tr>
+                <th>Phone Number</th>
+                <td>{{ company.phone }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ company.email }}</td>
+            </tr>
+        </table>
+
+        <h3>Members</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+            </tr>
+            {% for member in members %}
+                <tr>
+                    <td>{{ member.name }}</td>
+                    <td>{{ member.email }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        {% if members.has_other_pages %}
+            {{ pagination.render_pagination(members, "/company/" + company.id) }}
+        {% endif %}
+    </div>
+{% endblock %}
