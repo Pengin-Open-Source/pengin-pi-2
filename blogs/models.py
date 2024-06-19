@@ -7,12 +7,14 @@ from django.utils import timezone
 class BlogPost(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100, unique=True)
-    author = models.CharField(max_length=100)
-    edited_by = models.CharField(max_length=100, unique=True)
+    author = models.CharField(
+        max_length=100, default='Error Getting Author - Should be User Name')
+    edited_by = models.CharField(max_length=100, blank=True)
     date = models.DateTimeField(default=timezone.now)
-    content = models.TextField()
-    tags = models.CharField(max_length=150)
-    method = models.CharField(max_length=10)
+    content = models.TextField(blank=True)
+    tags = models.CharField(max_length=150,  blank=True)
+    method = models.CharField(
+        max_length=10, default='Error Getting Method Type- Should be CREATE OR EDIT')
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -32,9 +34,11 @@ class BlogPost(models.Model):
 class BlogHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     post_id = models.UUIDField(db_index=True)
-    title = models.CharField(max_length=100)
-    user = models.CharField(max_length=100)
+    title = models.CharField(max_length=100,  default='Error Getting Title')
+    user = models.CharField(
+        max_length=100, default='Error Getting Author/Editor')
     date = models.DateTimeField(default=timezone.now)
-    content = models.TextField()
-    tags = models.CharField(max_length=150)
-    method = models.CharField(max_length=10)
+    content = models.TextField(blank=True)
+    tags = models.CharField(max_length=150, blank=True)
+    method = models.CharField(
+        max_length=10, default='Error Getting Method Type- Should be CREATE OR EDIT')
