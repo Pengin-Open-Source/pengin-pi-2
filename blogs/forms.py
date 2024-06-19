@@ -38,5 +38,5 @@ class BlogForm(forms.ModelForm):
         model = BlogPost
         fields = ['title',  'author', 'edited_by',
                   'date',  'content', 'tags']
-        widgets = {'content': forms.Textarea(
-            attrs={'cols': 120, 'rows': 40}), }
+        widgets = {'content': forms.Textarea(attrs={'cols': 120, 'rows': 40}), 'author': forms.TextInput(
+            attrs={'readonly': 'readonly'}), 'edited_by': forms.TextInput(attrs={'readonly': 'readonly'}), 'date': forms.TextInput(attrs={'readonly': 'readonly'})}
