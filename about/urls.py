@@ -1,9 +1,8 @@
 from django.urls import path
-from .views import about, edit_about, create_about
+from .views import AboutView, AboutEdit, AboutCreate
 
 urlpatterns = [
-    path('about', about, name='about'),
-    path('about.html', about, name='about'),
-    path('about/edit/', edit_about, name='edit_about'),
-    path('about/create/', create_about, name='create_about'),
+    path('about/', AboutView.as_view(), name='about_view'),
+    path('about/edit/', AboutEdit.as_view(), name='about_edit'),
+    path('about/create/', AboutCreate.as_view(), name='about_create'),
 ]

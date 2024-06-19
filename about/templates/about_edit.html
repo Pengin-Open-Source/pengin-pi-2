@@ -1,7 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageContent %}
-    <form class="form" method="POST" action="{% url 'edit_about' %}" enctype="multipart/form-data">
+    <form class="form" method="POST" action="{% url 'about_edit' %}" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
         <div class="form-section upload-image-container">
