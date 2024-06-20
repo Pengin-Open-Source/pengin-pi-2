@@ -1,0 +1,20 @@
+{% extends "layout/alternating_color_table.html" %}
+{% import "macros/paginate.html" as pagination %}
+
+{% block pageDropDowns %}
+  <a href="{% url 'create_post' thread.id %}">Create Post</a>
+{% endblock %}
+
+{% block tableContent %}
+  {% for post in posts %}
+  <tr><td class="post-container">
+    <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|e }}</a>
+    {% if is_admin %}
+    <form method="post" action="{% url 'delete_post' post.id %}">
+      {% csrf_token %}
+      <button class="primary-button" type="submit">Delete</button>
+    </form>
+    {% endif %}
+  </td></tr>
+  {% endfor %}
+{% endblock %}
