@@ -1,4 +1,5 @@
 from blogs.models import BlogPost
+from django.core.paginator import Paginator
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, redirect, get_object_or_404
@@ -14,11 +15,15 @@ def blogs(request, is_admin):
         page = int(request.POST.get('page_number', 1))
     else:
         page = 1
-    # Use your custom paginate function
-    posts = paginate(BlogPost.objects.all, page=page, key="-date", per_page=10)
+
+    blog_posts = BlogPost.objects.all().order_by('date')
+    paginator = Paginator(blog_posts, 10)
+
+    posts = paginator.get_page(page)
+    print(posts)
 
     return render(request, 'blogs.html', {
-        'posts': posts,
+        'posts':  posts,
         'primary_title': 'Blog',
         'is_admin': is_admin,  # Can I remove this now that we have is_admin_provider?
         'left_title': 'Blog Posts'
