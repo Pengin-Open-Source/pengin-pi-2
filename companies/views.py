@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, admin_required
 from django.core.paginator import Paginator
 from .models import Company, CompanyMembers
-from .forms import CompanyMembersForm 
+from .forms import CompanyForm
 
 @login_required
 def display_companies_home(request):
