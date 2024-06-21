@@ -1,0 +1,40 @@
+{% extends "layout/alternating_color_table.html" %}
+{% import "macros/forum_tickets/comment_form.html" as comment_form %}
+{% import "macros/forum_tickets/comments_render.html" as comments_render %}
+{% import "macros/forum_tickets/post_ticket_content.html" as content %}
+
+{% block tags %}
+  {% if post.tags %}
+    <meta name="keywords" content="{{ post.tags|e }}">
+  {% endif %}
+{% endblock %}
+
+{% block pageDropDowns %}
+  {% if is_admin or can_delete_post(post.id).can() %}
+    <form method="post" action="{% url 'forums:delete_post' post.id %}">
+      {% csrf_token %}
+      <button type="submit">Delete</button>
+    </form> 
+  {% endif %}
+  {% if is_admin or can_edit_post(post.id).can() %}
+    <a href="{% url 'forums:edit_post' thread_id post.id %}">Edit</a>
+  {% endif %}
+{% endblock %}
+
+{% block beforeTableContent %}
+  {{ content.render_content(post.title, author, post.date, post.content) }}
+{% endblock %}
+
+{% block tableContent %}
+  {% for comment in comments %}
+    {{ comments_render.render_comments(
+        [comment], comment_authors, current_user, can_delete_comment, can_edit_comment, 
+        "{% url 'forums:delete_comment' comment.id %}", 
+        "{% url 'forums:edit_comment' thread_id post.id comment.id %}"
+    ) }}
+  {% endfor %}
+{% endblock %}
+
+{% block postTableContent %}
+  {{ comment_form.render_comment_form("post", "{% url 'forums:add_comment' thread_id post.id %}") }}
+{% endblock %}

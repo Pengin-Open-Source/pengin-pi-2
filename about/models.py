@@ -20,6 +20,7 @@ class About(models.Model):
     country = models.CharField(max_length=100)
     article = models.TextField()
     tags = models.CharField(max_length=150)
+    
 
     def __str__(self):
         return self.name

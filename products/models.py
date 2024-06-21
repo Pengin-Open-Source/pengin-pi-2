@@ -3,7 +3,7 @@ import uuid
 
 
 class Product(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4())
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     name = models.CharField(max_length=100)
     description = models.TextField()
     price = models.CharField(max_length=100)

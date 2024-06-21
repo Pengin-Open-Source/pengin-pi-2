@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Application Submitted!</h1>
+  <p>Thank you for submitting your application. We will be in touch soon.</p>
+  <p><a href="{% url 'application_detail' job_id=job_id application_id=application_id %}">View My Application</a></p>
+{% endblock %}

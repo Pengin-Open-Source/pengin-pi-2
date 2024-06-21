@@ -157,3 +157,15 @@ def edit_company_members_post(request, company_id):
             new_member = CompanyMembers.objects.create(company_id=company.id, user_id=user.id)
 
         return redirect('edit_company_members', company_id=company.id)
+
+
+# companies list view
+
+# company view
+
+# company edit view
+
+# company members view
+
+
+# company members edit view

@@ -9,8 +9,8 @@
 
 {% block pageContent %}
   <div class="product-grid">
-    {% for product in products %}
-      <a href="/products/{{ product.id }}">
+    {% for product in page_products %}
+      <a href="{% url 'products:detail-product' product.id %}">
         {% if product.name %}
           <div>{{ product.name }}</div>
         {% endif %}
@@ -23,20 +23,20 @@
   
   <!-- Pagination links -->
   <div class="pagination">
-    {% if products.has_previous %}
-      <a href="?page={{ products.previous_page_number }}">Previous</a>
+    {% if page_products.has_previous %}
+      <a href="?page={{ page_products.previous_page_number }}">Previous</a>
     {% endif %}
     
-    {% for num in products.paginator.page_range %}
-      {% if num == products.number %}
+    {% for num in page_products.paginator.page_range %}
+      {% if num == page_products.number %}
         <span class="current">{{ num }}</span>
       {% else %}
         <a href="?page={{ num }}">{{ num }}</a>
       {% endif %}
     {% endfor %}
     
-    {% if products.has_next %}
-      <a href="?page={{ products.next_page_number }}">Next</a>
+    {% if page_products.has_next %}
+      <a href="?page={{ page_products.next_page_number }}">Next</a>
     {% endif %}
   </div>
 {% endblock %}

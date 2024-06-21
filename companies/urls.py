@@ -9,3 +9,17 @@ urlpatterns = [
     path('company/<str:company_id>/members/edit/', edit_company_members, name='edit_company_members'),
     path('company/<str:company_id>/members/edit/save/', edit_company_members_post, name='edit_company_members_post'),
 ]
+#urls for companies
+
+
+#urlpatterns
+
+'''
+/companies
+/company
+/company_create
+/company_edit
+/company_members
+/company_members_edit
+
+'''

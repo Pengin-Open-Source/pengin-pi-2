@@ -33,7 +33,7 @@ class File:
         """
         try:
             ext = file.filename.split(".")[-1]  # get the file extension
-            filename = id() + "." + ext
+            filename = str(id()) + "." + ext
             self.conn.upload_fileobj(file, self.aws_bucket, filename)
             return filename
         except Exception as e:
