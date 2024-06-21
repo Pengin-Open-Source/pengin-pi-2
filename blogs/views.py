@@ -55,8 +55,7 @@ def create_post(request, is_admin):
             # add these fields to the form
             form.set_cleaned_data_field('method', 'CREATE')
             blog_post = form.save()
-            BlogPost.objects.create(blog_post)
-            return "Success"
+            return render(request, 'success.html')
         else:
             return render(request, 'create_blog_post.html', {'form': form, 'is_admin': is_admin})
     else:
