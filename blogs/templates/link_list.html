@@ -1,0 +1,11 @@
+<h3 class="blog-link-title">Blog Posts</h3>
+  <ul>
+    {% for post in posts %}
+    <li>
+      {% comment %} <a class="text-button" href="{% url 'blogs:blog_post' post.id %}> {% endcomment %}
+      <a>
+          {{ post.title }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
