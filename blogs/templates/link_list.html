@@ -2,8 +2,7 @@
   <ul>
     {% for post in posts %}
     <li>
-      {% comment %} <a class="text-button" href="{% url 'blogs:blog_post' post.id %}> {% endcomment %}
-      <a>
+      <a class="text-button" href="{% url 'blogs:blog_post' post.id %}">
           {{ post.title }}
       </a>
     </li>
