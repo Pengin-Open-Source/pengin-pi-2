@@ -12,15 +12,6 @@ class OrderForm(forms.ModelForm):
 
 class CustomerForm(forms.ModelForm):
 
-    def clean(self):
-        cleaned_data = super().clean()
-        user = cleaned_data.get('user')
-        company = cleaned_data.get('company')
-        if user and company:
-            raise ValidationError('Customer cannot have both user and company relationships.')
-        if not user and not company:
-            raise ValidationError('Customer must have either a user or a company relationship.')
-
     class Meta:
         model = Customer
         fields = ['user', 'company',]
