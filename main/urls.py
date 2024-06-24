@@ -26,6 +26,7 @@ urlpatterns = [
     path('', include('blogs.urls')),
     path('products/', include('products.urls')),
     path('orders/', include('orders.urls.orders')),
+    path('customers/', include('orders.urls.customers')),
     path('', include('jobs.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('signup/', SignupView.as_view(), name='signup'),
