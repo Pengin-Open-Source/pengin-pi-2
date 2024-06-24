@@ -32,6 +32,13 @@ def post(request, post_id, is_admin):
     blog_post = get_object_or_404(BlogPost, pk=post_id)
 
     author_date = get_create_date(blog_post.id)
+    edit_info = get_last_edit_info(blog_post.id)
+
+    if edit_info:
+        edited_date, edited_by = edit_info
+    else:
+        edited_date = ''
+        edited_by = ''
 
     blog_posts = BlogPost.objects.all().order_by('date')
     paginator = Paginator(blog_posts, 10)
@@ -42,6 +49,9 @@ def post(request, post_id, is_admin):
     return render(request, 'post.html', {
         'posts': posts,
         'post': blog_post,
+        'author': blog_post.author,
+        'blog_edited_date': edited_date,
+        'edited_by': edited_by,
         'page': page,
         'is_admin': is_admin,  # Assuming you have authentication
         'blog_author_date': author_date,
@@ -70,10 +80,20 @@ def create_post(request, is_admin):
         return render(request, 'create_blog_post.html', {'form': form_rendered_for_create, 'is_admin': is_admin})
 
 
-# utility method(s) go here
+# utility methods
 
 def get_create_date(post_id):
     blog_post_history = BlogHistory.objects.filter(post_id=post_id)
     # The oldest date should be the date of blog post creation
     oldest_date = blog_post_history.order_by("date").first().date
     return (oldest_date)
+
+
+def get_last_edit_info(post_id):
+    blog_post_history = BlogHistory.objects.filter(
+        post_id=post_id, method="EDIT")
+    # The newest date should be the date of the last blog post edit
+    if (blog_post_history):
+        last_edit = blog_post_history.order_by("-date").first()
+        return (last_edit.date, last_edit.user)
+    return None

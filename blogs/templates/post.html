@@ -20,7 +20,8 @@
 {% block rightContent %}
     <h3 class="blog-post-title">{{ post.title|escape }}</h3>
     <article class="blog-article">
-      <p class="blog-author-date"> Post Created On:  {{ blog_author_date|escape }}</p>
+      <p class="blog-author-date"> Post Created On:  {{ blog_author_date|escape }}  | Author: {{ author|escape }} </p>
+      <p class="blog-author-date"> Last Edit:   {{ blog_edited_date|escape }} | Edited By: {{ edited_by|escape }} </p>
       <div class="commonmark">
         {{ post.content|markdownit }}
       </div>
