@@ -29,4 +29,5 @@
   </table>
 {# Replace "render_pagination" macro with django's pagination template_tag in layout #}
 {#  {{ pagination.render_pagination(applications.items, "") }}#}
+    {% include "components/pagination.html" with page=applications %}
 {% endblock %}
