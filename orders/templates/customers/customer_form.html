@@ -4,6 +4,12 @@
   <form class="form" method="POST">
     <p>To create a new customer, please select either a user or a company.</p>
     {% csrf_token %}
+
+  {% if form.non_field_errors %}
+        <div class="error">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
     <div class="customer-edit-container">
       <div class="form-section">
         {{ form.user.label_tag }}
