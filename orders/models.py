@@ -23,6 +23,8 @@ class Customer(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         self.name = self.company.name if self.company else self.user.name
+        if not self.name:
+            self.name = "Unnamed Customer"
         super().save(*args, **kwargs)
 
 
