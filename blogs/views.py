@@ -11,14 +11,14 @@ from blogs.forms import BlogForm
 
 @is_admin_provider
 def blogs(request, is_admin):
-    if request.method == "POST":
-        page = int(request.POST.get('page_number', 1))
-    else:
-        page = 1
+    # if request.method == "POST":
+    #     page = int(request.POST.get('page_number', 1))
+    # else:
+    #     page = request.GET.get("page", 1)
 
     blog_posts = BlogPost.objects.all().order_by('date')
     paginator = Paginator(blog_posts, 10)
-
+    page = request.GET.get("page", 1)
     posts = paginator.get_page(page)
 
     return render(request, 'blogs.html', {
