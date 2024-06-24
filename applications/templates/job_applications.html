@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
 {% block content %}
   <h2>Job Applications for {{ job.job_title }}</h2>
   <div class="title-underline">
@@ -27,5 +30,7 @@
       {% endfor %}
     </tbody>
   </table>
-  {{ pagination.render_pagination(applications.items, "") }}
+
+{% use_macro render_pagination applications.items %}
+
 {% endblock %}
