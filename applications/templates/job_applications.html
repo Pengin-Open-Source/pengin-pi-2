@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% load macros %}
+{% loadmacros "pagination.html" %}
+
 {% block content %}
   <h2>Job Applications for {{ job.job_title }}</h2>
   <div class="title-underline">
@@ -27,7 +30,7 @@
       {% endfor %}
     </tbody>
   </table>
-{# Replace "render_pagination" macro with django's pagination template_tag in layout #}
-{#  {{ pagination.render_pagination(applications.items, "") }}#}
-    {% include "components/pagination.html" with page=applications %}
+
+{% use_macro render_pagination applications.items %}
+
 {% endblock %}

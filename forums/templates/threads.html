@@ -1,6 +1,6 @@
 {% extends "layout/alternating_color_table.html" %}
-{# Replace "render_pagination" macro with django's pagination template_tag in layout #}
-{#{% import "macros/paginate.html" as pagination %}#}
+{% load macros %}
+{% loadmacros "pagination.html" %}
 
 {% block pageDropDowns %}
   <a href="/forums/create">Create Thread</a>
@@ -19,8 +19,4 @@
   {% endfor %}
 {% endblock %}
 
-{# Replace "render_pagination" macro with django's pagination template_tag in layout #}
-{#{% block postTableContent %}#}
-{#  {{ pagination.render_pagination(threads, "") }}#}
-    {% include "components/pagination.html" with page=threads %}
-{#{% endblock %}#}
+{% use_macro render_pagination applications.items %}

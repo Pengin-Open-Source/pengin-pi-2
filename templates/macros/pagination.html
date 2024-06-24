@@ -1,11 +1,19 @@
-{# To use this template tag, add the next line to the template to paginate: #}
-{# {% include 'components/pagination.html' page=current_page %} #}
+{# To use this macro, add the following to the template to paginate: #}
+{# At the top of the file: #}
+{# {% load macros %} #}
+{# {% loadmacros "pagination.html" %} #}
+{# And when the macro should be used: #}
+{# {% use_macro render_pagination paginator.current_page %} #}
+{# The paginator.current_page is the page object returned by the Paginator class #}
+
+{% load macros %}
+{% macro render_pagination page %}
 
 <!-- Pagination links -->
-<div class="page-items">
-  {{ page.start_index }} - {{ page.end_index }} of {{ page.paginator.count }}
-</div>
 {% if page.has_other_pages %}
+    <div class="page-items">
+      {{ page.start_index }} - {{ page.end_index }} of {{ page.paginator.count }}
+    </div>
     <div class="pagination-list">
         {% if page.has_previous %}
             <div><a href="?page={{ page.previous_page_number }}">Previous</a></div>
@@ -24,3 +32,5 @@
         {% endif %}
     </div>
 {% endif %}
+
+{% endmacro %}
