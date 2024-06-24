@@ -33,4 +33,6 @@
         <p>No customers found</p>
     {% endif %}
 
+    {% include "components/pagination.html" with page=page_customers %}
+
 {% endblock %}
