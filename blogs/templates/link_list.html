@@ -2,7 +2,7 @@
   <ul>
     {% for post in posts %}
     <li>
-      <a class="text-button" href="{% url 'blogs:blog_post' post.id %}">
+      <a class="text-button" href="{% url 'blogs:blog_post' post.id %}?page={{ page }}">
           {{ post.title }}
       </a>
     </li>

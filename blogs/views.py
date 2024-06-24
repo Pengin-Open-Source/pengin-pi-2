@@ -11,18 +11,15 @@ from blogs.forms import BlogForm
 
 @is_admin_provider
 def blogs(request, is_admin):
-    # if request.method == "POST":
-    #     page = int(request.POST.get('page_number', 1))
-    # else:
-    #     page = request.GET.get("page", 1)
+    page = request.GET.get("page", 1)
 
     blog_posts = BlogPost.objects.all().order_by('date')
     paginator = Paginator(blog_posts, 10)
-    page = request.GET.get("page", 1)
     posts = paginator.get_page(page)
 
     return render(request, 'blogs.html', {
         'posts':  posts,
+        'page': page,
         'primary_title': 'Blog',
         'is_admin': is_admin,
         'left_title': 'Blog Posts'
@@ -35,8 +32,16 @@ def post(request, post_id, is_admin):
 
     author_date = blog_post.date  # TODO: Replace with correct attribute
 
+    blog_posts = BlogPost.objects.all().order_by('date')
+    paginator = Paginator(blog_posts, 10)
+
+    page = request.GET.get("page", 1)
+    posts = paginator.get_page(page)
+
     return render(request, 'post.html', {
+        'posts': posts,
         'post': blog_post,
+        'page': page,
         'is_admin': is_admin,  # Assuming you have authentication
         'blog_author_date': author_date,
     })
@@ -50,7 +55,7 @@ def create_post(request, is_admin):
             # add these fields to the form
             form.set_cleaned_data_field('method', 'CREATE')
             blog_post = form.save()
-            return render(request, 'success.html')
+            return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
             return render(request, 'create_blog_post.html', {'form': form, 'is_admin': is_admin})
     else:
