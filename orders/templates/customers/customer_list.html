@@ -7,12 +7,11 @@
 
 {% block pageContent %}
 
-    {% if page_customers.length > 0 %}
+    {% if page_customers|length > 0 %}
     <table>
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Customer ID</th>
                 <th>Type of customer</th>
             </tr>
         </thead>
