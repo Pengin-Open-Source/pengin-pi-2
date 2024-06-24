@@ -11,9 +11,9 @@
     <p>{{ customer.name }}</p>
     {% if customer.user %}
         {# href="{{ url 'main:detail-user' customer.user.id }}" #}
-        <p><a href="">Edit user</a></p>
+        <p><a href="">See user</a></p>
     {% elif customer.company %}
         {# href="{{ url 'companies:detail-company' customer.company.id }}" #}
-        <p><a href="">Edit company</a></p>
+        <p><a href="">See company</a></p>
     {% endif %}
 {% endblock %}
