@@ -1,0 +1,31 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+    <a href="{%  url "customers:create-customer" %}">New Customer</a>
+{% endblock %}
+
+
+{% block pageContent %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Customer ID</th>
+                <th>Type of customer</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in page_customers %}
+            <tr>
+                <td><a href="{% url 'customers:detail-customer' customer.id %}">{{ customer.name }}</a></td>
+                {% if customer.company %}
+                    <td>Company</td>
+                {% else %}
+                    <td>User</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
