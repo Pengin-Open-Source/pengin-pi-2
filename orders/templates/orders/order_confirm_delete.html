@@ -2,7 +2,7 @@
 
 {% block pageContent %}
     <p>Do you really want to delete this order?</p>
-    <p>{{ order.customer.user.name }}{{ order.order_date }}</p>
+    <p>{{ order.customer.name }}{{ order.order_date }}</p>
     <form method="post">
         {% csrf_token %}
         <a href="{% url "orders:detail-order" order.id %}">
