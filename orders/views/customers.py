@@ -80,3 +80,40 @@ class CreateCustomer(View):
         context['form'] = form
         return render(request, self.template_name, context)
 
+
+class EditCustomer(View):
+    template_name = "customers/customer_form.html"
+
+    def get_context_data(self, customer):
+        companies = Company.objects.all()
+        users = User.objects.all()
+
+        return {
+            "primary_title": "Edit Customer",
+            "action": "update",
+            "form": CustomerForm(instance=customer),
+            "companies": companies,
+            "users": users,
+            "customer": customer,
+        }
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def get(self, request, customer_id, *args, **kwargs):
+        customer = get_object_or_404(Customer, id=customer_id)
+        context = self.get_context_data(customer)
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request, customer_id, *args, **kwargs):
+        customer = get_object_or_404(Customer, id=customer_id)
+        form = CustomerForm(request.POST, instance=customer)
+
+        if form.is_valid():
+            form.save()
+            return redirect('customers:detail-customer', customer_id=customer.id)
+
+        context = self.get_context_data(customer)
+        context['form'] = form
+        return render(request, self.template_name, context)

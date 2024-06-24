@@ -2,7 +2,7 @@
 
 {% block pageDropDowns %}
   {% if is_admin %}
-{#    <a href="{% url 'customers:edit-customer' customer.id %}">Edit Customer</a>#}
+    <a href="{% url 'customers:edit-customer' customer.id %}">Edit Customer</a>
 {#    <a href="{% url 'customers:delete-customer' customer.id %}">Delete Order</a>#}
   {% endif %}
 {% endblock %}
