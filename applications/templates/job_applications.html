@@ -27,5 +27,6 @@
       {% endfor %}
     </tbody>
   </table>
-  {{ pagination.render_pagination(applications.items, "") }}
+{# Replace "render_pagination" macro with django's pagination template_tag in layout #}
+{#  {{ pagination.render_pagination(applications.items, "") }}#}
 {% endblock %}
