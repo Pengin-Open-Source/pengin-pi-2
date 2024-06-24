@@ -32,21 +32,12 @@ def blogs(request, is_admin):
 
 @is_admin_provider
 def post(request, post_id, is_admin):
-    post = get_object_or_404(BlogPost, pk=post_id)
+    blog_post = get_object_or_404(BlogPost, pk=post_id)
 
-    if request.method == "POST":
-        page = int(request.POST.get('page_number', 1))
-    else:
-        page = 1
-
-    posts = paginate(BlogPost.objects.all(), page=page,
-                     key="title", per_page=10)
-    author_date = post.date  # TODO: Replace with correct attribute
+    author_date = blog_post.date  # TODO: Replace with correct attribute
 
     return render(request, 'post.html', {
-        'page': page,
-        'post': post,
-        'posts': posts,
+        'post': blog_post,
         'is_admin': is_admin,  # Assuming you have authentication
         'blog_author_date': author_date,
     })

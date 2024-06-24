@@ -3,7 +3,7 @@
 
 {% block tags %}
   {% if post.tags %}
-      <meta name="keywords" content="{{ post.tags|e }}">
+      <meta name="keywords" content="{{ post.tags|escape }}">
   {% endif %}
 {% endblock %}
 
@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block leftContent %}
-  {% include "blog/link_list.html" %}
+  {% include "link_list.html" %}
 {% endblock %}
 
 {% block rightContent %}
