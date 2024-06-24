@@ -9,7 +9,7 @@
 {% block tableContent %}
   {% for thread in threads %}
   <tr><td class="thread-container">
-    <a class="alternating-colors-table-links" href="/forums/{{ thread.id }}">{{ thread.name|e }}</a>
+    <a class="alternating-colors-table-links" href="/forums/{{ thread.id }}">{{ thread.name }}</a>
     {% if is_admin %}
     <form method="post" action="/forums/delete/thread/{{ thread.id }}">
       <button class="primary-button" type="submit">Delete</button>
@@ -19,4 +19,4 @@
   {% endfor %}
 {% endblock %}
 
-{% use_macro render_pagination applications.items %}
+{% use_macro render_pagination threads %}

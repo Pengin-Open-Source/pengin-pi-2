@@ -7,7 +7,7 @@ from .forms import ThreadForm, ForumPostForm, ForumCommentForm
 @login_required
 def forums(request):
     threads = Thread.objects.all()
-    return render(request, 'forums/threads.html', {'threads': threads, 'is_admin': request.user.is_staff})
+    return render(request, 'threads.html', {'threads': threads, 'is_admin': request.user.is_staff})
 
 @login_required
 def create_thread(request):
