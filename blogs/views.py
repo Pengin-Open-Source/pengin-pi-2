@@ -1,4 +1,4 @@
-from blogs.models import BlogPost
+from blogs.models import BlogPost, BlogHistory
 from django.core.paginator import Paginator
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from util.security.auth_tools import is_admin_provider
 from django.contrib.auth.decorators import login_required
 from blogs.forms import BlogForm
+
 # Define the blog view
 
 
@@ -30,7 +31,7 @@ def blogs(request, is_admin):
 def post(request, post_id, is_admin):
     blog_post = get_object_or_404(BlogPost, pk=post_id)
 
-    author_date = blog_post.date  # TODO: Replace with correct attribute
+    author_date = get_create_date(blog_post.id)
 
     blog_posts = BlogPost.objects.all().order_by('date')
     paginator = Paginator(blog_posts, 10)
@@ -67,3 +68,12 @@ def create_post(request, is_admin):
         form_rendered_for_create = form.render(
             "configure_form_for_create.html")
         return render(request, 'create_blog_post.html', {'form': form_rendered_for_create, 'is_admin': is_admin})
+
+
+# utility method(s) go here
+
+def get_create_date(post_id):
+    blog_post_history = BlogHistory.objects.filter(post_id=post_id)
+    # The oldest date should be the date of blog post creation
+    oldest_date = blog_post_history.order_by("date").first().date
+    return (oldest_date)
