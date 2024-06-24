@@ -20,12 +20,11 @@ def blogs(request, is_admin):
     paginator = Paginator(blog_posts, 10)
 
     posts = paginator.get_page(page)
-    print(posts)
 
     return render(request, 'blogs.html', {
         'posts':  posts,
         'primary_title': 'Blog',
-        'is_admin': is_admin,  # Can I remove this now that we have is_admin_provider?
+        'is_admin': is_admin,
         'left_title': 'Blog Posts'
     })
 
