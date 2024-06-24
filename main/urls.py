@@ -25,7 +25,7 @@ urlpatterns = [
     path('', include('about.urls')),
     path('', include('blogs.urls')),
     path('products/', include('products.urls')),
-    path('orders/', include('orders.urls')),
+    path('orders/', include('orders.urls.orders')),
     path('', include('jobs.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('signup/', SignupView.as_view(), name='signup'),
