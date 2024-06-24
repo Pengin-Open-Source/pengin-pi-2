@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ListOrders, CreateOrder, DetailOrder, EditOrder, DeleteOrder
+from .views.orders import ListOrders, CreateOrder, DetailOrder, EditOrder, DeleteOrder
 
 # Add namespace to urls
 app_name = 'orders'
