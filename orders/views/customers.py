@@ -73,7 +73,9 @@ class CreateCustomer(View):
         form = CustomerForm(request.POST)
 
         if form.is_valid():
-            new_customer = form.save()
+            new_customer = form.save(commit=False)
+            new_customer.name = new_customer.company.name if new_customer.company else new_customer.user.name
+            new_customer.save()
             return redirect('customers:detail-customer', customer_id=new_customer.id)
 
         context = self.get_context_data()
