@@ -1,6 +1,6 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load macros %}
-{% loadmacros "pagination.html" %}
+{% loadmacros "macros/pagination.html" %}
 
 {% block pageDropDowns %}
   {% if is_admin %}
@@ -22,6 +22,6 @@
     {% endfor %}
   </div>
 
-{% use_macro render_pagination applications.items %}
+{% use_macro render_pagination page_products %}
 
 {% endblock %}
