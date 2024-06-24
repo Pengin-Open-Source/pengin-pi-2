@@ -7,6 +7,7 @@
 
 {% block pageContent %}
 
+    {% if page_customers.length > 0 %}
     <table>
         <thead>
             <tr>
@@ -28,4 +29,8 @@
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+        <p>No customers found</p>
+    {% endif %}
+
 {% endblock %}
