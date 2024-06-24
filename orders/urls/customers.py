@@ -1,5 +1,5 @@
 from django.urls import path
-from orders.views.customers import ListCustomers, CreateCustomer, DetailCustomer, EditCustomer
+from orders.views.customers import ListCustomers, CreateCustomer, DetailCustomer, EditCustomer, DeleteCustomer
 
 # Add namespace to urls
 app_name = 'customers'
@@ -9,5 +9,5 @@ urlpatterns = [
     path('<uuid:customer_id>/', DetailCustomer.as_view(), name='detail-customer'),
     path('create/', CreateCustomer.as_view(), name='create-customer'),
     path('<uuid:customer_id>/edit/', EditCustomer.as_view(), name='edit-customer'),
-    # path('<uuid:customer_id>/delete/', DeleteCustomer.as_view(), name='delete-customer'),
+    path('<uuid:customer_id>/delete/', DeleteCustomer.as_view(), name='delete-customer'),
 ]

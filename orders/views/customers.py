@@ -117,3 +117,24 @@ class EditCustomer(View):
         context = self.get_context_data(customer)
         context['form'] = form
         return render(request, self.template_name, context)
+
+
+class DeleteCustomer(View):
+    template_name = "customers/customer_confirm_delete.html"
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def get(self, request, customer_id):
+        customer = get_object_or_404(Customer, id=customer_id)
+        context = {
+            "primary_title": f"Delete Customer: {customer.name}",
+            "customer": customer,
+        }
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request, customer_id):
+        customer = get_object_or_404(Customer, id=customer_id)
+        customer.delete()
+        return redirect('customers:list-customers')
