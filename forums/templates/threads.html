@@ -1,5 +1,6 @@
 {% extends "layout/alternating_color_table.html" %}
-{% import "macros/paginate.html" as pagination %}
+{# Replace "render_pagination" macro with django's pagination template_tag in layout #}
+{#{% import "macros/paginate.html" as pagination %}#}
 
 {% block pageDropDowns %}
   <a href="/forums/create">Create Thread</a>
