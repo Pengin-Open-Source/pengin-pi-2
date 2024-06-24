@@ -19,7 +19,7 @@
     </div>
 
       {% if action == "update" %}
-        <a href="{% url "orders:detail-order" order_id %}">
+        <a href="{% url "orders:detail-order" order.id %}">
           <button class="primary-button" type="button">Cancel</button>
         </a>
         <button class="primary-button" type="submit">Save changes</button>
