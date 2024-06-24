@@ -25,7 +25,7 @@
       <tbody>
         <tr>
           <td>{{ order.order_date|date:"F d, Y" }}</td>
-          <td><a href="{% url 'detail-detail' order.id %}">{{ order.id }}</a></td>
+          <td><a href="{% url 'orders:detail-order' order.id %}">{{ order.id }}</a></td>
           <td>{{ order.customer.user.name|default:'Unknown User' }}</td>
         </tr>
       </tbody>
