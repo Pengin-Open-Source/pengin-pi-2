@@ -12,19 +12,19 @@ class Customer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
-    name = models.CharField(max_length=50, null=True, blank=False)
+    name = models.CharField(max_length=50, null=False, blank=False)
 
     def clean(self):
         if self.user and self.company:
             raise ValidationError('Customer cannot have both user and company relationships.')
         if not self.user and not self.company:
             raise ValidationError('Customer must have either a user or a company relationship.')
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
         self.name = self.company.name if self.company else self.user.name
         if not self.name:
             self.name = "Unnamed Customer"
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
         super().save(*args, **kwargs)
 
 
