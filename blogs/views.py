@@ -10,7 +10,6 @@ from blogs.forms import BlogForm
 # Define the blog view
 
 
-@login_required
 @is_admin_provider
 def blogs(request, is_admin):
     page = request.GET.get("page", 1)
@@ -28,7 +27,6 @@ def blogs(request, is_admin):
     })
 
 
-@login_required
 @is_admin_provider
 def post(request, post_id, is_admin):
     blog_post = get_object_or_404(BlogPost, pk=post_id)
@@ -84,7 +82,7 @@ def create_post(request, is_admin):
 
 @login_required
 @is_admin_provider
-def edit_post(request, is_admin, post_id):
+def edit_post(request, post_id, is_admin):
     if request.method == 'POST':
         blog_post = get_object_or_404(BlogPost, id=post_id)
         form = BlogForm(request.POST, instance=blog_post)
@@ -96,12 +94,15 @@ def edit_post(request, is_admin, post_id):
         else:
             return render(request, 'edit_blog_post.html', {'form': form, 'is_admin': is_admin})
     else:
+        blog_post = get_object_or_404(BlogPost, id=post_id)
         prefill_data = {'edited_by': request.user.name}
-        form = BlogForm(prefill_data=prefill_data)
+        remove_fields = ['date']
+        form = BlogForm(prefill_data=prefill_data,
+                        remove_fields=remove_fields,  instance=blog_post)
 
         form_rendered_for_edit = form.render(
             "configure_blog_form.html")
-        return render(request, 'edit_blog_post.html', {'form': form_rendered_for_edit, 'is_admin': is_admin})
+        return render(request, 'edit_blog_post.html',  {'form': form_rendered_for_edit, 'is_admin': is_admin,  'post_id': post_id})
 
 
 # utility methods

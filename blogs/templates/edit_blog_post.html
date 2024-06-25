@@ -1,7 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageContent %}
-<form action="{% url 'blogs:edit_blog_post' post.id %}"  method="POST" >
+<form action="{% url 'blogs:edit_blog_post' post_id %}"  method="POST" >
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Save Edits" >
