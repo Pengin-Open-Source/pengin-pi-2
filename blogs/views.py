@@ -92,7 +92,7 @@ def edit_post(request, post_id, is_admin):
             blog_post = form.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
-            return render(request, 'edit_blog_post.html', {'form': form, 'is_admin': is_admin})
+            return render(request, 'edit_blog_post.html', {'form': form, 'is_admin': is_admin, 'post_id': post_id})
     else:
         blog_post = get_object_or_404(BlogPost, id=post_id)
         prefill_data = {'edited_by': request.user.name}
