@@ -57,9 +57,10 @@ class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False, blank=False)
     is_cancelled = models.BooleanField(default=False)
     author = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
+    products = models.ManyToManyField(Product, through='OrderProduct')
 
 
-class OrderList(models.Model):
+class OrderProduct(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     quantity = models.PositiveIntegerField()
     order = models.ForeignKey(Order, on_delete=models.CASCADE, null=False)
