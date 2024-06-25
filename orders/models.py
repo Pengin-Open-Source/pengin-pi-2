@@ -54,16 +54,19 @@ class Contract(models.Model):
 class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     order_date = models.DateTimeField(null=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False, blank=False)
     is_cancelled = models.BooleanField(default=False)
     author = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
 
 
 class OrderList(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    quantity = models.IntegerField()
+    quantity = models.PositiveIntegerField()
     order = models.ForeignKey(Order, on_delete=models.CASCADE, null=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=False)
+
+    class Meta:
+        unique_together = (('order', 'product'),)
 
 
 # ### Order Workflow Models ###
