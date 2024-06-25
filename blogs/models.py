@@ -14,7 +14,7 @@ class BlogPost(models.Model):
     content = models.TextField(blank=True)
     tags = models.CharField(max_length=150,  blank=True)
     method = models.CharField(
-        max_length=10, default='Error Getting Method Type- Should be CREATE OR EDIT')
+        max_length=10, default='ERROR')
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -22,7 +22,7 @@ class BlogPost(models.Model):
             super().save(*args, **kwargs)
             if self.method == 'CREATE':
                 poster = self.author
-            elif self.method == 'EDIT':
+            elif self.method == 'EDIT' or self.method == 'DELETE':
                 poster = self.edited_by
             post_backup = BlogHistory(post_id=self.id, title=self.title, user=poster,
                                       date=self.date, content=self.content, method=self.method, tags=self.tags)
@@ -42,4 +42,4 @@ class BlogHistory(models.Model):
     content = models.TextField(blank=True)
     tags = models.CharField(max_length=150, blank=True)
     method = models.CharField(
-        max_length=10, default='Error Getting Method Type- Should be CREATE OR EDIT')
+        max_length=10, default='ERROR')

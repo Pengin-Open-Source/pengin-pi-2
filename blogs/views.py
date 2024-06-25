@@ -10,6 +10,7 @@ from blogs.forms import BlogForm
 # Define the blog view
 
 
+@login_required
 @is_admin_provider
 def blogs(request, is_admin):
     page = request.GET.get("page", 1)
@@ -27,6 +28,7 @@ def blogs(request, is_admin):
     })
 
 
+@login_required
 @is_admin_provider
 def post(request, post_id, is_admin):
     blog_post = get_object_or_404(BlogPost, pk=post_id)
@@ -58,6 +60,7 @@ def post(request, post_id, is_admin):
     })
 
 
+@login_required
 @is_admin_provider
 def create_post(request, is_admin):
     if request.method == 'POST':
@@ -75,9 +78,30 @@ def create_post(request, is_admin):
         remove_fields = ['edited_by']
         form = BlogForm(remove_fields=remove_fields, prefill_data=prefill_data)
 
-        form_rendered_for_create = form.render(
-            "configure_form_for_create.html")
+        form_rendered_for_create = form.render("configure_blog_form.html")
         return render(request, 'create_blog_post.html', {'form': form_rendered_for_create, 'is_admin': is_admin})
+
+
+@login_required
+@is_admin_provider
+def edit_post(request, is_admin, post_id):
+    if request.method == 'POST':
+        blog_post = get_object_or_404(BlogPost, id=post_id)
+        form = BlogForm(request.POST, instance=blog_post)
+        if form.is_valid():
+            # specify this is an edited record
+            form.set_cleaned_data_field('method', 'EDIT')
+            blog_post = form.save()
+            return redirect('blogs:blog_post', post_id=blog_post.id)
+        else:
+            return render(request, 'edit_blog_post.html', {'form': form, 'is_admin': is_admin})
+    else:
+        prefill_data = {'edited_by': request.user.name}
+        form = BlogForm(prefill_data=prefill_data)
+
+        form_rendered_for_edit = form.render(
+            "configure_blog_form.html")
+        return render(request, 'edit_blog_post.html', {'form': form_rendered_for_edit, 'is_admin': is_admin})
 
 
 # utility methods
@@ -86,14 +110,14 @@ def get_create_date(post_id):
     blog_post_history = BlogHistory.objects.filter(post_id=post_id)
     # The oldest date should be the date of blog post creation
     oldest_date = blog_post_history.order_by("date").first().date
-    return (oldest_date)
+    return oldest_date
 
 
 def get_last_edit_info(post_id):
     blog_post_history = BlogHistory.objects.filter(
         post_id=post_id, method="EDIT")
     # The newest date should be the date of the last blog post edit
-    if (blog_post_history):
+    if blog_post_history:
         last_edit = blog_post_history.order_by("-date").first()
         return (last_edit.date, last_edit.user)
     return None
