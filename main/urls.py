@@ -20,12 +20,14 @@ from .views import LoginView, SignupView, LogoutView, PasswordResetRequestView, 
 
 
 urlpatterns = [
+    path('admin/clearcache/', include('clearcache.urls')),
     path('admin/', admin.site.urls),
     path('', include('home.urls')),
     path('', include('about.urls')),
     path('', include('blogs.urls')),
     path('products/', include('products.urls')),
     path('', include('jobs.urls')),
+    path('', include('companies.urls')),
     path('forums/', include('forums.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('signup/', SignupView.as_view(), name='signup'),

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'jobs',
     'applications',
     'profiles',
+    'clearcache',
     'relationships',
 ]
 

@@ -29,6 +29,10 @@ def save_home(request, form):
 class HomeView(View):
     def get(self, request, is_admin):
         home = Home.objects.first() or default.Home()
+        if request.user.is_authenticated:
+            print("User authenticated")
+        else:
+            print("User not authenticated")
         try:
             image = conn.get_URL(home.image)
         except ParamValidationError:
