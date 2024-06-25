@@ -5,8 +5,8 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from util.security.auth_tools import is_admin_provider, is_admin_required
 
-from orders.models import Order, Customer, Product, OrderList
-from orders.forms import OrderForm
+from orders.models import Order, Customer, Product
+from orders.forms import OrderForm, OrderProductFormSet
 
 
 class ListOrders(View):
@@ -79,6 +79,7 @@ class CreateOrder(View):
             "primary_title": "Create Order",
             "action": "create",
             "form": OrderForm(),
+            "formset": OrderProductFormSet(),
             "products": products,
             "customers": customers,
         }
@@ -91,25 +92,28 @@ class CreateOrder(View):
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         form = OrderForm(request.POST)
+        formset = OrderProductFormSet(request.POST)
 
-        if form.is_valid():
+        if form.is_valid() and formset.is_valid():
             new_order = form.save(commit=False)
             new_order.author = request.user
             new_order.save()
+            formset.save()
 
-            # Create OrdersList objects with products and quantities for each
-            product_ids = request.POST.getlist('product')
-            quantities = request.POST.getlist('quantity')
-            orders_list = [
-                OrderList(order=new_order, product=product_id, quantity=quantity)
-                for product_id, quantity in zip(product_ids, quantities)
-            ]
-            OrderList.objects.bulk_create(orders_list)
+            # # Create OrdersList objects with products and quantities for each
+            # product_ids = request.POST.getlist('product')
+            # quantities = request.POST.getlist('quantity')
+            # orders_list = [
+            #     OrderProduct(order=new_order, product=product_id, quantity=quantity)
+            #     for product_id, quantity in zip(product_ids, quantities)
+            # ]
+            # OrderProduct.objects.bulk_create(orders_list)
 
             return redirect('orders:detail-order', order_id=new_order.id)
 
         context = self.get_context_data()
         context['form'] = form
+        context['formset'] = formset
         return render(request, self.template_name, context)
 
 
@@ -120,16 +124,14 @@ class EditOrder(View):
         products = Product.objects.all()
         customers = Customer.objects.all()
 
-        order_items = OrderList.objects.filter(order=order)
-
         return {
             "primary_title": "Edit Order",
             "action": "update",
             "form": OrderForm(instance=order),
+            "formset": OrderProductFormSet(instance=order),
             "products": products,
             "customers": customers,
             "order": order,
-            "order_items": order_items,
         }
 
     @method_decorator(login_required)
@@ -144,29 +146,32 @@ class EditOrder(View):
     def post(self, request, order_id, *args, **kwargs):
         order = get_object_or_404(Order, id=order_id)
         form = OrderForm(request.POST, instance=order)
+        formset = OrderProductFormSet(request.POST, instance=order)
 
-        if form.is_valid():
+        if form.is_valid() and formset.is_valid():
             # Update the author of the order?
             # order = form.save(commit=False)
             # order.author = request.user
-            order.save()
+            order = form.save()
+            formset.save()
 
-            # Clear the existing OrdersList entries
-            OrderList.objects.filter(order=order).delete()
-
-            # Create new OrdersList objects with updated products and quantities
-            product_ids = request.POST.getlist('product')
-            quantities = request.POST.getlist('quantity')
-            orders_list = [
-                OrderList(order=order, product=product_id, quantity=quantity)
-                for product_id, quantity in zip(product_ids, quantities)
-            ]
-            OrderList.objects.bulk_create(orders_list)
+            # # Clear the existing OrdersList entries
+            # OrderProduct.objects.filter(order=order).delete()
+            #
+            # # Create new OrdersList objects with updated products and quantities
+            # product_ids = request.POST.getlist('product')
+            # quantities = request.POST.getlist('quantity')
+            # orders_list = [
+            #     OrderProduct(order=order, product=product_id, quantity=quantity)
+            #     for product_id, quantity in zip(product_ids, quantities)
+            # ]
+            # OrderProduct.objects.bulk_create(orders_list)
 
             return redirect('orders:detail-order', order_id=order.id)
 
         context = self.get_context_data(order)
         context['form'] = form
+        context['formset'] = formset
         return render(request, self.template_name, context)
 
 

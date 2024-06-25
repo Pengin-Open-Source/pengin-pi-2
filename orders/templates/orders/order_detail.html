@@ -11,4 +11,24 @@
 {% block pageContent %}
     <p>{{ order.order_date }}</p>
     <div class="commonmark">{{ order.customer.name }}</div>
+    <h2>Products</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in order.products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.quantity }}</td>
+                    <td><a href="{% url 'products:detail-product' product.id %}">See product</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
 {% endblock %}

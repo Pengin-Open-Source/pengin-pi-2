@@ -1,22 +1,43 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageContent %}
-  <form class="form" method="POST">
-    {% csrf_token %}
-    <div class="order-edit-container">
-      <div class="form-section">
-        {{ form.customer.label_tag }}
-        {{ form.customer }}
-      </div>
-      <div class="form-section">
-        {{ form.order_date.label_tag }}
-        {{ form.order_date }}
-      </div>
-      <div class="form-section order-edit-description ">
-        {{ form.is_cancelled.label_tag }}
-        {{ form.is_cancelled }}
-      </div>
-    </div>
+    <form class="form" method="POST">
+        {% csrf_token %}
+        <div class="order-edit-container">
+            <div class="form-section">
+                {{ form.customer.label_tag }}
+                {{ form.customer }}
+            </div>
+            <div class="form-section">
+                {{ form.order_date.label_tag }}
+                {{ form.order_date }}
+            </div>
+            <div class="form-section order-edit-description ">
+                {{ form.is_cancelled.label_tag }}
+                {{ form.is_cancelled }}
+            </div>
+            <div>
+                {{ form.products.label_tag }}
+                {{ form.products }}
+            </div>
+
+            <h3>Products</h3>
+            <div>
+                {{ formset.management_form }}
+                {% for form in formset %}
+                    <div class="form-row">
+                        {{ form.product.label_tag }} {{ form.product }}
+                        {{ form.quantity.label_tag }} {{ form.quantity }}
+                        {% if form.instance.pk %}
+                            <div>
+                                <label for="{{ form.prefix }}-DELETE">Delete:</label>
+                                {{ form.DELETE }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
 
       {% if action == "update" %}
         <a href="{% url "orders:detail-order" order.id %}">
