@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, redirect, get_object_or_404
-from util.security.auth_tools import is_admin_provider
+from util.security.auth_tools import is_admin_provider, user_group_provider
 from django.contrib.auth.decorators import login_required
 from blogs.forms import BlogForm
 
@@ -60,13 +60,15 @@ def post(request, post_id, is_admin):
 
 @login_required
 @is_admin_provider
-def create_post(request, is_admin):
+@user_group_provider
+def create_post(request, is_admin, groups):
     if request.method == 'POST':
         form = BlogForm(request.POST)
         if form.is_valid():
             # add these fields to the form
-            form.set_cleaned_data_field('method', 'CREATE')
-            blog_post = form.save()
+            blog_post = form.save(commit=False)
+            blog_post.method = 'CREATE'
+            blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
             return render(request, 'create_blog_post.html', {'form': form, 'is_admin': is_admin})
@@ -82,14 +84,16 @@ def create_post(request, is_admin):
 
 @login_required
 @is_admin_provider
-def edit_post(request, post_id, is_admin):
+@user_group_provider
+def edit_post(request, post_id, is_admin, groups):
     if request.method == 'POST':
         blog_post = get_object_or_404(BlogPost, id=post_id)
         form = BlogForm(request.POST, instance=blog_post)
         if form.is_valid():
             # specify this is an edited record
-            form.set_cleaned_data_field('method', 'EDIT')
-            blog_post = form.save()
+            blog_post = form.save(commit=False)
+            blog_post.method = 'EDIT'
+            blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
             return render(request, 'edit_blog_post.html', {'form': form, 'is_admin': is_admin, 'post_id': post_id})
