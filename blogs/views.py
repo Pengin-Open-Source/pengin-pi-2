@@ -69,6 +69,8 @@ def create_post(request, is_admin, groups):
             # add these fields to the form
             blog_post = form.save(commit=False)
             blog_post.method = 'CREATE'
+            # date will be auto-filled by data model with "now"
+            blog_post.roles = request.user.groups.all()
             blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
@@ -95,6 +97,7 @@ def edit_post(request, post_id, is_admin, groups):
             blog_post = form.save(commit=False)
             blog_post.method = 'EDIT'
             blog_post.date = timezone.now()
+            blog_post.roles = request.user.groups.all()
             blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:

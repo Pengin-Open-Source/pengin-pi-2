@@ -15,6 +15,7 @@ class BlogPost(models.Model):
     tags = models.CharField(max_length=150,  blank=True)
     method = models.CharField(
         max_length=10, default='ERROR')
+    roles = models.JSONField()
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
@@ -43,3 +44,4 @@ class BlogHistory(models.Model):
     tags = models.CharField(max_length=150, blank=True)
     method = models.CharField(
         max_length=10, default='ERROR')
+    roles = models.JSONField()
