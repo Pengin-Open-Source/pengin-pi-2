@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from util.security.auth_tools import is_admin_provider, user_group_provider
 from django.contrib.auth.decorators import login_required
 from blogs.forms import BlogForm
+from django.utils import timezone
 
 # Define the blog view
 
@@ -93,6 +94,7 @@ def edit_post(request, post_id, is_admin, groups):
             # specify this is an edited record
             blog_post = form.save(commit=False)
             blog_post.method = 'EDIT'
+            blog_post.date = timezone.now()
             blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
@@ -100,9 +102,7 @@ def edit_post(request, post_id, is_admin, groups):
     else:
         blog_post = get_object_or_404(BlogPost, id=post_id)
         prefill_data = {'edited_by': request.user.name}
-        remove_fields = ['date']
-        form = BlogForm(prefill_data=prefill_data,
-                        remove_fields=remove_fields,  instance=blog_post)
+        form = BlogForm(prefill_data=prefill_data,  instance=blog_post)
 
         form_rendered_for_edit = form.render(
             "configure_blog_form.html")
