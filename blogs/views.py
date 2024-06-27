@@ -70,6 +70,7 @@ def create_post(request, is_admin, groups):
             # add these fields to the form
             blog_post = form.save(commit=False)
             blog_post.method = 'CREATE'
+            blog_post.user_id = request.user.id
             # date will be auto-filled by data model with "now"
             qs = request.user.groups.all()
             blog_post.roles = list(qs.values('pk', 'name'))
@@ -95,9 +96,10 @@ def edit_post(request, post_id, is_admin, groups):
         blog_post = get_object_or_404(BlogPost, id=post_id)
         form = BlogForm(request.POST, instance=blog_post)
         if form.is_valid():
-            # specify this is an edited record
             blog_post = form.save(commit=False)
+            # specify this is an edited record
             blog_post.method = 'EDIT'
+            blog_post.user_id = request.user.id
             blog_post.date = timezone.now()
             qs = request.user.groups.all()
             blog_post.roles = list(qs.values('pk', 'name'))
