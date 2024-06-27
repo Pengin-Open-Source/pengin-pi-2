@@ -26,7 +26,7 @@ class BlogPost(models.Model):
             elif self.method == 'EDIT' or self.method == 'DELETE':
                 poster = self.edited_by
             post_backup = BlogHistory(post_id=self.id, title=self.title, user=poster,
-                                      date=self.date, content=self.content, method=self.method, tags=self.tags)
+                                      date=self.date, content=self.content, method=self.method, tags=self.tags, roles=self.roles)
             post_backup.save()
 
     def __str__(self):
