@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from .models import Company, CompanyMembers
+from main.models.users import User  
 from .forms import CompanyForm
 from django_ratelimit.decorators import ratelimit
 
@@ -12,6 +13,8 @@ def display_companies_home(request):
         return handle_admin_view(request)
     else:
         return handle_user_view(request)
+    
+
 
 def handle_admin_view(request):
     if request.method == "POST":
@@ -59,7 +62,7 @@ def display_company_info(request, company_id):
 
     is_admin = request.user.has_perm('admin')
 
-    return render(request, 'company_info/company_info.html', {
+    return render(request, 'company_info.html', {
         'primary_title': 'Company Info',
         'company': company,
         'members': paginated_members,
@@ -75,11 +78,14 @@ def create_company(request):
             company = form.save(commit=False)
             company.save()
             CompanyMembers.objects.create(company=company, user=request.user)
+            print("Company created successfully:", company)
             return redirect('display_company_info', company_id=company.id)
+        else:
+            print("Form is not valid:", form.errors)
     else:
         form = CompanyForm()
 
-    return render(request, 'company_info/company_info_create.html', {'form': form, 'primary_title': 'Create New Company'})
+    return render(request, 'company_info_create.html', {'form': form, 'primary_title': 'Create New Company'})
 
 
 @login_required
@@ -94,7 +100,11 @@ def edit_company_info_post(request, company_id):
     else:
         form = CompanyForm(instance=company)
 
-    return render(request, 'company_info/company_edit.html', {'form': form, 'primary_title': 'Edit Company'})
+    return render(request, 'company_edit.html', {
+        'form': form,
+        'company': company,
+        'primary_title': 'Edit Company'
+    })
 
 @login_required
 def display_company_members(request, company_id):
@@ -108,7 +118,7 @@ def display_company_members(request, company_id):
     members_ids = CompanyMembers.objects.filter(company_id=company.id).values_list('user_id', flat=True)
     members_ids_list = list(members_ids)
 
-    return render(request, 'company_info/display_members.html', {
+    return render(request, 'display_members.html', {
         'users': users,
         'company': company,
         'page': page,
@@ -127,7 +137,7 @@ def edit_company_members(request, company_id):
     members_ids = CompanyMembers.objects.filter(company_id=company.id).values_list('user_id', flat=True)
     members_ids_list = list(members_ids)
 
-    return render(request, 'company_info/edit_members.html', {
+    return render(request, 'edit_members.html', {
         'users': users,
         'company': company,
         'page': page,

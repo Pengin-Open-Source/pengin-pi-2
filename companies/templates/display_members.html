@@ -1,6 +1,6 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  {# Load static files #}
-{% import "macros/paginate.html" as pagination %}  {# Import pagination macro #}
+{% load macros %}
 
 {% block pageDropDowns %}
     <a href="{% url 'edit_company_members' company_id=company.id %}">Edit Members</a>
@@ -18,7 +18,7 @@
       {% endfor %}
     </ul>
     {% if users.has_other_pages %}
-      {{ pagination.render_pagination(users, "/company/" + company.id + "/members") }}
+      {% include "paginate.html" %}
     {% endif %}
   </div>
 </div>

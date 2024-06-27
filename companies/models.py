@@ -1,4 +1,5 @@
 from django.db import models
+from main.models.users import User  
 import uuid
 
 
@@ -20,6 +21,9 @@ class Company(models.Model):
 
 class CompanyMembers(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='members', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, default=uuid.UUID('3b2cc328-41f9-4729-b301-b32f18a69578'))
+
 
     def __str__(self):
         return str(self.id)
