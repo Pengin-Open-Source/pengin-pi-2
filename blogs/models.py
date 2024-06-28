@@ -12,7 +12,7 @@ class BlogPost(models.Model):
     # For now, if the user is deleted,  there will be a cascade delete of the blogposts,
     # BUT I intend to pre-emptdelete behavior,  and create a backup entry in the history table.
     # The plan is to leave deletion of history tables to the DBA
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='blogposts')
     author = models.CharField(
         max_length=100, default='Error Getting Author - Should be User Name')
