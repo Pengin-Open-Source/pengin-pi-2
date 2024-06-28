@@ -24,29 +24,31 @@ class BlogPost(models.Model):
         max_length=10, default='ERROR')
     roles = models.JSONField()
 
+    # this will need to get replaced by db triggers OR Django Signals
+    # If bulk actions are involved
     def save(self, *args, **kwargs):
         save_method = kwargs.pop('method')
         with transaction.atomic():
-            # Do backup of current values first first
-            if save_method == "EDIT":
+            # Do backup of current row values first
+            # DELETE is included because we will call save with save_method delete before calling delete
+            if save_method == "EDIT" or save_method == "DELETE":
                 post_backup = BlogHistory(post_id=self.id, title=self.title, user=self.user,
                                           date=self.date, content=self.content, method=self.method, tags=self.tags, roles=self.roles)
                 post_backup.save()
-            # Else don't save to backup table yet
+            # Else, if this is a newly created row don't save to backup table yet
+
             # save to this blog post table regardless
             super().save(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
-        save_method = kwargs.pop('method')
-        with transaction.atomic():
-            # Do backup of current values first first
-            if save_method == "EDIT":
+            # if this is a pre-delete save,  we need to make sure the row we just saved in blogpost, which records
+            # 1) The action/method: "DELETE"
+            # 2) The User who did the Delete
+            # 3) The time of the deletion
+            # ... is saved into the bloghistory,  because our delete_post view is going to delete this information
+            if save_method == 'DELETE':
                 post_backup = BlogHistory(post_id=self.id, title=self.title, user=self.user,
                                           date=self.date, content=self.content, method=self.method, tags=self.tags, roles=self.roles)
                 post_backup.save()
-            # Else don't save to backup table yet
-            # save to this blog post table regardless
-            super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.title)

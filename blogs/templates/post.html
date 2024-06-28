@@ -10,6 +10,7 @@
 {% block pageDropDowns %}
   {% if is_admin %}
     <a href="/blogs/{{ post.id }}/edit/">Edit Post</a>
+    <a href="/blogs/{{ post.id }}/delete/"> Delete Post</a>
   {% endif %}
 {% endblock %}
 

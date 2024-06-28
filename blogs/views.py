@@ -1,4 +1,4 @@
-from blogs.models import BlogPost, BlogHistory
+from blogs.models import BlogPost, BlogHistory, transaction
 from django.core.paginator import Paginator
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
@@ -115,6 +115,27 @@ def edit_post(request, post_id, is_admin, groups):
         form_rendered_for_edit = form.render(
             "configure_blog_form.html")
         return render(request, 'edit_blog_post.html',  {'form': form_rendered_for_edit, 'is_admin': is_admin,  'post_id': post_id})
+
+
+@login_required
+@is_admin_provider
+@user_group_provider
+def delete_post(request, post_id, is_admin, groups):
+    blog_post = get_object_or_404(BlogPost, id=post_id)
+    blog_post.method = 'DELETE'
+    blog_post.user = request.user
+    blog_post.date = timezone.now()
+    blog_post.roles = groups
+    with transaction.atomic():
+        # specify this is an deleted record
+        # both save and delete must execute or fail together,
+        # since we are saving changes to history first.
+        # this keeps track of the time of deletion and
+        # the user who deleted the record
+        blog_post.save()
+        blog_post.delete()
+        # if successful return to main blog post
+    return redirect('blogs:blogs')
 
 
 # utility methods
