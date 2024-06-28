@@ -25,11 +25,28 @@ class BlogPost(models.Model):
     roles = models.JSONField()
 
     def save(self, *args, **kwargs):
+        save_method = kwargs.pop('method')
         with transaction.atomic():
+            # Do backup of current values first first
+            if save_method == "EDIT":
+                post_backup = BlogHistory(post_id=self.id, title=self.title, user=self.user,
+                                          date=self.date, content=self.content, method=self.method, tags=self.tags, roles=self.roles)
+                post_backup.save()
+            # Else don't save to backup table yet
+            # save to this blog post table regardless
             super().save(*args, **kwargs)
-            post_backup = BlogHistory(post_id=self.id, title=self.title, user=self.user_id,
-                                      date=self.date, content=self.content, method=self.method, tags=self.tags, roles=self.roles)
-            post_backup.save()
+
+    def save(self, *args, **kwargs):
+        save_method = kwargs.pop('method')
+        with transaction.atomic():
+            # Do backup of current values first first
+            if save_method == "EDIT":
+                post_backup = BlogHistory(post_id=self.id, title=self.title, user=self.user,
+                                          date=self.date, content=self.content, method=self.method, tags=self.tags, roles=self.roles)
+                post_backup.save()
+            # Else don't save to backup table yet
+            # save to this blog post table regardless
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.title)
