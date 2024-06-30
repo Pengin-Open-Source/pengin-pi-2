@@ -27,7 +27,7 @@ class BlogPost(models.Model):
     # this will need to get replaced by db triggers OR Django Signals
     # If bulk actions are involved
     def save(self, *args, **kwargs):
-        save_method = kwargs.pop('method')
+        save_method = self.method
         with transaction.atomic():
             # Do backup of current row values first
             # DELETE is included because we will call save with save_method delete before calling delete

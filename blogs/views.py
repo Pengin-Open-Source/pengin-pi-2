@@ -1,5 +1,6 @@
 from blogs.models import BlogPost, BlogHistory, transaction
 from django.core.paginator import Paginator
+from main.models.users import User
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, redirect, get_object_or_404
@@ -99,10 +100,15 @@ def edit_post(request, post_id, is_admin, groups):
             blog_post = form.save(commit=False)
             # specify this is an edited record
             blog_post.method = 'EDIT'
-            blog_post.user = request.user
+            user = User.objects.get(pk=request.user.id)
+            print(type(user))
+            blog_post.user = user  # Assign the complete User object
+            # blog_post.user = User.objects.get(pk=request.user.id)
             blog_post.date = timezone.now()
             qs = request.user.groups.all()
             blog_post.roles = list(qs.values('pk', 'name'))
+            print("blog post user is: ")
+            print(blog_post.user)
             blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
@@ -139,11 +145,17 @@ def delete_post(request, post_id, is_admin, groups):
 
 
 # utility methods
-
 def get_create_date(post_id):
     blog_post_history = BlogHistory.objects.filter(post_id=post_id)
     # The oldest date should be the date of blog post creation
-    oldest_date = blog_post_history.order_by("date").first().date
+    if blog_post_history:
+        # could be many dates in Blog History table for a given
+        # post_id if there are many edits
+        oldest_date = blog_post_history.order_by("date").first().date
+    else:
+        # This should only have one post, so first is
+        newly_created_post = BlogPost.objects.get(id=post_id)
+        oldest_date = newly_created_post.date
     return oldest_date
 
 
