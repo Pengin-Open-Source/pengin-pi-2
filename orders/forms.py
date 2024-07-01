@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Order, Customer, OrderProduct
+from .models import Order, Customer, OrderProduct, ShippingAddress
 
 
 class OrderProductForm(forms.ModelForm):
@@ -31,3 +31,10 @@ class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
         fields = ['user', 'company',]
+
+
+class ShippingAddressForm(forms.ModelForm):
+
+    class Meta:
+        model = ShippingAddress
+        exclude = ['id', 'customer',]
