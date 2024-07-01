@@ -10,22 +10,20 @@
 
 {% block pageContent %}
     <p>{{ order.order_date|date:"M d, Y" }}</p>
-    <div class="commonmark">{{ order.customer.name }}</div>
+    <div class="commonmark"><a href="{% url "customers:detail-customer" order.customer.id %}">{{ order.customer.name }}</a></div>
     <h2>Products</h2>
     <table>
         <thead>
             <tr>
                 <th>Product Name</th>
                 <th>Quantity</th>
-                <th>Link</th>
             </tr>
         </thead>
         <tbody>
             {% for item in order.orderproduct_set.all %}
                 <tr>
-                    <td>{{ item.product.name }}</td>
+                    <td><a href="{% url 'products:detail-product' item.product.id %}">{{ item.product.name }}</a></td>
                     <td>{{ item.quantity }}</td>
-                    <td><a href="{% url 'products:detail-product' item.product.id %}">See product</a></td>
                 </tr>
             {% endfor %}
         </tbody>
