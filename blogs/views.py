@@ -36,10 +36,12 @@ def post(request, post_id, is_admin):
 
     author_info = get_create_info(blog_post)
     edit_info = get_last_edit_info(blog_post)
-    author, create_date, is_create_missing = author_info
+    author_id, create_date, is_create_missing = author_info
+    author = User.objects.get(id=author_id).name
 
     if edit_info:
-        edited_date, edited_by = edit_info
+        edited_date, edited_by_id = edit_info
+        edited_by = User.objects.get(id=edited_by_id).name
     else:
         edited_date = ''
         edited_by = ''
@@ -145,7 +147,7 @@ def get_create_info(blog_post):
     oldest_date = ''
     is_create_missing = False
     if blog_post.method == 'CREATE':
-        author = blog_post.user.name
+        author = blog_post.user.id
         oldest_date = blog_post.date
 
     else:
@@ -155,7 +157,7 @@ def get_create_info(blog_post):
         # we should expect an error to be thrown here if there is no CREATE in blog history
         try:
             oldest_post = blog_post_history.first()
-            author = oldest_post.user.name
+            author = oldest_post.user
             oldest_date = oldest_post.date
         except BlogHistory.DoesNotExist:
             is_create_missing = True
@@ -166,18 +168,21 @@ def get_create_info(blog_post):
 def get_last_edit_info(blog_post):
     if blog_post.method != 'CREATE':
 
-        if blog_post.method != 'EDIT':
+        if blog_post.method == 'EDIT':
             # Last edit information is already in blog_post
-            last_edit = blog_post
+            edit_date = blog_post.date
+            last_edit_user = blog_post.user.id
         elif blog_post.method == 'DELETE':
             # Likely means A DBA restored a deleted row from history,  with the latest history record,
             # which would have method value: 'DELETE'.
             # (It's preferable to get the first history row with 'EDIT' instead)
             # So, get the first Blog history row with method = 'EDIT'
             blog_post_history = BlogHistory.objects.filter(
-                post_id=post_id, method="EDIT")
+                post_id=blog_post.id, method="EDIT")
             last_edit = blog_post_history.order_by("-date").first()
+            edit_date = last_edit.date
+            last_edit_user = last_edit.user
 
-        return (last_edit.date, last_edit.user.name)
+        return (edit_date, last_edit_user)
     # If row was just created,  no edit information is available.
     return None
