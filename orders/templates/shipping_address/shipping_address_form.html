@@ -1,0 +1,24 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+    <form class="form" method="POST">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {{ form.as_p }}
+
+        <a href="{% url "customers:detail-customer" customer_id %}">
+          <button class="primary-button" type="button">Cancel</button>
+        </a>
+        {% if action == "update" %}
+            <button class="primary-button" type="submit">Save changes</button>
+        {% else %}
+            <button class="primary-button" type="submit">Add Address</button>
+        {% endif %}
+    </form>
+{% endblock %}
