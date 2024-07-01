@@ -21,11 +21,11 @@
             </tr>
         </thead>
         <tbody>
-            {% for product in order.products %}
+            {% for item in order.orderproduct_set.all %}
                 <tr>
-                    <td>{{ product.name }}</td>
-                    <td>{{ product.quantity }}</td>
-                    <td><a href="{% url 'products:detail-product' product.id %}">See product</a></td>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td><a href="{% url 'products:detail-product' item.product.id %}">See product</a></td>
                 </tr>
             {% endfor %}
         </tbody>
