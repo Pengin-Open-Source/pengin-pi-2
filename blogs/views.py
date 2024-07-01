@@ -159,5 +159,5 @@ def get_last_edit_info(blog_post):
     # method != CREATE (to account for some scenarios where something unusual occured,
     # such as restoringa  deleted row from history,  whose latest record will have method  value 'DELETE")
     if blog_post.method != 'CREATE':
-        return (blog_post.date, blog_post.user)
+        return (blog_post.date, blog_post.user.name)
     return None
