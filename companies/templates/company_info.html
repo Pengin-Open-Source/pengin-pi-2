@@ -1,5 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  {# Load static files #}
+{% load macros %}
+{% loadmacros "macros/pagination.html"%}
 
 {% block pageDropDowns %}
     <a href="{% url 'display_company_members' company_id=company.id %}">View Members</a>
@@ -61,5 +63,8 @@
                 </tr>
             {% endfor %}
         </table>
+
+        <!-- Pagination -->
+        {% use_macro render_pagination members %}
     </div>
 {% endblock %}

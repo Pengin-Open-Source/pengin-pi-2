@@ -1,5 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  {# Load static files #}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
 
 {% block pageDropDowns %}
   <a href="{% url 'display_company_info' company_id=company.id %}">Company Home</a>
@@ -10,7 +12,7 @@
     <h1 class="profile-title">Edit Company Members</h1>
     <form class="form" method="POST" action="{% url 'edit_company_members_post' company_id=company.id %}">
       {% csrf_token %}
-      <input type="hidden" name="page-number" value="{{ page }}"/>
+      <input type="hidden" name="page-number" value="{{ page_obj.number }}"/>
       <div class="member-grid">
         {% for user in users %}
           <div>
@@ -22,5 +24,6 @@
       </div>
       <button class="primary-button" type="submit">Save</button>
     </form>
+    {% use_macro render_pagination page_obj %}
   </div>
 {% endblock %}

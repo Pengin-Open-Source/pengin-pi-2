@@ -1,5 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
-{% load static %}  {# Load static files #}
+{% load static %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
 
 {% block pageDropDowns %}
 <a href="{% url 'display_company_info' company_id=company.id %}">Company Home</a>
@@ -18,5 +20,6 @@
       {% endfor %}
     </ul>
   </div>
+  {% use_macro render_pagination page_obj %}
 </div>
 {% endblock %}

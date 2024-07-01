@@ -15,6 +15,7 @@ def display_companies_home(request):
         return handle_user_view(request)
     
 
+
 def handle_admin_view(request):
     if request.method == "POST":
         page = int(request.POST.get('page_number', 1))
@@ -37,14 +38,18 @@ def handle_user_view(request):
 @login_required
 def display_company_info(request, company_id):
     company = get_object_or_404(Company, id=company_id)
-
-    # Get page number from form button if POST, else default to 1
-    page = request.POST.get('page_number', 1) if request.method == "POST" else 1
+    
+    if request.method == "POST":
+        page_number = request.POST.get('page-number', 1)
+        # Handle form submission (saving members) here
+        # After handling form submission, retain the current page number
+    else:
+        page_number = request.GET.get('page', 1)
 
     # Get members of the company and paginate
     members = CompanyMembers.objects.filter(company_id=company_id).select_related('user')
     paginator = Paginator(members, 10)  # 10 members per page
-    paginated_members = paginator.get_page(page)
+    paginated_members = paginator.get_page(page_number)
 
     is_admin = request.user.has_perm('admin')
 
@@ -95,40 +100,55 @@ def edit_company_info_post(request, company_id):
 def display_company_members(request, company_id):
     company = get_object_or_404(Company, id=company_id)
     
-    page = int(request.POST.get('page_number', 1)) if request.method == "POST" else 1
-
-    paginator = Paginator(User.objects.all(), 10)  # 10 users per page
-    users = paginator.get_page(page)
-
+    if request.method == "POST":
+        page_number = request.POST.get('page-number', 1)
+        # Handle form submission (saving members) here
+        # After handling form submission, retain the current page number
+    else:
+        page_number = request.GET.get('page', 1)
+    
+    # Retrieve members of the company
     members_ids = CompanyMembers.objects.filter(company_id=company.id).values_list('user_id', flat=True)
+    
+    # Filter User queryset to only include members of the company
+    users = User.objects.filter(id__in=members_ids)
+    
+    paginator = Paginator(users, 10)  # 10 users per page
+    page_obj = paginator.get_page(page_number)
+
     members_ids_list = list(members_ids)
 
     return render(request, 'display_members.html', {
-        'users': users,
+        'users': page_obj.object_list,
         'company': company,
-        'page': page,
+        'page_obj': page_obj,
         'members_ids_list': members_ids_list
     })
-
 
 @login_required
 def edit_company_members(request, company_id):
     company = get_object_or_404(Company, id=company_id)
-    page = int(request.POST.get('page_number', 1)) if request.method == "POST" else 1
-
+    
+    if request.method == "POST":
+        page_number = request.POST.get('page-number', 1)
+        # Handle form submission (saving members) here
+        # After handling form submission, retain the current page number
+    else:
+        page_number = request.GET.get('page', 1)
+    
     paginator = Paginator(User.objects.all(), 10)  # 10 users per page
-    users = paginator.get_page(page)
+    page_obj = paginator.get_page(page_number)
 
     members_ids = CompanyMembers.objects.filter(company_id=company.id).values_list('user_id', flat=True)
     members_ids_list = list(members_ids)
 
     return render(request, 'edit_members.html', {
-        'users': users,
+        'users': page_obj.object_list,
         'company': company,
-        'page': page,
+        'paginator': paginator,
+        'page_obj': page_obj,
         'members_ids_list': members_ids_list
     })
-
 
 @ratelimit(key='ip', rate='10/m', method='POST', block=True)  
 @login_required
@@ -148,7 +168,7 @@ def edit_company_members_post(request, company_id):
             user = get_object_or_404(User, id=value)
             new_member = CompanyMembers.objects.create(company_id=company.id, user_id=user.id)
 
-        return redirect('edit_members', company_id=company.id)
+        return redirect('display_company_members', company_id=company.id)
 
 
 # companies list view
