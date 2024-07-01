@@ -19,11 +19,15 @@ OrderProductFormSet = forms.inlineformset_factory(
 
 
 class OrderForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(OrderForm, self).__init__(*args, **kwargs)
+        self.fields['shipping_address'].queryset = ShippingAddress.objects.filter(customer=self.instance.customer)
+
     order_date = forms.DateField(widget=forms.SelectDateWidget)
 
     class Meta:
         model = Order
-        fields = ['order_date', 'customer',]
+        fields = ['order_date', 'customer', 'shipping_address', 'is_cancelled',]
 
 
 class CustomerForm(forms.ModelForm):
