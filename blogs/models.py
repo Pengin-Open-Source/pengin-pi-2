@@ -10,13 +10,10 @@ class BlogPost(models.Model):
     title = models.CharField(max_length=100, unique=True)
     # EITHER editor (if one exists) or the author.
     # For now, if the user is deleted,  there will be a cascade delete of the blogposts,
-    # BUT I intend to pre-emptdelete behavior,  and create a backup entry in the history table.
+    # BUT I intend to pre-empt delete behavior,  and create a backup entry in the history table.
     # The plan is to leave deletion of history tables to the DBA
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='blogposts')
-    author = models.CharField(
-        max_length=100, default='Error Getting Author - Should be User Name')
-    edited_by = models.CharField(max_length=100, blank=True)
     date = models.DateTimeField(default=timezone.now)
     content = models.TextField(blank=True)
     tags = models.CharField(max_length=150,  blank=True)

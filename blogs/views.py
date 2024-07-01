@@ -34,8 +34,9 @@ def blogs(request, is_admin):
 def post(request, post_id, is_admin):
     blog_post = get_object_or_404(BlogPost, pk=post_id)
 
-    author_date = get_create_date(blog_post.id)
+    author_info = get_create_info(blog_post)
     edit_info = get_last_edit_info(blog_post)
+    author, create_date, is_create_missing = author_info
 
     if edit_info:
         edited_date, edited_by = edit_info
@@ -52,12 +53,14 @@ def post(request, post_id, is_admin):
     return render(request, 'post.html', {
         'posts': posts,
         'post': blog_post,
-        'author': blog_post.author,
-        'blog_edited_date': edited_date,
+        'is_create_missing': is_create_missing,
+        'author': author,
+        'blog_author_date': create_date,
         'edited_by': edited_by,
+        'blog_edited_date': edited_date,
         'page': page,
         'is_admin': is_admin,  # Assuming you have authentication
-        'blog_author_date': author_date,
+
     })
 
 
@@ -73,17 +76,14 @@ def create_post(request, is_admin, groups):
             blog_post.method = 'CREATE'
             blog_post.user = request.user
             # date will be auto-filled by data model with "now"
-            qs = request.user.groups.all()
-            blog_post.roles = list(qs.values('pk', 'name'))
+            query_groups = request.user.groups.all()
+            blog_post.roles = list(query_groups.values('pk', 'name'))
             blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
             return render(request, 'create_blog_post.html', {'form': form, 'is_admin': is_admin})
     else:
-
-        prefill_data = {'author': request.user.name}
-        remove_fields = ['edited_by']
-        form = BlogForm(remove_fields=remove_fields, prefill_data=prefill_data)
+        form = BlogForm()
 
         form_rendered_for_create = form.render("configure_blog_form.html")
         return render(request, 'create_blog_post.html', {'form': form_rendered_for_create, 'is_admin': is_admin})
@@ -102,16 +102,15 @@ def edit_post(request, post_id, is_admin, groups):
             blog_post.method = 'EDIT'
             blog_post.user = request.user
             blog_post.date = timezone.now()
-            qs = request.user.groups.all()
-            blog_post.roles = list(qs.values('pk', 'name'))
+            query_groups = request.user.groups.all()
+            blog_post.roles = list(query_groups.values('pk', 'name'))
             blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
             return render(request, 'edit_blog_post.html', {'form': form, 'is_admin': is_admin, 'post_id': post_id})
     else:
         blog_post = get_object_or_404(BlogPost, id=post_id)
-        prefill_data = {'edited_by': request.user.name}
-        form = BlogForm(prefill_data=prefill_data,  instance=blog_post)
+        form = BlogForm(instance=blog_post)
 
         form_rendered_for_edit = form.render(
             "configure_blog_form.html")
@@ -126,7 +125,8 @@ def delete_post(request, post_id, is_admin, groups):
     blog_post.method = 'DELETE'
     blog_post.user = request.user
     blog_post.date = timezone.now()
-    blog_post.roles = groups
+    query_groups = request.user.groups.all()
+    blog_post.roles = list(query_groups.values('pk', 'name'))
     with transaction.atomic():
         # specify this is an deleted record
         # both save and delete must execute or fail together,
@@ -140,24 +140,44 @@ def delete_post(request, post_id, is_admin, groups):
 
 
 # utility methods
-def get_create_date(post_id):
-    blog_post_history = BlogHistory.objects.filter(post_id=post_id)
-    # The oldest date should be the date of blog post creation
-    if blog_post_history:
-        # could be many dates in Blog History table for a given
-        # post_id if there are many edits
-        oldest_date = blog_post_history.order_by("date").first().date
+def get_create_info(blog_post):
+    author = ''
+    oldest_date = ''
+    is_create_missing = False
+    if blog_post.method == 'CREATE':
+        author = blog_post.user.name
+        oldest_date = blog_post.date
+
     else:
-        # This should only have one post, so first is
-        newly_created_post = BlogPost.objects.get(id=post_id)
-        oldest_date = newly_created_post.date
-    return oldest_date
+        blog_post_history = BlogHistory.objects.filter(
+            post_id=blog_post.id,  method="CREATE")
+        # there should be only one value.
+        # we should expect an error to be thrown here if there is no CREATE in blog history
+        try:
+            oldest_post = blog_post_history.first()
+            author = oldest_post.user.name
+            oldest_date = oldest_post.date
+        except BlogHistory.DoesNotExist:
+            is_create_missing = True
+
+    return (author, oldest_date, is_create_missing)
 
 
 def get_last_edit_info(blog_post):
-    # I suppose it's up for debate if this should be method == edit or
-    # method != CREATE (to account for some scenarios where something unusual occured,
-    # such as restoringa  deleted row from history,  whose latest record will have method  value 'DELETE")
     if blog_post.method != 'CREATE':
-        return (blog_post.date, blog_post.user.name)
+
+        if blog_post.method != 'EDIT':
+            # Last edit information is already in blog_post
+            last_edit = blog_post
+        elif blog_post.method == 'DELETE':
+            # Likely means A DBA restored a deleted row from history,  with the latest history record,
+            # which would have method value: 'DELETE'.
+            # (It's preferable to get the first history row with 'EDIT' instead)
+            # So, get the first Blog history row with method = 'EDIT'
+            blog_post_history = BlogHistory.objects.filter(
+                post_id=post_id, method="EDIT")
+            last_edit = blog_post_history.order_by("-date").first()
+
+        return (last_edit.date, last_edit.user.name)
+    # If row was just created,  no edit information is available.
     return None
