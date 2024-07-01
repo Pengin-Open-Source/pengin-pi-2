@@ -19,10 +19,11 @@ OrderProductFormSet = forms.inlineformset_factory(
 
 
 class OrderForm(forms.ModelForm):
+    order_date = forms.DateField(widget=forms.SelectDateWidget)
 
     class Meta:
         model = Order
-        fields = ['order_date', 'customer', 'products',]
+        fields = ['order_date', 'customer',]
 
 
 class CustomerForm(forms.ModelForm):
