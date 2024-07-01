@@ -34,7 +34,7 @@ class Customer(models.Model):
 class ShippingAddress(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     address1 = models.CharField(max_length=50)
-    address2 = models.CharField(max_length=50)
+    address2 = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50)
     zipcode = models.CharField(max_length=50)
     state = models.CharField(max_length=50)
