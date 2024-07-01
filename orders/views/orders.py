@@ -98,16 +98,14 @@ class CreateOrder(View):
             new_order = form.save(commit=False)
             new_order.author = request.user
             new_order.save()
-            formset.save()
-
-            # # Create OrdersList objects with products and quantities for each
-            # product_ids = request.POST.getlist('product')
-            # quantities = request.POST.getlist('quantity')
-            # orders_list = [
-            #     OrderProduct(order=new_order, product=product_id, quantity=quantity)
-            #     for product_id, quantity in zip(product_ids, quantities)
-            # ]
-            # OrderProduct.objects.bulk_create(orders_list)
+            order_products = formset.save(commit=False)
+            for order_product in order_products:
+                if order_product.quantity == 0:
+                    order_product.delete()
+                else:
+                    order_product.order = new_order
+                order_product.save()
+            formset.save_m2m()
 
             return redirect('orders:detail-order', order_id=new_order.id)
 
@@ -149,23 +147,17 @@ class EditOrder(View):
         formset = OrderProductFormSet(request.POST, instance=order)
 
         if form.is_valid() and formset.is_valid():
-            # Update the author of the order?
-            # order = form.save(commit=False)
-            # order.author = request.user
             order = form.save()
-            formset.save()
-
-            # # Clear the existing OrdersList entries
-            # OrderProduct.objects.filter(order=order).delete()
-            #
-            # # Create new OrdersList objects with updated products and quantities
-            # product_ids = request.POST.getlist('product')
-            # quantities = request.POST.getlist('quantity')
-            # orders_list = [
-            #     OrderProduct(order=order, product=product_id, quantity=quantity)
-            #     for product_id, quantity in zip(product_ids, quantities)
-            # ]
-            # OrderProduct.objects.bulk_create(orders_list)
+            order_products = formset.save(commit=False)
+            for deleted_order in formset.deleted_objects:
+                deleted_order.delete()
+            for order_product in order_products:
+                if order_product.quantity == 0:
+                    order_product.delete()
+                else:
+                    order_product.order = order
+                    order_product.save()
+            formset.save_m2m()
 
             return redirect('orders:detail-order', order_id=order.id)
 
