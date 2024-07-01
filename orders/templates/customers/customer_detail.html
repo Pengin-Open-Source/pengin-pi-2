@@ -17,6 +17,25 @@
 {#        <p><a href="">See company (link not functional, need a company view)</a></p>#}
 {#    {% endif %}#}
 
+    <h3>Shipping Address</h3>
+    {% if customer.shippingaddress_set %}
+        {% for address in customer.shippingaddress_set.all %}
+            <div>
+                <span>{{ address }}</span>
+                <span><a href="{% url "customers:edit-address" customer_id=customer.id address_id=address.id %}">
+                    <button class="primary-button" type="button">Edit</button>
+                </a></span>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No shipping address on file</p>
+    {% endif %}
+    <div>
+        <a href="{% url "customers:create-address" customer_id=customer.id %}">
+            <button class="primary-button" type="button">Add Shipping Address</button>
+        </a>
+    </div>
+
     <h3>Orders</h3>
     {% for order in customer.order_set.all %}
         <p><a href="{% url "orders:detail-order" order.id %}">{{ order.order_date }}</a></p>
