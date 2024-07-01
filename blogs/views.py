@@ -35,7 +35,7 @@ def post(request, post_id, is_admin):
     blog_post = get_object_or_404(BlogPost, pk=post_id)
 
     author_date = get_create_date(blog_post.id)
-    edit_info = get_last_edit_info(blog_post.id)
+    edit_info = get_last_edit_info(blog_post)
 
     if edit_info:
         edited_date, edited_by = edit_info
@@ -100,15 +100,10 @@ def edit_post(request, post_id, is_admin, groups):
             blog_post = form.save(commit=False)
             # specify this is an edited record
             blog_post.method = 'EDIT'
-            user = User.objects.get(pk=request.user.id)
-            print(type(user))
-            blog_post.user = user  # Assign the complete User object
-            # blog_post.user = User.objects.get(pk=request.user.id)
+            blog_post.user = request.user
             blog_post.date = timezone.now()
             qs = request.user.groups.all()
             blog_post.roles = list(qs.values('pk', 'name'))
-            print("blog post user is: ")
-            print(blog_post.user)
             blog_post.save()
             return redirect('blogs:blog_post', post_id=blog_post.id)
         else:
@@ -159,11 +154,10 @@ def get_create_date(post_id):
     return oldest_date
 
 
-def get_last_edit_info(post_id):
-    blog_post_history = BlogHistory.objects.filter(
-        post_id=post_id, method="EDIT")
-    # The newest date should be the date of the last blog post edit
-    if blog_post_history:
-        last_edit = blog_post_history.order_by("-date").first()
-        return (last_edit.date, last_edit.user)
+def get_last_edit_info(blog_post):
+    # I suppose it's up for debate if this should be method == edit or
+    # method != CREATE (to account for some scenarios where something unusual occured,
+    # such as restoringa  deleted row from history,  whose latest record will have method  value 'DELETE")
+    if blog_post.method != 'CREATE':
+        return (blog_post.date, blog_post.user)
     return None
