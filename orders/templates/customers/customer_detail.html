@@ -9,11 +9,16 @@
 
 {% block pageContent %}
     <p>{{ customer.name }}</p>
-    {% if customer.user %}
+{#    {% if customer.user %}#}
         {# href="{{ url 'main:detail-user' customer.user.id }}" #}
-        <p><a href="">See user</a></p>
-    {% elif customer.company %}
+{#        <p><a href="">See user (link not functional, need a user view)</a></p>#}
+{#    {% elif customer.company %}#}
         {# href="{{ url 'companies:detail-company' customer.company.id }}" #}
-        <p><a href="">See company</a></p>
-    {% endif %}
+{#        <p><a href="">See company (link not functional, need a company view)</a></p>#}
+{#    {% endif %}#}
+
+    <h3>Orders</h3>
+    {% for order in customer.order_set.all %}
+        <p><a href="{% url "orders:detail-order" order.id %}">{{ order.order_date }}</a></p>
+    {% endfor %}
 {% endblock %}
