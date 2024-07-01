@@ -2,6 +2,23 @@
 
 {% block pageContent %}
     <form class="form" method="POST">
+        {% if form.errors %}
+            <div class="alert alert-danger">
+            {% for error in form.errors %}
+                <ul>
+                    <li>{{ error}}</li>
+                </ul>
+            {% endfor %}            </div>
+        {% endif %}
+        {% if formset.errors %}
+            <div class="alert alert-danger">
+            {% for error in formset.errors %}
+                <ul>
+                    <li>{{ error}}</li>
+                </ul>
+            {% endfor %}
+            </div>
+        {% endif %}
         {% csrf_token %}
         <div class="order-edit-container">
             <div class="form-section">
@@ -16,39 +33,40 @@
                 {{ form.is_cancelled.label_tag }}
                 {{ form.is_cancelled }}
             </div>
-            <div>
-                {{ form.products.label_tag }}
-                {{ form.products }}
-            </div>
 
-            <h3>Products</h3>
-            <div>
-                {{ formset.management_form }}
-                {% for form in formset %}
-                    <div class="form-row">
-                        {{ form.product.label_tag }} {{ form.product }}
-                        {{ form.quantity.label_tag }} {{ form.quantity }}
-                        {% if form.instance.pk %}
-                            <div>
-                                <label for="{{ form.prefix }}-DELETE">Delete:</label>
-                                {{ form.DELETE }}
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-            </div>
+        </div>
+        <h3>Products</h3>
+        <div id="order-products">
+            {{ formset.management_form }}
+            {% for form in formset %}
+                <div class="form-row">
+                    {{ form.id }}
+                    {{ form.product.label_tag }} {{ form.product }}
+                    {{ form.quantity.label_tag }} {{ form.quantity }}
+                    {% if form.instance.pk %}
+                        <label for="{{ form.prefix }}-DELETE">Delete:</label>
+                        {{ form.DELETE }}
+                    {% endif %}
+                </div>
+            {% endfor %}
         </div>
 
-      {% if action == "update" %}
+    <div>
+        <button type="button" class="primary-button" id="add-more-products">Add more products</button>
+    </div>
+
+    {% if action == "update" %}
         <a href="{% url "orders:detail-order" order.id %}">
-          <button class="primary-button" type="button">Cancel</button>
+            <button class="primary-button" type="button">Cancel</button>
         </a>
-        <button class="primary-button" type="submit">Save changes</button>
-      {% else %}
+            <button class="primary-button" type="submit">Save changes</button>
+    {% else %}
         <a href="{% url "orders:list-orders" %}">
-          <button class="primary-button" type="button">Cancel</button>
+            <button class="primary-button" type="button">Cancel</button>
         </a>
         <button class="primary-button" type="submit">Add Order</button>
-      {% endif %}
-  </form>
+    {% endif %}
+
+    </form>
+
 {% endblock %}
