@@ -1,15 +1,15 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  {# Load static files #}
-{% load macros %}  {# Import pagination macro #}
 
 {% block pageDropDowns %}
-  <a class="primary-button" href="{% url 'edit_company_members' company_id=company.id %}">Edit Company</a>
+  <a href="{% url 'display_company_info' company_id=company.id %}">Company Home</a>
 {% endblock %}
 
 {% block pageContent %}
   <div class="content-section">
     <h1 class="profile-title">Edit Company Members</h1>
     <form class="form" method="POST" action="{% url 'edit_company_members_post' company_id=company.id %}">
+      {% csrf_token %}
       <input type="hidden" name="page-number" value="{{ page }}"/>
       <div class="member-grid">
         {% for user in users %}
@@ -22,8 +22,5 @@
       </div>
       <button class="primary-button" type="submit">Save</button>
     </form>
-    {% if users.has_other_pages %}
-      {% include "paginate.html" %}
-    {% endif %}
   </div>
 {% endblock %}

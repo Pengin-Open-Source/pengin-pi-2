@@ -1,10 +1,10 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  {# Load static files #}
-{% load macros %}
 
 {% block pageDropDowns %}
-    <a href="{% url 'edit_company_info_post' company_id=company.id %}">Edit Company</a>
     <a href="{% url 'display_company_members' company_id=company.id %}">View Members</a>
+    <a href="{% url 'edit_company_info_post' company_id=company.id %}">Edit Company</a>
+    <a href="{% url 'edit_company_members' company_id=company.id %}">Edit Members</a>
 {% endblock %}
 
 {% block pageContent %}
@@ -56,14 +56,10 @@
             </tr>
             {% for member in members %}
                 <tr>
-                    <td>{{ member.name }}</td>
-                    <td>{{ member.email }}</td>
+                    <td>{{ member.user.name }}</td>
+                    <td>{{ member.user.email }}</td>
                 </tr>
             {% endfor %}
         </table>
-
-        {% if members.has_other_pages %}
-            {% include "paginate.html" %}
-        {% endif %}
     </div>
 {% endblock %}

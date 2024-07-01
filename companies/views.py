@@ -15,7 +15,6 @@ def display_companies_home(request):
         return handle_user_view(request)
     
 
-
 def handle_admin_view(request):
     if request.method == "POST":
         page = int(request.POST.get('page_number', 1))
@@ -37,25 +36,12 @@ def handle_user_view(request):
 
 @login_required
 def display_company_info(request, company_id):
-    """display company info method
-    This method handles the company/company_id route and returns a company information view.
-
-    Required Inputs:
-        company_id: company UUID4 string
-
-    Outputs:
-        render_template -> company_info.html
-    Output Arguments:
-        company_info.html, company query, paginated company members
-    """
-
-    # Get company from database
     company = get_object_or_404(Company, id=company_id)
 
-    # If POST, get page number from form button
+    # Get page number from form button if POST, else default to 1
     page = request.POST.get('page_number', 1) if request.method == "POST" else 1
 
-    # Custom paginate method to join two tables and paginate results. Gets users where members of company_id
+    # Get members of the company and paginate
     members = CompanyMembers.objects.filter(company_id=company_id).select_related('user')
     paginator = Paginator(members, 10)  # 10 members per page
     paginated_members = paginator.get_page(page)
@@ -68,7 +54,6 @@ def display_company_info(request, company_id):
         'members': paginated_members,
         'is_admin': is_admin
     })
-
 
 @login_required
 def create_company(request):
@@ -163,7 +148,7 @@ def edit_company_members_post(request, company_id):
             user = get_object_or_404(User, id=value)
             new_member = CompanyMembers.objects.create(company_id=company.id, user_id=user.id)
 
-        return redirect('edit_company_members', company_id=company.id)
+        return redirect('edit_members', company_id=company.id)
 
 
 # companies list view

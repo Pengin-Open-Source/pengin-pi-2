@@ -1,6 +1,5 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  {# Load static files #}
-{% load macros %}
 
 {% block pageContent %}
   <p>Please click on a link below to view a specific company's information.</p>
@@ -9,7 +8,4 @@
       <li><a href="{% url 'display_company_info' company_id=company.id %}">{{ company.name }}</a></li>
     {% endfor %}
   </ul>
-  {% if companies.has_other_pages %}
-    {% include "paginate.html" %}
-  {% endif %}
 {% endblock %}

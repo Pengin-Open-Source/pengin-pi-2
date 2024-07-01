@@ -1,7 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageDropDowns %}
-  <a href="{% url 'edit_company_members' company_id=company.id %}">Edit Members</a>
+  <a href="{% url 'display_company_info' company_id=company.id %}">Company Home</a>
 {% endblock %}
 
 {% block pageContent %}
