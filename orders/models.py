@@ -14,6 +14,9 @@ class Customer(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=50, null=False, blank=False)
 
+    def __str__(self):
+        return self.name
+
     def clean(self):
         if self.user and self.company:
             raise ValidationError('Customer cannot have both user and company relationships.')
@@ -58,6 +61,9 @@ class Order(models.Model):
     is_cancelled = models.BooleanField(default=False)
     author = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
     products = models.ManyToManyField(Product, through='OrderProduct')
+
+    def __str__(self):
+        return f"{self.customer.name} Order, {self.order_date.strftime('%b %d, %Y')}"
 
 
 class OrderProduct(models.Model):
