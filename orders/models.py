@@ -64,9 +64,14 @@ class Order(models.Model):
     is_cancelled = models.BooleanField(default=False)
     author = models.ForeignKey(User, on_delete=models.CASCADE, null=False)
     products = models.ManyToManyField(Product, through='OrderProduct')
+    shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.customer.name} Order, {self.order_date.strftime('%b %d, %Y')}"
+
+    def clean(self):
+        if self.shipping_address and self.shipping_address.customer != self.customer:
+            raise ValidationError('Shipping address must belong to the customer.')
 
 
 class OrderProduct(models.Model):
