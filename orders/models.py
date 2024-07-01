@@ -42,6 +42,9 @@ class ShippingAddress(models.Model):
     phone = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=50, unique=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
+    
+    def __str__(self):
+        return f"{self.address1}, {self.city}, {self.state}, {self.country}"
 
 
 class Contract(models.Model):
