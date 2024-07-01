@@ -11,7 +11,15 @@
 {% block pageContent %}
     <p>{{ order.order_date|date:"M d, Y" }}</p>
     <div class="commonmark"><a href="{% url "customers:detail-customer" order.customer.id %}">{{ order.customer.name }}</a></div>
-    <h2>Products</h2>
+    <h3>Shipping Address</h3>
+        <div>
+            {% if order.shipping_address %}
+                <span>{{ address }}</span>
+            {% else %}
+                <span>No shipping address on file</span>
+            {% endif %}
+        </div>
+    <h3>Products</h3>
     <table>
         <thead>
             <tr>
