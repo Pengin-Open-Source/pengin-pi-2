@@ -37,7 +37,10 @@ def post(request, post_id, is_admin):
     author_info = get_create_info(blog_post)
     edit_info = get_last_edit_info(blog_post)
     author_id, create_date, is_create_missing = author_info
-    author = User.objects.get(id=author_id).name
+    if author_id != 'NOT FOUND':
+        author = User.objects.get(id=author_id).name
+    else:
+        author = 'NOT FOUND'
 
     if edit_info:
         edited_date, edited_by_id = edit_info
@@ -154,13 +157,18 @@ def get_create_info(blog_post):
         blog_post_history = BlogHistory.objects.filter(
             post_id=blog_post.id,  method="CREATE")
         # there should be only one value.
-        # we should expect an error to be thrown here if there is no CREATE in blog history
-        try:
-            oldest_post = blog_post_history.first()
+        # we will set a flag if there is no row with method 'CREATE'  in blog history
+        oldest_post = blog_post_history.first()
+        if oldest_post:
             author = oldest_post.user
             oldest_date = oldest_post.date
-        except BlogHistory.DoesNotExist:
+        else:
+            # DBAs TAKE NOTE: If a DBA archives or deleted some older blog history
+            # then the row with the blog creation date/original post author could have
+            # been deleted and will not be available now!
             is_create_missing = True
+            author = 'NOT FOUND'
+            oldest_date = 'DATE NOT FOUND'
 
     return (author, oldest_date, is_create_missing)
 
