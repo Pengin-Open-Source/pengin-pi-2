@@ -31,7 +31,7 @@ def blogs(request, is_admin):
 
 
 @is_admin_provider
-def post(request, post_id, is_admin,  is_delete_unsuccessful=False):
+def post(request, post_id, is_admin):
     blog_post = get_object_or_404(BlogPost, pk=post_id)
 
     author_info = get_create_info(blog_post)
@@ -132,24 +132,15 @@ def delete_post(request, post_id, is_admin, groups):
     blog_post.date = timezone.now()
     query_groups = request.user.groups.all()
     blog_post.roles = list(query_groups.values('pk', 'name'))
-    is_delete_unsuccessful = False
-    try:
-        with transaction.atomic():
-            # specify this is an deleted record
-            # both save and delete must execute or fail together,
-            # since we are saving changes to history first.
-            # this keeps track of the time of deletion and
-            # the user who deleted the record
-            blog_post.save()
-            blog_post.delete()
-            # if successful return to main blog post
-    except Exception as e:
-        is_delete_unsuccessful = True
-        raise e
-
-    if is_delete_unsuccessful:
-        return redirect('blogs:blog_post',  post_id=blog_post.id,  is_delete_unsuccessful=is_delete_unsuccessful)
-
+    with transaction.atomic():
+        # specify this is an deleted record
+        # both save and delete must execute or fail together,
+        # since we are saving changes to history first.
+        # this keeps track of the time of deletion and
+        # the user who deleted the record
+        blog_post.save()
+        blog_post.delete()
+        # if successful return to main blog post
     return redirect('blogs:blogs')
 
 
