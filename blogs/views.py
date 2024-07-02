@@ -4,7 +4,7 @@ from main.models.users import User
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
 from django.shortcuts import render, redirect, get_object_or_404
-from util.security.auth_tools import is_admin_provider, user_group_provider
+from util.security.auth_tools import is_admin_provider, user_group_provider, is_admin_required
 from django.contrib.auth.decorators import login_required
 from blogs.forms import BlogForm
 from django.utils import timezone
@@ -72,6 +72,7 @@ def post(request, post_id, is_admin):
 @login_required
 @is_admin_provider
 @user_group_provider
+@is_admin_required
 def create_post(request, is_admin, groups):
     if request.method == 'POST':
         form = BlogForm(request.POST)
@@ -97,6 +98,7 @@ def create_post(request, is_admin, groups):
 @login_required
 @is_admin_provider
 @user_group_provider
+@is_admin_required
 def edit_post(request, post_id, is_admin, groups):
     if request.method == 'POST':
         blog_post = get_object_or_404(BlogPost, id=post_id)
@@ -125,6 +127,7 @@ def edit_post(request, post_id, is_admin, groups):
 @login_required
 @is_admin_provider
 @user_group_provider
+@is_admin_required
 def delete_post(request, post_id, is_admin, groups):
     blog_post = get_object_or_404(BlogPost, id=post_id)
     blog_post.method = 'DELETE'
