@@ -4,7 +4,7 @@
 {% block pageDropDowns %}
   {% if is_admin %}
     <a href="/jobs/{{ job.id }}/edit">Edit Job</a>
-    <form method="post" action="/jobs/{{ job.id }}/delete">
+    <form method="post" action="/jobs/{{ job.id }}/delete/">
       {% csrf_token %}
       <button type="submit">Delete</button>
     </form>

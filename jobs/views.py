@@ -1,4 +1,4 @@
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from .models import Job
 from util.paginate import paginate  # Assuming you have a pagination utility
 # Define the blog post view
@@ -75,7 +75,7 @@ def edit_job(request, job_id):
         form = JobForm(request.POST, instance=job)
         if form.is_valid():
             form.save()
-            return redirect('job_detail', job_id=job.id)  # Redirect to job detail view after edit
+            return redirect('job', job_id=job.id)  # Redirect to job detail view after edit
     else:
         form = JobForm(instance=job)
 
@@ -88,13 +88,17 @@ def edit_job(request, job_id):
 
 @login_required
 @permission_required('yourapp.delete_job', raise_exception=True)
-def delete_job(request, job_id):
+def delete_job(request: HttpRequest, job_id: uuid.UUID) -> HttpResponse:
     job = get_object_or_404(Job, id=job_id)
     
     if request.method == 'POST':
-        job.delete()
-        return redirect('job_list')  # Redirect to job list view after deletion
-
+        if request.POST.get('confirm_delete'):
+            job.delete()
+            return redirect('job_list')  # Redirect to job list view after deletion
+        else:
+            # Handle case where confirmation checkbox is not checked
+            return render(request, 'job_confirm_delete.html', {'job': job})
+    
     context = {
         'job': job,
     }
