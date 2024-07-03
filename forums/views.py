@@ -7,14 +7,17 @@ from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
 
 
 class ForumsListView(LoginRequiredMixin, ListView):
-    model = Thread
-    template_name = 'threads.html'
-    context_object_name = 'threads'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['is_admin'] = self.request.user.is_staff
-        return context
+    queryset = Thread.objects.all()
+    template_name = 'threads.html'
+    # model = Thread
+
+    # context_object_name = 'threads'
+
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     context['is_admin'] = self.request.user.is_staff
+    #     return context
 
 
 class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):

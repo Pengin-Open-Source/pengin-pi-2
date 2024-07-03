@@ -8,7 +8,7 @@
 {% block tableContent %}
   {% for post in posts %}
   <tr><td class="post-container">
-    <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|e }}</a>
+    <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|escape }}</a>
     {% if is_admin %}
     <form method="post" action="{% url 'delete_post' post.id %}">
       {% csrf_token %}
