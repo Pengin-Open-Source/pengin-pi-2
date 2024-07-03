@@ -2,12 +2,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .models import Thread, ForumPost, ForumComment, ThreadRole
-from .forms import ThreadForm, ForumPostForm, ForumCommentForm
+from forums.models import Thread, ForumPost, ForumComment, ThreadRole
+from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
+
 
 class ForumsListView(LoginRequiredMixin, ListView):
     model = Thread
-    template_name = 'forums/threads.html'
+    template_name = 'threads.html'
     context_object_name = 'threads'
 
     def get_context_data(self, **kwargs):
@@ -15,10 +16,11 @@ class ForumsListView(LoginRequiredMixin, ListView):
         context['is_admin'] = self.request.user.is_staff
         return context
 
+
 class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Thread
     form_class = ThreadForm
-    template_name = 'forums/create_thread.html'
+    template_name = 'create_thread.html'
     success_url = reverse_lazy('forums')
 
     def test_func(self):
@@ -36,9 +38,10 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         context['ThreadRoles'] = ThreadRole.objects.all()
         return context
 
+
 class ThreadDetailView(LoginRequiredMixin, DetailView):
     model = Thread
-    template_name = 'forums/thread.html'
+    template_name = 'thread.html'
     context_object_name = 'thread'
 
     def get_context_data(self, **kwargs):
@@ -47,22 +50,25 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
         context['is_admin'] = self.request.user.is_staff
         return context
 
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = ForumPost
     form_class = ForumPostForm
-    template_name = 'forums/create_post.html'
+    template_name = 'create_post.html'
 
     def form_valid(self, form):
-        form.instance.thread = get_object_or_404(Thread, id=self.kwargs['thread_id'])
+        form.instance.thread = get_object_or_404(
+            Thread, id=self.kwargs['thread_id'])
         form.instance.author = self.request.user
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('thread', kwargs={'pk': self.kwargs['thread_id']})
 
+
 class PostDetailView(LoginRequiredMixin, DetailView):
     model = ForumPost
-    template_name = 'forums/post.html'
+    template_name = 'post.html'
     context_object_name = 'post'
 
     def get_context_data(self, **kwargs):
@@ -82,10 +88,11 @@ class PostDetailView(LoginRequiredMixin, DetailView):
             return redirect('post', thread_id=self.object.thread.id, pk=self.object.id)
         return self.render_to_response(self.get_context_data(form=form))
 
+
 class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = ForumPost
     form_class = ForumPostForm
-    template_name = 'forums/edit_post.html'
+    template_name = 'edit_post.html'
 
     def get_success_url(self):
         return reverse_lazy('thread', kwargs={'pk': self.object.thread.id})
@@ -94,17 +101,19 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         post = self.get_object()
         return self.request.user == post.author or self.request.user.is_staff
 
+
 class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Thread
-    template_name = 'forums/delete_thread.html'
+    template_name = 'delete_thread.html'
     success_url = reverse_lazy('forums')
 
     def test_func(self):
         return self.request.user.is_staff
 
+
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = ForumPost
-    template_name = 'forums/delete_post.html'
+    template_name = 'delete_post.html'
 
     def get_success_url(self):
         return reverse_lazy('thread', kwargs={'pk': self.object.thread.id})
@@ -113,10 +122,11 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         post = self.get_object()
         return self.request.user == post.author or self.request.user.is_staff
 
+
 class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = ForumComment
     form_class = ForumCommentForm
-    template_name = 'forums/edit_comment.html'
+    template_name = 'edit_comment.html'
 
     def get_success_url(self):
         return reverse_lazy('post', kwargs={'thread_id': self.object.post.thread.id, 'pk': self.object.post.id})
@@ -125,9 +135,10 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         comment = self.get_object()
         return self.request.user == comment.author or self.request.user.is_staff
 
+
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = ForumComment
-    template_name = 'forums/delete_comment.html'
+    template_name = 'delete_comment.html'
 
     def get_success_url(self):
         return reverse_lazy('post', kwargs={'thread_id': self.object.post.thread.id, 'pk': self.object.post.id})
