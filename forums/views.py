@@ -10,14 +10,15 @@ class ForumsListView(LoginRequiredMixin, ListView):
 
     queryset = Thread.objects.all()
     template_name = 'threads.html'
-    # model = Thread
+    model = Thread
 
-    # context_object_name = 'threads'
+    context_object_name = 'threads'
 
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-    #     context['is_admin'] = self.request.user.is_staff
-    #     return context
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_admin'] = self.request.user.is_staff
+        context['primary_title'] = 'Forums'
+        return context
 
 
 class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
