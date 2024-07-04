@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from forums.models import Thread, ForumPost, ForumComment, ThreadRole
@@ -32,15 +34,13 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        role_id = self.request.POST.get('ThreadRole')
-        role = get_object_or_404(ThreadRole, id=role_id)
-        ThreadRole.objects.create(thread=self.object, group=role.group)
+        role = self.request.POST.get('role')
+        ThreadRole.objects.create(thread=self.object, group=role.id)
         return response
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['ThreadRoles'] = ThreadRole.objects.all()
-        return context
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, roles=request.user.groups)
 
 
 class ThreadDetailView(LoginRequiredMixin, DetailView):

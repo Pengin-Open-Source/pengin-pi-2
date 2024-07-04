@@ -1,14 +1,13 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import Group
+from main.models.users import User
 import uuid
 
 
 class Thread(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    users = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, through='UserThreadRole', related_name='threads')
     groups = models.ManyToManyField(
         Group, through='ThreadRole', related_name='threads')
 
@@ -25,7 +24,7 @@ class ForumPost(models.Model):
     thread = models.ForeignKey(
         Thread, on_delete=models.CASCADE, related_name='posts')
     author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
+        User, on_delete=models.CASCADE, related_name='posts')
 
     def __str__(self):
         return str(self.title)
@@ -38,7 +37,7 @@ class ForumComment(models.Model):
     post = models.ForeignKey(
         ForumPost, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
+        User, on_delete=models.CASCADE, related_name='comments')
 
     def __str__(self):
         return str(self.content)[:20]
@@ -52,13 +51,3 @@ class ThreadRole(models.Model):
 
     def __str__(self):
         return str(self.name)
-
-
-class UserThreadRole(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
-    thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f'{str(self.user.email)} - {str(self.thread.name)}'
