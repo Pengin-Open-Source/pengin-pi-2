@@ -60,6 +60,7 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['posts'] = self.object.posts.all()
         context['is_admin'] = self.request.user.is_staff
+        context['primary_title'] = self.object.name
         return context
 
 
