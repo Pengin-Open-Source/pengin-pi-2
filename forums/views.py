@@ -32,15 +32,23 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def test_func(self):
         return self.request.user.is_staff
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        role = self.request.POST.get('role')
-        ThreadRole.objects.create(thread=self.object, group=role.id)
-        return response
-
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name, roles=request.user.groups)
+        query_groups = request.user.groups.all()
+        roles = list(query_groups.values('id', 'name'))
+        form = ThreadForm()
+        context = {'roles': roles, 'form': form}
+        return render(request, self.template_name,  context)
+
+    @method_decorator(login_required)
+    def post(self, request):
+        form = ThreadForm(request.POST)
+        if form.is_valid():
+            role = self.request.POST.get('role')
+            thread = form.save()
+            selected_role = request.user.groups.get(pk=role)
+            ThreadRole.objects.create(thread=thread, group=selected_role)
+            return render(request, 'threads.html')
 
 
 class ThreadDetailView(LoginRequiredMixin, DetailView):
