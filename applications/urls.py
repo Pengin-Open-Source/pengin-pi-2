@@ -10,5 +10,5 @@ urlpatterns = [
     #path('<uuid:job_id>/<uuid:application_id>/reject', views.reject_applicant, name='reject_applicant'),
     #path('<uuid:job_id>/<uuid:application_id>/delete', views.delete_applicant, name='delete_applicant'),
     #path('my-applications', views.my_applications, name='my_applications'),
-    #path('<uuid:job_id>/job-applications', views.job_applications, name='job_applications'),
+    path('<uuid:job_id>/job-applications', views.job_applications, name='job_applications'),
 ]

@@ -1,5 +1,8 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "layout/fullPageScroll.html" %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+{% block pageContent %}
   <h2>Job Applications for {{ job.job_title }}</h2>
   <div class="title-underline">
     <a class="text-button" href="{% url 'job_applications' job_id=job.id %}">all</a>|
@@ -27,5 +30,4 @@
       {% endfor %}
     </tbody>
   </table>
-  {{ pagination.render_pagination(applications.items, "") }}
 {% endblock %}

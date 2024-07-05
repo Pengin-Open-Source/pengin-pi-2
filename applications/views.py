@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Application, StatusCode
+from .models import Application, StatusCode, Job
 from .forms import ApplicationForm
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 
 @login_required
@@ -36,3 +38,33 @@ def create_application(request, job_id):
 @login_required
 def application_success(request, job_id, application_id):
     return render(request, 'application_success.html', {'job_id': job_id, 'application_id': application_id})
+
+
+@login_required
+def job_applications(request, job_id):
+    job = get_object_or_404(Job, id=job_id)
+    status = request.GET.get('status')
+    status_codes = StatusCode.objects.all()
+
+    page = request.GET.get('page', 1)
+
+    if status:
+        applications = Application.objects.filter(
+            status_code__code=status,
+            job=job
+        )
+    else:
+        applications = Application.objects.filter(
+            ~Q(status_code__code='deleted'),
+            job=job
+        )
+
+    paginator = Paginator(applications, 1)
+    paginated_applications = paginator.get_page(page)
+
+    return render(request, 'job_applications.html', {
+        'job': job,
+        'applications': paginated_applications,
+        'status_codes': status_codes,
+        'primary_title': 'Job Applications',
+    })
