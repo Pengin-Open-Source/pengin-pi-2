@@ -1,7 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageContent %}
-    <form class="form" method="POST" action="{% url 'create_post' thread_id=thread_id %}">
+    <form class="form" method="POST" action="{% url 'create_post' thread_id=thread.id %}">
         {% csrf_token %}
         {{ form.as_p }}
         <button class="primary-button" type="submit">Post</button>

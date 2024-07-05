@@ -1,11 +1,12 @@
 {% extends "layout/alternating_color_table.html" %}
-{% import "macros/forum_tickets/comment_form.html" as comment_form %}
-{% import "macros/forum_tickets/comments_render.html" as comments_render %}
-{% import "macros/forum_tickets/post_ticket_content.html" as content %}
+{% comment %} {% load macros %}
+{% loadmacros "macros/forum_tickets/comment_form.html"  %}
+{% loadmacros "macros/forum_tickets/comments_render.html" %}
+{% loadmacros "macros/forum_tickets/post_ticket_content.html" %}  {% endcomment %}
 
 {% block tags %}
   {% if post.tags %}
-    <meta name="keywords" content="{{ post.tags|e }}">
+    <meta name="keywords" content="{{ post.tags|escape }}">
   {% endif %}
 {% endblock %}
 
@@ -20,20 +21,21 @@
 {% endblock %}
 
 {% block beforeTableContent %}
-  {{ content.render_content(post.title, post.author, post.date, post.content) }}
+ {% comment %} {% use_macro render_content post.title post.author post.date post.content %} {% endcomment %}
+ <p>  {{ form.as_p }} </p>
 {% endblock %}
 
 {% block tableContent %}
-  {% for comment in comments %}
+{% comment %}   {% for comment in comments %}
     {{ comments_render.render_comments(
         [comment], comment.author, user, 
         user == comment.author or is_admin, user == comment.author or is_admin, 
         "{% url 'delete_comment' comment.id %}", 
         "{% url 'edit_comment' comment.post.thread.id comment.post.id comment.id %}"
     ) }}
-  {% endfor %}
+  {% endfor %} {% endcomment %}
 {% endblock %}
 
 {% block postTableContent %}
-  {{ comment_form.render_comment_form("post", "{% url 'post' post.thread.id post.id %}") }}
+  {% comment %} {{ comment_form.render_comment_form("post", "{% url 'post' post.thread.id post.id %}") }} {% endcomment %}
 {% endblock %}

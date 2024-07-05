@@ -61,6 +61,7 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
         context['posts'] = self.object.posts.all()
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.name
+
         return context
 
 
@@ -69,29 +70,57 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     form_class = ForumPostForm
     template_name = 'create_post.html'
 
-    def form_valid(self, form):
-        form.instance.thread = get_object_or_404(
-            Thread, id=self.kwargs['thread_id'])
-        form.instance.author = self.request.user
-        return super().form_valid(form)
+    @method_decorator(login_required)
+    def post(self, request, thread_id):
+        form = ForumPostForm(request.POST)
+        if form.is_valid():
+            form.instance.thread = get_object_or_404(
+                Thread, id=thread_id)
+            form.instance.author = self.request.user
+            form.save()
+            # return reverse_lazy('thread', kwargs={'pk': self.kwargs['thread_id']})
+            return render(request, 'threads.html')
 
-    def get_success_url(self):
-        return reverse_lazy('thread', kwargs={'pk': self.kwargs['thread_id']})
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        form = ForumPostForm()
+        thread = get_object_or_404(
+            Thread, id=self.kwargs['thread_id'])
+        context = {'form': form,  'thread': thread}
+        return render(request, self.template_name,  context)
+
+   # def get_success_url(self):
+   #     return reverse_lazy('thread', kwargs={'pk': self.kwargs['thread_id']})
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
     model = ForumPost
     template_name = 'post.html'
     context_object_name = 'post'
+    form_class = ForumPostForm
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['comments'] = self.object.comments.all()
-        context['form'] = ForumCommentForm()
-        context['is_admin'] = self.request.user.is_staff
-        return context
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        form = ForumPostForm()
+        post = get_object_or_404(
+            ForumPost, id=self.kwargs.get('post.id'))
+        context = {'form': form,  'post': post}
+        print(post.id)
+        return render(request, self.template_name,  context)
 
-    def post(self, request, *args, **kwargs):
+    # def get_object(self):
+    #     id_ = self.kwargs.get("post.id")
+    #     return get_object_or_404(ForumPost, id=id_)
+
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     # context['comments'] = self.object.comments.all()
+    #     # context['form'] = ForumCommentForm()
+    #     context['is_admin'] = self.request.user.is_staff
+    #     return context
+
+
+"""     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = ForumCommentForm(request.POST)
         if form.is_valid():
@@ -99,7 +128,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
             form.instance.author = request.user
             form.save()
             return redirect('post', thread_id=self.object.thread.id, pk=self.object.id)
-        return self.render_to_response(self.get_context_data(form=form))
+        return self.render_to_response(self.get_context_data(form=form)) """
 
 
 class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
