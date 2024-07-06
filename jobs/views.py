@@ -19,6 +19,13 @@ def jobs(request: HttpRequest, is_admin):
     else:
         page = 1
 
+    if request.user.is_authenticated:
+        print("auth: yes")
+        user_id = request.user.name
+        print(user_id)
+    else:
+        print("auth: no")
+    
     jobs_paginated = paginate(Job.objects.all, page=page, key='priority', per_page=jobs_per_page)
     
     return render(request, 'jobs.html', {

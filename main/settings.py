@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'jobs',
     'applications',
     'profiles',
+    'clearcache',
     #'relationships',
 ]
 
@@ -130,7 +131,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = 'main.User' #forces Django to use custom User model main.models.users.__init__.py User
-
+DEFAULT_USER_ID = '0c6ae962f019410c9f51d96ff7a7a7f1'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/

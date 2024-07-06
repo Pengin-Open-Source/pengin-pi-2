@@ -6,7 +6,7 @@ import uuid
 
 class Application(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications', default=settings.DEFAULT_USER_ID)
     resume = models.FileField(upload_to='resumes/')
     cover_letter = models.FileField(upload_to='cover_letters/', null=True, blank=True)
     message = models.TextField()

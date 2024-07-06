@@ -1,5 +1,5 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "layout/fullPageScroll.html" %}
+{% block pageContent %}
   <h1>Application for {{ application.job.job_title }}</h1>
   <p>Applied on {{ application.date_applied }}</p>
   <p>Resume: <a href="{{ resume_url }}" target="_blank">Download</a></p>
