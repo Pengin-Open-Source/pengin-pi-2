@@ -61,7 +61,6 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
         context['posts'] = self.object.posts.all()
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.name
-
         return context
 
 
@@ -99,25 +98,16 @@ class PostDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'post'
     form_class = ForumPostForm
 
-    @method_decorator(login_required)
-    def get(self, request, *args, **kwargs):
-        form = ForumPostForm()
-        post = get_object_or_404(
-            ForumPost, id=self.kwargs.get('post.id'))
-        context = {'form': form,  'post': post}
-        print(post.id)
-        return render(request, self.template_name,  context)
-
-    # def get_object(self):
-    #     id_ = self.kwargs.get("post.id")
-    #     return get_object_or_404(ForumPost, id=id_)
-
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-    #     # context['comments'] = self.object.comments.all()
-    #     # context['form'] = ForumCommentForm()
-    #     context['is_admin'] = self.request.user.is_staff
-    #     return context
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        forum_post = get_object_or_404(ForumPost, id=self.kwargs.get('pk'))
+        form = ForumPostForm(instance=forum_post)
+        for field in form.fields:
+            form.fields[field].widget.attrs['disabled'] = True
+        context['form'] = form
+        context['is_admin'] = self.request.user.is_staff
+        context['primary_title'] = self.object.title
+        return context
 
 
 """     def post(self, request, *args, **kwargs):

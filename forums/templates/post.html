@@ -22,7 +22,13 @@
 
 {% block beforeTableContent %}
  {% comment %} {% use_macro render_content post.title post.author post.date post.content %} {% endcomment %}
- <p>  {{ form.as_p }} </p>
+ <p> 
+  {% for field in form %}
+    <div class="fieldWrapper">
+        <p>{{ field.label_tag }}</p>
+        <p> {{ field }}</span> <p>
+    </div>
+  {% endfor %} </p>
 {% endblock %}
 
 {% block tableContent %}
