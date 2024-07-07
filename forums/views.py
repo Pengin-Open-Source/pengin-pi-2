@@ -125,9 +125,19 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = ForumPost
     form_class = ForumPostForm
     template_name = 'edit_post.html'
+    context_object_name = 'post'
 
     def get_success_url(self):
         return reverse_lazy('thread', kwargs={'pk': self.object.thread.id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        forum_post = get_object_or_404(ForumPost, id=self.kwargs.get('pk'))
+        form = ForumPostForm(instance=forum_post)
+        context['form'] = form
+        context['is_admin'] = self.request.user.is_staff
+        context['primary_title'] = self.object.title
+        return context
 
     def test_func(self):
         post = self.get_object()
