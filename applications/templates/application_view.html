@@ -1,4 +1,10 @@
 {% extends "layout/fullPageScroll.html" %}
+
+<!-- Need to set if_admin condition for pageDropDown options -->
+{% block pageDropDowns %}
+  <a href="{% url 'edit_status' job_id=job.id application_id=application.id %}">Edit Status</a>
+{% endblock %}
+
 {% block pageContent %}
   <h1>Application for {{ application.job.job_title }}</h1>
   <p>Applied on {{ application.date_applied }}</p>

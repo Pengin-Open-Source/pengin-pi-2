@@ -2,16 +2,28 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Application, StatusCode, Job
 from .forms import ApplicationForm
 from django.contrib import messages
+from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import render, get_object_or_404
+from .models import Job, Application
 
-@login_required
+
 def application_detail(request, job_id, application_id):
-    application = get_object_or_404(Application, pk=application_id, job_id=job_id)
-    resume_url = application.resume.url
-    cover_letter_url = application.cover_letter.url if application.cover_letter else None
-    return render(request, 'application_view.html', {'application': application, 'resume_url': resume_url, 'cover_letter_url': cover_letter_url})
+    job = get_object_or_404(Job, id=job_id)
+    application = get_object_or_404(Application, id=application_id)
+    resume_url = application.resume.url if application.resume else ''
+    cover_letter_url = application.cover_letter.url if application.cover_letter else ''
+    context = {
+        'job': job,
+        'application': application,
+        'resume_url': resume_url,
+        'cover_letter_url': cover_letter_url,
+    }
+    return render(request, 'application_view.html', context)
+
 
 @login_required
 def create_application(request, job_id):
@@ -71,3 +83,93 @@ def job_applications(request, job_id):
         'status_codes': status_codes,
         'primary_title': 'Job Applications',
     })
+
+
+@login_required
+def edit_status(request, job_id, application_id):
+    job = get_object_or_404(Job, id=job_id)
+    application = get_object_or_404(Application, id=application_id)
+    
+    if request.method == 'POST':
+        form_status_code = request.POST.get('status_code')
+        new_status_code, created = StatusCode.objects.get_or_create(code=form_status_code)
+
+        application.status_code = new_status_code
+        application.save()
+
+        return redirect('job_applications', job_id=job_id)
+
+    return render(request, 'edit_application.html', {'job': job, 'application': application, 'primary_title': 'Edit Application'})
+
+
+@login_required
+def accept_applicant(request, job_id, application_id):
+    # Retrieve the application object
+    application = get_object_or_404(Application, id=application_id)
+
+    # Retrieve accept subject and body from POST data
+    accept_subject = request.POST.get('accept-subject')
+    accept_body = request.POST.get('accept-body')
+
+    try:
+        # Simulate sending accept mail (replace with actual email logic)
+        # send_accept_mail(application.user.email, application.id, application.user.name, application.job.job_title, accept_subject, accept_body)
+
+        # Check if 'accepted' status code exists in the database; if not, create it
+        new_status_code, created = StatusCode.objects.get_or_create(code='accepted')
+
+        # Update application status to 'accepted'
+        application.status_code = new_status_code
+        application.save()
+
+    except Exception as e:
+        print('Error: ', e)
+        # Handle the error gracefully, perhaps log it
+
+    # Redirect back to application view
+    return redirect('application_detail', job_id=job_id, application_id=application_id)
+
+
+@login_required
+def reject_applicant(request, job_id, application_id):
+    # Retrieve the application object
+    application = get_object_or_404(Application, id=application_id)
+
+    # Retrieve reject subject and body from POST data
+    reject_subject = request.POST.get('reject-subject')
+    reject_body = request.POST.get('reject-body')
+
+    try:
+        # Simulate sending reject mail (replace with actual email logic)
+        # send_reject_mail(application.user.email, application.id, application.user.name, application.job.job_title, reject_subject, reject_body)
+
+        # Check if 'rejected' status code exists in the database; if not, create it
+        new_status_code, created = StatusCode.objects.get_or_create(code='rejected')
+
+        # Update application status to 'rejected'
+        application.status_code = new_status_code
+        application.save()
+
+    except Exception as e:
+        print('Error: ', e)
+        # Handle the error gracefully, perhaps log it
+
+    # Redirect back to application view
+    return redirect('application_detail', job_id=job_id, application_id=application_id)
+
+
+@login_required
+def delete_applicant(request, job_id, application_id):
+    application = get_object_or_404(Application, id=application_id)
+
+    try:
+        # check whether 'deleted' code exists in db; if not, create it
+        new_status_code, created = StatusCode.objects.get_or_create(code='deleted')
+
+        application.status_code = new_status_code.id
+        application.save()
+
+    except Exception as e:
+        print('Error: ', e)
+
+    return redirect(reverse('applications:job_applications', args=[job_id]))
