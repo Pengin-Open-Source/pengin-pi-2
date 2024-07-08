@@ -5,6 +5,7 @@ from util.paginate import paginate  # Assuming you have a pagination utility
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from util.security.auth_tools import is_admin_provider
 from .forms import JobForm
 from datetime import datetime
@@ -13,26 +14,17 @@ import uuid
 # Define the jobs view
 @is_admin_provider
 def jobs(request: HttpRequest, is_admin):
-    jobs_per_page = 9
-    if request.method == 'POST':
-        page = int(request.POST.get('page_number', 1))
-    else:
-        page = 1
 
-    if request.user.is_authenticated:
-        print("auth: yes")
-        user_id = request.user.name
-        print(user_id)
-    else:
-        print("auth: no")
-    
-    jobs_paginated = paginate(Job.objects.all, page=page, key='priority', per_page=jobs_per_page)
+    page = int(request.GET.get('page', 1))
+
+    jobs = Job.objects.all()
+    paginator = Paginator(jobs, 10)
+    jobs_paginated = paginator.get_page(page)
     
     return render(request, 'jobs.html', {
         'is_admin': is_admin,
         'jobs': jobs_paginated,
-        'page': page,
-        'primary_title': 'Jobs',
+        'page_obj': jobs_paginated, 
     })
 
 # Define the job view
