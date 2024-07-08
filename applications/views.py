@@ -61,7 +61,7 @@ def job_applications(request, job_id):
     if request.method == "POST":
         page = int(request.POST.get('page_number', 1))
     else:
-        page = 1
+        page = int(request.GET.get('page', 1))
 
     if status:
         applications = Application.objects.filter(
@@ -74,7 +74,7 @@ def job_applications(request, job_id):
             job=job
         )
 
-    paginator = Paginator(applications, 5)
+    paginator = Paginator(applications, 10)
     paginated_applications = paginator.get_page(page)
 
     return render(request, 'job_applications.html', {
@@ -82,6 +82,8 @@ def job_applications(request, job_id):
         'applications': paginated_applications,
         'status_codes': status_codes,
         'primary_title': 'Job Applications',
+        'status': status,
+        'page_obj': paginated_applications,
     })
 
 
