@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 import uuid
 
-from main.models import User
+from main.models import User, Address
 from products.models import Product
 from companies.models import Company
 
@@ -31,20 +31,12 @@ class Customer(models.Model):
         super().save(*args, **kwargs)
 
 
-class ShippingAddress(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    address1 = models.CharField(max_length=50)
-    address2 = models.CharField(max_length=50, null=True, blank=True)
-    city = models.CharField(max_length=50)
-    zipcode = models.CharField(max_length=50)
-    state = models.CharField(max_length=50)
-    country = models.CharField(max_length=50)
-    phone = models.CharField(max_length=50, unique=True)
-    email = models.EmailField(max_length=50, unique=True)
+class ShippingAddress(Address):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
-    
-    def __str__(self):
-        return f"{self.address1}, {self.city}, {self.state}, {self.country}"
+    address = models.OneToOneField(Address, on_delete=models.CASCADE, parent_link=True)
+
+    class Meta:
+        verbose_name_plural = "Shipping addresses"
 
 
 class Contract(models.Model):
