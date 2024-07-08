@@ -137,6 +137,8 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.title
+        context['thread_id'] = self.object.thread.id
+        context['post_id'] = self.object.id
         return context
 
     def test_func(self):
