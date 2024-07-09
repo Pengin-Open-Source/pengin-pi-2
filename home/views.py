@@ -13,18 +13,19 @@ import logging
 
 conn = File()
 
+
 def save_home(request, form):
     home = form.save(commit=False)
     image = request.FILES.get('image')
-    
+
     if image:
         image.filename = secure_filename(image.name)
         home.image = conn.create(image)
-        
+
     home.save()
     return home
 
-@method_decorator(login_required, name='dispatch')
+
 @method_decorator(is_admin_provider, name='dispatch')
 class HomeView(View):
     def get(self, request, is_admin):
@@ -33,10 +34,10 @@ class HomeView(View):
             image = conn.get_URL(home.image)
         except ParamValidationError:
             image = default.image
-        
+
         if home:
             logging.info("S3 Image accessed: " + home.image)
-        
+
         return render(request, "home.html", {
             'is_admin': is_admin,
             'home': home,
@@ -44,13 +45,14 @@ class HomeView(View):
             'primary_title': "Home Page"
         })
 
+
 @method_decorator(login_required, name='dispatch')
 @method_decorator(is_admin_required, name='dispatch')
 class HomeEdit(View):
     def get(self, request):
         home_instance = Home.objects.first()
         form = HomeForm(instance=home_instance)
-        
+
         context = {
             'form': form,
             'home': home_instance,
@@ -60,7 +62,7 @@ class HomeEdit(View):
             'primary_title': 'Edit Home Page',
         }
         return render(request, 'home_edit.html', context)
-    
+
     def post(self, request):
         home_instance = Home.objects.first()
         form = HomeForm(request.POST, request.FILES, instance=home_instance)
@@ -78,6 +80,7 @@ class HomeEdit(View):
         }
         return render(request, 'home_edit.html', context)
 
+
 @method_decorator(login_required, name='dispatch')
 @method_decorator(is_admin_required, name='dispatch')
 class HomeCreate(View):
@@ -90,7 +93,7 @@ class HomeCreate(View):
             'primary_title': 'Create Home Page',
         }
         return render(request, 'home_create.html', context)
-    
+
     def post(self, request):
         form = HomeForm(request.POST, request.FILES)
         if form.is_valid():
