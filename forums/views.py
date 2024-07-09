@@ -1,3 +1,4 @@
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
@@ -77,8 +78,11 @@ class PostCreateView(LoginRequiredMixin, CreateView):
                 Thread, id=thread_id)
             form.instance.author = self.request.user
             form.save()
-            # return reverse_lazy('thread', kwargs={'pk': self.kwargs['thread_id']})
-            return render(request, 'threads.html')
+            return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': thread_id}))
+        else:
+            thread = get_object_or_404(Thread, id=thread_id)
+            context = {'form': form,  'thread': thread}
+            return render(request, self.template_name, context)
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
