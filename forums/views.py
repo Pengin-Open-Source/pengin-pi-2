@@ -1,6 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
+from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -21,6 +22,14 @@ class ForumsListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = 'Forums'
+        threads = self.queryset.order_by('-name')
+        # Similar to what Sincere is using for companies
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(threads, 10)
+        page_obj = paginator.get_page(page_number)
+        context['page_obj'] = page_obj
+
         return context
 
 
@@ -91,9 +100,6 @@ class PostCreateView(LoginRequiredMixin, CreateView):
             Thread, id=self.kwargs['thread_id'])
         context = {'form': form,  'thread': thread}
         return render(request, self.template_name,  context)
-
-   # def get_success_url(self):
-   #     return reverse_lazy('thread', kwargs={'pk': self.kwargs['thread_id']})
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
