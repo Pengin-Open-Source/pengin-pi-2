@@ -1,7 +1,7 @@
 {% extends "layout/alternating_color_table.html" %}
-{% comment %} {% load macros %}
+{% load macros %}
 {% loadmacros "macros/forum_tickets/comment_form.html"  %}
-{% loadmacros "macros/forum_tickets/comments_render.html" %}
+{% comment %} {% loadmacros "macros/forum_tickets/comments_render.html" %}
 {% loadmacros "macros/forum_tickets/post_ticket_content.html" %}  {% endcomment %}
 
 {% block tags %}
@@ -44,5 +44,5 @@
 {% endblock %}
 
 {% block postTableContent %}
-  {% comment %} {{ comment_form.render_comment_form("post", "{% url 'post' post.thread.id post.id %}") }} {% endcomment %}
+  {% use_macro comment_form.render_comment_form post "{% url 'post' post.thread.id post.id %}"  %}
 {% endblock %}
