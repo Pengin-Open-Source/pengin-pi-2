@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block tableContent %}
-  {% for thread in threads %}
+  {% for thread in page_obj  %}
   <tr><td class="thread-container">
     <a class="alternating-colors-table-links" href="{% url 'thread' thread.id %}">{{ thread.name|escape }}</a>
     {% if is_admin %}
