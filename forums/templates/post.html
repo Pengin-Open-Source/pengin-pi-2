@@ -18,6 +18,7 @@
     </form> 
     <a href="{% url 'edit_post' post.thread.id post.id %}">Edit</a>
   {% endif %}
+  <a href="{% url 'thread' post.thread.id %}"> Back To Thread </a>
 {% endblock %}
 
 {% block beforeTableContent %}

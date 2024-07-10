@@ -5,6 +5,7 @@
 
 {% block pageDropDowns %}
   <a href="{% url 'create_post' thread.id %}">Create Post</a>
+  <a href="{% url 'forums' %}">Back To Forums</a>
 {% endblock %}
 
 {% block tableContent %}
@@ -21,3 +22,5 @@
   {% endfor %}
   {% use_macro render_pagination page_obj %}
 {% endblock %}
+
+
