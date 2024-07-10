@@ -58,7 +58,7 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             thread = form.save()
             selected_role = request.user.groups.get(pk=role)
             ThreadRole.objects.create(thread=thread, group=selected_role)
-            return render(request, 'threads.html')
+            return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': form.instance.pk}))
 
 
 class ThreadDetailView(LoginRequiredMixin, DetailView):
@@ -92,7 +92,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
                 Thread, id=thread_id)
             form.instance.author = self.request.user
             form.save()
-            return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': thread_id}))
+            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': thread_id,  'pk': form.instance.id}))
         else:
             thread = get_object_or_404(Thread, id=thread_id)
             context = {'form': form,  'thread': thread}
@@ -143,7 +143,7 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     context_object_name = 'post'
 
     def get_success_url(self):
-        return reverse_lazy('thread', kwargs={'pk': self.object.thread.id})
+        return reverse_lazy('post', kwargs={'thread_id': self.object.thread.id,  'pk': self.object.id})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
