@@ -22,7 +22,7 @@ class ForumsListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = 'Forums'
-        threads = self.queryset.order_by('-name')
+        threads = self.queryset.order_by('name')
         # Similar to what Sincere is using for companies
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -68,7 +68,12 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['posts'] = self.object.posts.all()
+        posts = self.object.posts.all().order_by('-date')
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(posts, 10)
+        page_obj = paginator.get_page(page_number)
+        context['page_obj'] = page_obj
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.name
         return context

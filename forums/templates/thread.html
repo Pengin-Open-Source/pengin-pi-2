@@ -1,11 +1,14 @@
 {% extends "layout/alternating_color_table.html" %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
 
 {% block pageDropDowns %}
   <a href="{% url 'create_post' thread.id %}">Create Post</a>
 {% endblock %}
 
 {% block tableContent %}
-  {% for post in posts %}
+  {% for post in page_obj %}
   <tr><td class="post-container">
     <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|escape }}</a>
     {% if is_admin %}
@@ -16,4 +19,5 @@
     {% endif %}
   </td></tr>
   {% endfor %}
+  {% use_macro render_pagination page_obj %}
 {% endblock %}
