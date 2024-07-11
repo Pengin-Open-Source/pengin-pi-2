@@ -120,20 +120,21 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
+        comment_form = ForumCommentForm()
+        context['comment_form'] = comment_form
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.title
         return context
 
-
-"""     def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        form = ForumCommentForm(request.POST)
-        if form.is_valid():
-            form.instance.post = self.object
-            form.instance.author = request.user
-            form.save()
-            return redirect('post', thread_id=self.object.thread.id, pk=self.object.id)
-        return self.render_to_response(self.get_context_data(form=form)) """
+        comment_form = ForumCommentForm(request.POST)
+        if comment_form.is_valid():
+            comment_form.instance.post = self.object
+            comment_form.instance.author = request.user
+            comment_form.save()
+            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': self.object.thread_id,  'pk': self.object.id}))
+        # return self.render_to_response(self.get_context_data(form=form))
 
 
 class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):

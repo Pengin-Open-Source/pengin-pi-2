@@ -1,15 +1,10 @@
 {% load macros %}
-{% macro render_comment_form ticket_or_post action_url %}
+{% macro render_comment_form ticket_or_post action_url com_form %}
 
   <form class="comment-form" method="POST" action="{{action_url}}">
-    <label for="content">Comment</label>
-    <input
-    class="comment-input"
-    type="text"
-    name="content"
-    id="content"
-    placeholder="What do you think of this {{ ticket_or_post }}?">
-  <button class="primary-button">Submit comment</button>
-  </form>
+    {% csrf_token %}
+    <label for="content">What do you think of {{ ticket_or_post }}?  Comment Below </label>
+    {{ com_form }}
+    <button class="primary-button" type="submit">Submit Comment</button>
 
 {% endmacro %}

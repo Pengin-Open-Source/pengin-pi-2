@@ -49,6 +49,6 @@
 
 {% url 'post' post.thread.id post.id as post_url %} 
 
-{% use_macro render_comment_form post post_url %}
+{% use_macro render_comment_form post post_url comment_form %}
 
 {% endblock %}
