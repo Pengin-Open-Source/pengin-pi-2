@@ -1,5 +1,6 @@
 {% extends "layout/alternating_color_table.html" %}
 {% load macros %}
+{% loadmacros "macros/forum_tickets/comments_render.html" %}
 {% loadmacros "macros/forum_tickets/comment_form.html"  %}
 
 
@@ -21,7 +22,6 @@
 {% endblock %}
 
 {% block beforeTableContent %}
- {% comment %} {% use_macro render_content post.title post.author post.date post.content %} {% endcomment %}
  <p> 
   {% for field in form %}
     <div class="fieldWrapper">
@@ -32,14 +32,9 @@
 {% endblock %}
 
 {% block tableContent %}
-{% comment %}   {% for comment in comments %}
-    {{ comments_render.render_comments(
-        [comment], comment.author, user, 
-        user == comment.author or is_admin, user == comment.author or is_admin, 
-        "{% url 'delete_comment' comment.id %}", 
-        "{% url 'edit_comment' comment.post.thread.id comment.post.id comment.id %}"
-    ) }}
-  {% endfor %} {% endcomment %}
+    {% url 'delete_comment' comment.id as delete_url %}
+    {% url 'edit_comment' comment.post.thread.id comment.post.id comment.id as edit_url %}
+    {% use_macro render_comments page_obj user delete_url edit_url  %}   
 {% endblock %}
 
 

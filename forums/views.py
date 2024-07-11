@@ -121,6 +121,12 @@ class PostDetailView(LoginRequiredMixin, DetailView):
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
         comment_form = ForumCommentForm()
+        comments = self.object.comments.all().order_by('-date')
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(comments, 10)
+        page_obj = paginator.get_page(page_number)
+        context['page_obj'] = page_obj
         context['comment_form'] = comment_form
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.title
