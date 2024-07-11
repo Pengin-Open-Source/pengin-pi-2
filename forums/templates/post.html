@@ -1,8 +1,7 @@
 {% extends "layout/alternating_color_table.html" %}
 {% load macros %}
 {% loadmacros "macros/forum_tickets/comment_form.html"  %}
-{% comment %} {% loadmacros "macros/forum_tickets/comments_render.html" %}
-{% loadmacros "macros/forum_tickets/post_ticket_content.html" %}  {% endcomment %}
+
 
 {% block tags %}
   {% if post.tags %}
@@ -43,6 +42,13 @@
   {% endfor %} {% endcomment %}
 {% endblock %}
 
+
+
+
 {% block postTableContent %}
-  {% use_macro comment_form.render_comment_form post "{% url 'post' post.thread.id post.id %}"  %}
+
+{% url 'post' post.thread.id post.id as post_url %} 
+
+{% use_macro render_comment_form post post_url %}
+
 {% endblock %}

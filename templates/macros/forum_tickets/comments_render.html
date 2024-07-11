@@ -1,3 +1,4 @@
+{% load macros %}
 {% macro render_comments(comments,comment_authors, current_user, can_delete_comment, can_edit_comment, action_url, edit_url) %}
   {% for comment in comments %}
   <tr><td>

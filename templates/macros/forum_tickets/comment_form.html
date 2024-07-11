@@ -1,3 +1,4 @@
+{% load macros %}
 {% macro render_comment_form ticket_or_post action_url %}
 
   <form class="comment-form" method="POST" action="{{action_url}}">
@@ -7,7 +8,7 @@
     type="text"
     name="content"
     id="content"
-    placeholder="What do you think of this {{ticket_or_post}}?">
+    placeholder="What do you think of this {{ ticket_or_post }}?">
   <button class="primary-button">Submit comment</button>
   </form>
 
