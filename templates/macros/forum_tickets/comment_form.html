@@ -3,8 +3,12 @@
 
   <form class="comment-form" method="POST" action="{{action_url}}">
     {% csrf_token %}
-    <label for="content">What do you think of {{ ticket_or_post }}?  Comment Below </label>
-    {{ com_form }}
+    <label for="content"> <h2> Share your thoughts on   <i> {{ ticket_or_post }} </i> below  </h2> </label>
+    {% for field in com_form %}
+    <div class="fieldWrapper">
+        <p> {{ field }} </span> <p>
+    </div>
+  {% endfor %} </p>
     <button class="primary-button" type="submit">Submit Comment</button>
 
 {% endmacro %}
