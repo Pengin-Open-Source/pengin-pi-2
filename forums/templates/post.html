@@ -32,9 +32,7 @@
 {% endblock %}
 
 {% block tableContent %}
-    {% url 'delete_comment' comment.id as delete_url %}
-    {% url 'edit_comment' comment.post.thread.id comment.post.id comment.id as edit_url %}
-    {% use_macro render_comments page_obj user delete_url edit_url  %}   
+    {% use_macro render_comments page_obj user  %}   
 {% endblock %}
 
 

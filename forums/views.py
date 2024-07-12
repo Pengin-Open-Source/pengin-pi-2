@@ -197,6 +197,18 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('post', kwargs={'thread_id': self.object.post.thread.id, 'pk': self.object.post.id})
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        comment = get_object_or_404(
+            ForumComment, id=self.kwargs.get('pk'))
+        form = ForumCommentForm(instance=comment)
+        context['form'] = form
+        context['is_admin'] = self.request.user.is_staff
+        context['thread_id'] = self.object.post.thread.id
+        context['post_id'] = self.object.post.id
+        context['comment_id'] = self.object.id
+        return context
+
     def test_func(self):
         comment = self.get_object()
         return self.request.user == comment.author or self.request.user.is_staff
