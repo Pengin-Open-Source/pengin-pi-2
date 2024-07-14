@@ -4,7 +4,9 @@
 {% loadmacros "macros/pagination.html" %}
 
 {% block pageDropDowns %}
-  <a href="{% url 'create_thread' %}">Create Thread</a>
+  {% if is_admin %}
+    <a href="{% url 'create_thread' %}">Create Thread</a>
+  {% endif %}
 {% endblock %}
 
 {% block tableContent %}
