@@ -170,7 +170,6 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Thread
-    template_name = 'delete_thread.html'
     success_url = reverse_lazy('forums')
 
     def test_func(self):
