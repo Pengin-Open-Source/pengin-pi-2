@@ -218,7 +218,6 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = ForumComment
-    template_name = 'delete_comment.html'
 
     def get_success_url(self):
         return reverse_lazy('post', kwargs={'thread_id': self.object.post.thread.id, 'pk': self.object.post.id})
