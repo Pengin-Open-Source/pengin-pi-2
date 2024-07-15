@@ -21,7 +21,10 @@ OrderProductFormSet = forms.inlineformset_factory(
 class OrderForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(OrderForm, self).__init__(*args, **kwargs)
-        self.fields['shipping_address'].queryset = ShippingAddress.objects.filter(customer=self.instance.customer)
+        if hasattr(self.instance, 'customer'):
+            self.fields['shipping_address'].queryset = ShippingAddress.objects.filter(customer=self.instance.customer)
+        else:
+            self.fields['shipping_address'].queryset = ShippingAddress.objects.none()
 
     order_date = forms.DateField(widget=forms.SelectDateWidget)
 
