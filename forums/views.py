@@ -8,7 +8,6 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from forums.models import Thread, ForumPost, ForumComment, ThreadRole
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
-from tkinter import messagebox
 
 
 class ForumsListView(LoginRequiredMixin, ListView):
@@ -180,7 +179,6 @@ class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = ForumPost
-    template_name = 'delete_post.html'
 
     def get_success_url(self):
         return reverse_lazy('thread', kwargs={'pk': self.object.thread.id})
@@ -189,13 +187,8 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         post = self.get_object()
         if not (self.request.user == post.author or self.request.user.is_staff):
             return False
-        is_delete_confirmed = messagebox.askokcancel(
-            "Confirm Delete", "Confirm you want to DELETE this post: " + post.title)
-        print(is_delete_confirmed)
-        if is_delete_confirmed:
-            return True
-        else:
-            return False
+
+        return redirect('thread',  pk=post.thread.id)
 
 
 class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
