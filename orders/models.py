@@ -58,6 +58,9 @@ class Order(models.Model):
     products = models.ManyToManyField(Product, through='OrderProduct')
     shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE, null=True, blank=True)
 
+    class Meta:
+        ordering = ['-order_date']
+
     def __str__(self):
         return f"{self.customer.name} Order, {self.order_date.strftime('%b %d, %Y')}"
 
