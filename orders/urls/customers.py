@@ -4,7 +4,7 @@ from orders.views.customers import (ListCustomers,
                                     DetailCustomer,
                                     EditCustomer,
                                     DeleteCustomer,)
-from orders.views.shipping_address import CreateShippingAddress, EditShippingAddress
+from orders.views.shipping_address import CreateShippingAddress, EditShippingAddress, DeleteShippingAddress
 
 # Add namespace to urls
 app_name = 'customers'
@@ -21,4 +21,7 @@ urlpatterns = [
     path('<uuid:customer_id>/shipping-address/<uuid:address_id>/',
          EditShippingAddress.as_view(),
          name='edit-address'),
+    path('<uuid:customer_id>/shipping-address/<uuid:address_id>/delete/',
+         DeleteShippingAddress.as_view(),
+         name='delete-address'),
 ]

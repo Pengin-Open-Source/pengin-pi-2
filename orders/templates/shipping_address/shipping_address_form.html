@@ -1,5 +1,13 @@
 {% extends "layout/fullPageScroll.html" %}
 
+{% block pageDropDowns %}
+  {% if is_admin %}
+    <a href="{% url 'customers:delete-address' customer_id address_id %}">Delete Address</a>
+      {% else %}
+    <a href="{% url 'customers:detail-customer' customer_id %}">Back to Customer</a>
+  {% endif %}
+{% endblock %}
+
 {% block pageContent %}
     <form class="form" method="POST">
         {% csrf_token %}

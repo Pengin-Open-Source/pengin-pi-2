@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views import View
-from util.security.auth_tools import is_admin_required
+from util.security.auth_tools import is_admin_required, is_admin_provider
 
 from orders.models import ShippingAddress, Customer
 from orders.forms import ShippingAddressForm
@@ -57,10 +57,12 @@ class EditShippingAddress(View):
         }
 
     @method_decorator(login_required)
-    @method_decorator(is_admin_required)
+    @method_decorator(is_admin_provider)
     def get(self, request, address_id, *args, **kwargs):
         address = get_object_or_404(ShippingAddress, id=address_id)
         context = self.get_context_data(address)
+        context['is_admin'] = kwargs['is_admin']
+        context['address_id'] = address_id
         return render(request, self.template_name, context)
 
     @method_decorator(login_required)
@@ -78,3 +80,26 @@ class EditShippingAddress(View):
         context = self.get_context_data(address)
         context['form'] = form
         return render(request, self.template_name, context)
+
+
+class DeleteShippingAddress(View):
+    template_name = "shipping_address/shipping_address_confirm_delete.html"
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_provider)
+    def get(self, request, customer_id, address_id, is_admin):
+        address = get_object_or_404(ShippingAddress, id=address_id)
+        context = {
+            "is_admin": is_admin,
+            "primary_title": f"Delete Shipping Address for {address.customer}",
+            "address": address,
+        }
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    @method_decorator(is_admin_required)
+    def post(self, request, customer_id, address_id):
+        address = get_object_or_404(ShippingAddress, id=address_id)
+        customer_id = address.customer.id
+        address.delete()
+        return redirect('customers:detail-customer', customer_id=customer_id)
