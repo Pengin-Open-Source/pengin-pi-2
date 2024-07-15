@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.urls import reverse
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.core.mail import send_mail
+from decouple import config
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404
@@ -114,9 +116,14 @@ def accept_applicant(request, job_id, application_id):
     accept_body = request.POST.get('accept-body')
 
     try:
-        # Simulate sending accept mail (replace with actual email logic)
-        # send_accept_mail(application.user.email, application.id, application.user.name, application.job.job_title, accept_subject, accept_body)
-
+        # Send acceptance email
+        send_mail(
+                accept_subject,
+                accept_body,
+                config('SES_SENDER'),  # Use environment variable
+                [application.user.email],
+                fail_silently=False,
+            )
         # Check if 'accepted' status code exists in the database; if not, create it
         new_status_code, created = StatusCode.objects.get_or_create(code='accepted')
 
@@ -142,9 +149,15 @@ def reject_applicant(request, job_id, application_id):
     reject_body = request.POST.get('reject-body')
 
     try:
-        # Simulate sending reject mail (replace with actual email logic)
-        # send_reject_mail(application.user.email, application.id, application.user.name, application.job.job_title, reject_subject, reject_body)
-
+        # Send rejection email
+        send_mail(
+                reject_subject,
+                reject_body,
+                config('SES_SENDER'),  # Use environment variable
+                [application.user.email],
+                fail_silently=False,
+            )
+        
         # Check if 'rejected' status code exists in the database; if not, create it
         new_status_code, created = StatusCode.objects.get_or_create(code='rejected')
 
