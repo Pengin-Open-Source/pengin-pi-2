@@ -8,6 +8,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from forums.models import Thread, ForumPost, ForumComment, ThreadRole
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
+from tkinter import messagebox
 
 
 class ForumsListView(LoginRequiredMixin, ListView):
@@ -186,7 +187,15 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         post = self.get_object()
-        return self.request.user == post.author or self.request.user.is_staff
+        if not (self.request.user == post.author or self.request.user.is_staff):
+            return False
+        is_delete_confirmed = messagebox.askokcancel(
+            "Confirm Delete", "Confirm you want to DELETE this post: " + post.title)
+        print(is_delete_confirmed)
+        if is_delete_confirmed:
+            return True
+        else:
+            return False
 
 
 class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
