@@ -2,12 +2,14 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import Group
 from main.models.users import User
+from django.utils import timezone
 import uuid
 
 
 class Thread(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
+    date = models.DateTimeField(default=timezone.now)
     groups = models.ManyToManyField(
         Group, through='ThreadRole', related_name='threads')
 
@@ -38,9 +40,22 @@ class ForumComment(models.Model):
         ForumPost, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='comments')
+    # CREATE, EDIT, DELETE - which put the row in this state?
+    # (DELETE is used for Comment History)
+    row_action = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):
         return str(self.content)[:20]
+
+
+class ForumCommentHistory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    comment_id = models.UUIDField(db_index=True)
+    content = models.TextField()
+    date = models.DateTimeField(auto_now_add=True)
+    post = models.UUIDField(db_index=True)
+    author = models.UUIDField(db_index=True)
+    row_action = models.CharField(max_length=10, default='ERROR')
 
 
 class ThreadRole(models.Model):
