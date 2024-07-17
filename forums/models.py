@@ -1,4 +1,5 @@
 from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.contrib.auth.models import Group
 from main.models.users import User
@@ -46,6 +47,37 @@ class ForumComment(models.Model):
 
     def __str__(self):
         return str(self.content)[:20]
+
+    def save(self, *args, **kwargs):
+        save_method = self.row_action
+        # all backups must complete properly for changes to be saved
+        with transaction.atomic():
+            # Do backup of current values in the row first.
+            # (Note we backup before a DELETE.  Frequently,  a
+            # row will have no backup history until we enter DELETE)
+            if save_method == "EDIT" or save_method == "DELETE":
+                original_comment = ForumComment.objects.get(pk=self.pk)
+                comment_backup = ForumCommentHistory(comment_id=original_comment.id, content=original_comment.content, date=original_comment.date, post=original_comment.post.pk,
+                                                     author=original_comment.author.pk, row_action=original_comment.row_action)
+                comment_backup.save()
+
+            # else: this is a newly created comment don't save it to backup table yet
+
+            # No matter what happens,  save this new comment or comment update to the database.
+            super().save(*args, **kwargs)
+
+            # if this is a pre-delete save,  the comment row will have been updated to contain
+            # 1) The action/method: "DELETE"
+            # 2) The User who did the Delete
+            # 3) The time of the deletion
+            # We need to make sure this information is copied into comment history
+            # before we delete the comment.
+            # (If comment history needs to be totally deleted, that should be done
+            # by a DBA)
+            if save_method == 'DELETE':
+                archived_comment = ForumCommentHistory(comment_id=self.id, content=self.content, date=self.date, post=self.post.pk,
+                                                       author=self.author.pk, row_action=self.row_action)
+                archived_comment.save()
 
 
 class ForumCommentHistory(models.Model):
