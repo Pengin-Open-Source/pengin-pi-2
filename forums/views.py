@@ -222,7 +222,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy('post', kwargs={'thread_id': self.object.post.thread.id, 'pk': self.object.post.id})
 
-    # currently not being callsed
+    # currently not being called
     def delete(self, request, *args, **kwargs):
         print("CAN YOU SEE ME NOW!!!???")
         archive_comment = self.get_object()
