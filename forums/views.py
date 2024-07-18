@@ -8,6 +8,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from forums.models import Thread, ForumPost, ForumComment, ThreadRole, transaction
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
+from django.utils import timezone
 
 
 class ForumsListView(LoginRequiredMixin, ListView):
@@ -221,23 +222,23 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy('post', kwargs={'thread_id': self.object.post.thread.id, 'pk': self.object.post.id})
 
-    @method_decorator(login_required)
-    def post(self, request):
-        if (delete_comment(request.user, self.get_object().pk) == 'sucesss'):
-            self.get_success_url()
+    # currently not being callsed
+    def delete(self, request, *args, **kwargs):
+        print("CAN YOU SEE ME NOW!!!???")
+        archive_comment = self.get_object()
+        thread_id = archive_comment.post.thread.id
+        post_id = archive_comment.post.id
 
-    def test_func(self):
-        comment = self.get_object()
-        return self.request.user == comment.author or self.request.user.is_staff
+        return super(CommentDeleteView, self).delete(*args, **kwargs)
 
 
 # Utility delete comments
 
 
-def delete_comment(usr, comment_id):
-    archive_comment = ForumComment.objects.get(pk=comment_id)
-    archive_comment.method = 'DELETE'
-    archive_comment.user = usr
+def delete_comment(usr, archive_comment):
+
+    archive_comment.row_action = 'DELETE'
+    archive_comment.author = usr
     archive_comment.date = timezone.now()
     with transaction.atomic():
         # specify this is an deleted record
@@ -246,4 +247,4 @@ def delete_comment(usr, comment_id):
         # the user who deleted the record
         archive_comment.save()
         archive_comment.delete()
-        return "sucesss"
+        return "success"
