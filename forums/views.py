@@ -231,6 +231,11 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
         return super(CommentDeleteView, self).delete(*args, **kwargs)
 
+    def test_func(self):
+        print("In the test function")
+        comment = self.get_object()
+        return self.request.user == comment.author or self.request.user.is_staff
+
 
 # Utility delete comments
 
