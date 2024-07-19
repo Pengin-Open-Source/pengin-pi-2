@@ -219,20 +219,15 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = ForumComment
 
-    def get_success_url(self):
-        return reverse_lazy('post', kwargs={'thread_id': self.object.post.thread.id, 'pk': self.object.post.id})
-
-    # currently not being called
-    def delete(self, request, *args, **kwargs):
-        print("CAN YOU SEE ME NOW!!!???")
+    def post(self, request, *args, **kwargs):
         archive_comment = self.get_object()
         thread_id = archive_comment.post.thread.id
         post_id = archive_comment.post.id
-
-        return super(CommentDeleteView, self).delete(*args, **kwargs)
+        with transaction.atomic():
+            delete_comment(request.user, archive_comment)
+        return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': thread_id,  'pk': post_id}))
 
     def test_func(self):
-        print("In the test function")
         comment = self.get_object()
         return self.request.user == comment.author or self.request.user.is_staff
 
@@ -245,11 +240,19 @@ def delete_comment(usr, archive_comment):
     archive_comment.row_action = 'DELETE'
     archive_comment.author = usr
     archive_comment.date = timezone.now()
-    with transaction.atomic():
-        # specify this is an deleted record
-        # both save and delete must execute or fail together,
-        # this keeps track of the time of deletion and
-        # the user who deleted the record
-        archive_comment.save()
-        archive_comment.delete()
-        return "success"
+
+    # specify this is an deleted record
+    # both save and delete must execute or fail together,
+    # this keeps track of the time of deletion and
+    # the user who deleted the record
+    archive_comment.save()
+    archive_comment.delete()
+    # Test error in a transaction after both operations complete successfully
+    if "Comment about widgets" in archive_comment.content:
+        raise TestTransactionError("Test Delete Comment Failure.")
+    return "success"
+
+
+# Use to test failure case of delete transaction
+class TestTransactionError(Exception):
+    pass
