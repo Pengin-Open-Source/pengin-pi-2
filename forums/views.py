@@ -139,6 +139,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         if comment_form.is_valid():
             comment_form.instance.post = self.object
             comment_form.instance.author = request.user
+            comment_form.instance.row_action = 'CREATE'
             comment_form.save()
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': self.object.thread_id,  'pk': self.object.id}))
         # return self.render_to_response(self.get_context_data(form=form))
@@ -196,9 +197,6 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     form_class = ForumCommentForm
     template_name = 'edit_comment.html'
 
-    def get_success_url(self):
-        return reverse_lazy('post', kwargs={'thread_id': self.object.post.thread.id, 'pk': self.object.post.id})
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         comment = get_object_or_404(
@@ -210,6 +208,16 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context['post_id'] = self.object.post.id
         context['comment_id'] = self.object.id
         return context
+
+    def post(self, request, *args, **kwargs):
+        comment_form = ForumCommentForm(request.POST)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.author = request.user
+            comment.row_action = 'EDIT'
+            comment.date = timezone.now()
+            comment.save()
+            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': self.object.post.thread_id,  'pk': self.object.post.id}))
 
     def test_func(self):
         comment = self.get_object()

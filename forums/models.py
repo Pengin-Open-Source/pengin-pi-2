@@ -36,7 +36,7 @@ class ForumPost(models.Model):
 class ForumComment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content = models.TextField()
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
     post = models.ForeignKey(
         ForumPost, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(
@@ -56,6 +56,7 @@ class ForumComment(models.Model):
             # (Note we backup before a DELETE.  Frequently,  a
             # row will have no backup history until we enter DELETE)
             if save_method == "EDIT" or save_method == "DELETE":
+                print(self.pk)
                 original_comment = ForumComment.objects.get(pk=self.pk)
                 comment_backup = ForumCommentHistory(comment_id=original_comment.id, content=original_comment.content, date=original_comment.date, post=original_comment.post.pk,
                                                      author=original_comment.author.pk, row_action=original_comment.row_action)
@@ -84,7 +85,7 @@ class ForumCommentHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     comment_id = models.UUIDField(db_index=True)
     content = models.TextField()
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
     post = models.UUIDField(db_index=True)
     author = models.UUIDField(db_index=True)
     row_action = models.CharField(max_length=10, default='ERROR')
