@@ -1,6 +1,14 @@
-{% extends "base.html" %}
-{% block content %}
-  <h2>My Applications</h2>
+{% extends "layout/fullPageScroll.html" %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+{% block pageDropDowns %}
+  <a href="{% url 'job_list' %}">Jobs</a>
+  <a href="{% url 'my_applications' %}">My Applications</a>
+{% endblock %}
+
+{% block pageContent %}
+<h2>My Applications</h2>
   <table class="table">
     <thead>
       <tr>
@@ -11,12 +19,36 @@
     <tbody>
       {% for application in applications %}
         <tr>
-          <td>{{ application.date_applied }}</td>
-          <td><a href="{% url 'application_detail' job_id=application.job_id application_id=application.id %}">{{ application.job.job_title }}</a></td>
+          <td>{{ application.date_applied|date:"F d, Y" }}</td>
+          <td><a href="{% url 'application_detail' application.job.id application.id %}">{{ application.job.job_title }}</a></td>
         </tr>
-      {% empty %}
-        <tr><td colspan="2">You have not applied to any jobs.</td></tr>
       {% endfor %}
+      {% empty %}
+        <tr>
+          <td colspan="2">No applications found.</td>
+        </tr>
+      {% endempty %}
     </tbody>
   </table>
+
+  <!-- Pagination -->
+  {% if applications.has_other_pages %}
+    <div class="pagination">
+      <span class="step-links">
+        {% if applications.has_previous %}
+          <a href="?page=1">&laquo; first</a>
+          <a href="?page={{ applications.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+          Page {{ applications.number }} of {{ applications.paginator.num_pages }}.
+        </span>
+
+        {% if applications.has_next %}
+          <a href="?page={{ applications.next_page_number }}">next</a>
+          <a href="?page={{ applications.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
+  {% endif %}
 {% endblock %}

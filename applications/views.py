@@ -1,17 +1,14 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Application, StatusCode, Job
-from .forms import ApplicationForm
+from decouple import config
 from django.contrib import messages
-from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.core.mail import send_mail
-from decouple import config
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.shortcuts import render, get_object_or_404
-from .models import Job, Application
-
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from .forms import ApplicationForm
+from .models import Application, Job, StatusCode
+from util.security.auth_tools import is_admin_provider, is_admin_required
 
 def application_detail(request, job_id, application_id):
     job = get_object_or_404(Job, id=job_id)
@@ -25,7 +22,6 @@ def application_detail(request, job_id, application_id):
         'cover_letter_url': cover_letter_url,
     }
     return render(request, 'application_view.html', context)
-
 
 @login_required
 def create_application(request, job_id):
@@ -53,8 +49,25 @@ def create_application(request, job_id):
 def application_success(request, job_id, application_id):
     return render(request, 'application_success.html', {'job_id': job_id, 'application_id': application_id})
 
+@login_required
+def my_applications(request):
+    applications_per_page = 9
+    page_number = request.GET.get('page', 1)
+    user_applications = Application.objects.filter(user_id=request.user.id).order_by('-date_applied')
+    
+    paginator = Paginator(user_applications, applications_per_page)
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'applications': page_obj,
+        'page': page_obj.number,
+        'primary_title': 'My Applications'
+    }
+
+    return render(request, 'my_applications.html', context)
 
 @login_required
+@is_admin_required
 def job_applications(request, job_id):
     job = get_object_or_404(Job, id=job_id)
     status = request.GET.get('status')
@@ -88,8 +101,8 @@ def job_applications(request, job_id):
         'page_obj': paginated_applications,
     })
 
-
 @login_required
+@is_admin_required
 def edit_status(request, job_id, application_id):
     job = get_object_or_404(Job, id=job_id)
     application = get_object_or_404(Application, id=application_id)
@@ -105,8 +118,8 @@ def edit_status(request, job_id, application_id):
 
     return render(request, 'edit_application.html', {'job': job, 'application': application, 'primary_title': 'Edit Application'})
 
-
 @login_required
+@is_admin_required
 def accept_applicant(request, job_id, application_id):
     # Retrieve the application object
     application = get_object_or_404(Application, id=application_id)
@@ -138,8 +151,8 @@ def accept_applicant(request, job_id, application_id):
     # Redirect back to application view
     return redirect('application_detail', job_id=job_id, application_id=application_id)
 
-
 @login_required
+@is_admin_required
 def reject_applicant(request, job_id, application_id):
     # Retrieve the application object
     application = get_object_or_404(Application, id=application_id)
@@ -172,8 +185,8 @@ def reject_applicant(request, job_id, application_id):
     # Redirect back to application view
     return redirect('application_detail', job_id=job_id, application_id=application_id)
 
-
 @login_required
+@is_admin_required
 def delete_applicant(request, job_id, application_id):
     application = get_object_or_404(Application, id=application_id)
 

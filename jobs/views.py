@@ -1,33 +1,37 @@
-from django.http import HttpRequest, HttpResponse
-from .models import Job
-from util.paginate import paginate  # Assuming you have a pagination utility
-# Define the blog post view
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, permission_required
-from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
-from util.security.auth_tools import is_admin_provider
-from .forms import JobForm
-from datetime import datetime
 import uuid
+from datetime import datetime
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from .forms import JobForm
+from .models import Job
+from util.security.auth_tools import group_required, is_admin_provider
 
-# Define the jobs view
+# Set view permissions based off of group
+#???_required = group_required('???')
+
 @is_admin_provider
 def jobs(request: HttpRequest, is_admin):
 
     page = int(request.GET.get('page', 1))
 
-    jobs = Job.objects.all()
+    jobs = Job.objects.all().order_by('priority', '-date_posted')
     paginator = Paginator(jobs, 10)
     jobs_paginated = paginator.get_page(page)
     
+    # Accessing the current authenticated user
+    current_user = request.user
+
+    # Print current user info to the command line
+    print(f"Current user: {current_user.username} (ID: {current_user.id})")
+
     return render(request, 'jobs.html', {
         'is_admin': is_admin,
         'jobs': jobs_paginated,
         'page_obj': jobs_paginated, 
     })
 
-# Define the job view
 @is_admin_provider
 def job(request: HttpRequest, job_id: uuid.UUID, is_admin):  # Change to UUID here
     job = get_object_or_404(Job, id=job_id)
@@ -47,7 +51,6 @@ def job(request: HttpRequest, job_id: uuid.UUID, is_admin):  # Change to UUID he
     })
 
 @login_required
-@permission_required('yourapp.add_job', raise_exception=True)
 def create_job(request):
     if request.method == 'POST':
         form = JobForm(request.POST)
@@ -66,7 +69,6 @@ def create_job(request):
     return render(request, 'job_create.html', context)
 
 @login_required
-@permission_required('yourapp.change_job', raise_exception=True)
 def edit_job(request, job_id):
     job = get_object_or_404(Job, id=job_id)
 
@@ -86,7 +88,6 @@ def edit_job(request, job_id):
     return render(request, 'job_edit.html', context)
 
 @login_required
-@permission_required('yourapp.delete_job', raise_exception=True)
 def delete_job(request: HttpRequest, job_id: uuid.UUID) -> HttpResponse:
     job = get_object_or_404(Job, id=job_id)
     

@@ -9,6 +9,6 @@ urlpatterns = [
     path('applications/<uuid:job_id>/application/<uuid:application_id>/accept', views.accept_applicant, name='accept_applicant'),
     path('applications/<uuid:job_id>/application/<uuid:application_id>/reject', views.reject_applicant, name='reject_applicant'),
     path('applications/<uuid:job_id>/application/<uuid:application_id>/delete', views.delete_applicant, name='delete_applicant'),
-    #path('my-applications', views.my_applications, name='my_applications'),
+    path('my_applications', views.my_applications, name='my_applications'),
     path('applications/<uuid:job_id>/job-applications', views.job_applications, name='job_applications'),
 ]
