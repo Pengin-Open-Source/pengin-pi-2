@@ -56,7 +56,6 @@ class ForumComment(models.Model):
             # (Note we backup before a DELETE.  Frequently,  a
             # row will have no backup history until we enter DELETE)
             if save_method == "EDIT" or save_method == "DELETE":
-                print(self.pk)
                 original_comment = ForumComment.objects.get(pk=self.pk)
                 comment_backup = ForumCommentHistory(comment_id=original_comment.id, content=original_comment.content, date=original_comment.date, post=original_comment.post.pk,
                                                      author=original_comment.author.pk, row_action=original_comment.row_action)

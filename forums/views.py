@@ -210,14 +210,17 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        comment_form = ForumCommentForm(request.POST)
+        comment_id = self.kwargs.get('pk')
+        comment = get_object_or_404(
+            ForumComment, id=comment_id)
+        comment_form = ForumCommentForm(request.POST, instance=comment)
         if comment_form.is_valid():
             comment = comment_form.save(commit=False)
             comment.author = request.user
             comment.row_action = 'EDIT'
             comment.date = timezone.now()
             comment.save()
-            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': self.object.post.thread_id,  'pk': self.object.post.id}))
+            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': comment.post.thread_id,  'pk': comment.post.id}))
 
     def test_func(self):
         comment = self.get_object()
