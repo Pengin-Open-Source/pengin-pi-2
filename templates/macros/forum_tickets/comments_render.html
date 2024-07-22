@@ -1,10 +1,20 @@
 {% load macros %}
 {% loadmacros "macros/pagination.html" %}
-{% macro render_comments comments current_user %}
+{% macro render_comments comments current_user is_edited %}
   {% for comment in comments %}
   <tr><td>
     <div class="comment-title-underline">
-      <div >by {{comment.author.name|escape}} at {{comment.date|escape}}</div>
+
+      <div> 
+        {% if comment.row_action == 'EDIT' %} 
+         Edited
+        {% elif comment.row_action =='CREATE' %}
+         Posted 
+        {% else %}
+        <p style="color: red;" >  
+            <i> Warning: This may be a restored comment's date of deletion. Notify your system administrator</i>
+         </p>
+        {% endif %} by {{comment.author.name|escape}} at {{comment.date|escape}}</div>
         {% if current_user.is_authenticated %}
           <div class="text-buttons-container">
             {% if user == comment.author or is_admin %}
