@@ -4,17 +4,23 @@
   {% for comment in comments %}
   <tr><td>
     <div class="comment-title-underline">
-
-      <div> 
-        {% if comment.row_action == 'EDIT' %} 
-         Edited
-        {% elif comment.row_action =='CREATE' %}
-         Posted 
-        {% else %}
-        <p style="color: red;" >  
-            <i> Warning: This may be a restored comment's date of deletion. Notify your system administrator</i>
-         </p>
-        {% endif %} by {{comment.author.name|escape}} at {{comment.date|escape}}</div>
+    <div> by {{comment.author.name|escape}} at {{comment.date|escape}}</div>
+    {% if comment.row_action == 'CREATE' %} 
+    {% elif comment.row_action == 'EDIT' %}
+     <i> (Edited) </i> 
+            {% if comment.is_create_missing %}
+            <p style="color: red;" >  
+              <i> Comment Creation Date / Original Author not found!</i>
+            </p>
+            {% else %}
+                 <div> Originally posted by {{comment.original_author |escape}} at {{comment.create_date|escape}}</div>
+            {% endif %}
+    {% else %}
+    <p style="color: red;" >  
+      <i> Warning: This may be a restored comment's date of deletion. Notify your system administrator</i>
+    </p>
+  {% endif %} 
+        
         {% if current_user.is_authenticated %}
           <div class="text-buttons-container">
             {% if user == comment.author or is_admin %}

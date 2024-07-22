@@ -6,9 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from forums.models import Thread, ForumPost, ForumComment, ThreadRole, transaction
+from forums.models import ForumCommentHistory, Thread, ForumPost, ForumComment, ThreadRole, transaction
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
 from django.utils import timezone
+
+from main.models.users import User
 
 
 class ForumsListView(LoginRequiredMixin, ListView):
@@ -123,6 +125,19 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         context['form'] = form
         comment_form = ForumCommentForm()
         comments = self.object.comments.all().order_by('-date')
+
+        for comment in comments:
+            if comment.row_action == 'CREATE':
+                comment.is_create_missing = False
+            else:
+                creation_info = get_comment_create_info(comment)
+                author_id, comment.create_date, comment.is_create_missing = creation_info
+                if author_id != 'NOT FOUND':
+                    author = User.objects.get(id=author_id).name
+                else:
+                    author = 'NOT FOUND'
+                comment.original_author = author
+
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(comments, 10)
@@ -243,7 +258,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user == comment.author or self.request.user.is_staff
 
 
-# Utility delete comments
+# Utility methods
 
 
 def delete_comment(usr, archive_comment):
@@ -262,6 +277,32 @@ def delete_comment(usr, archive_comment):
     if "Comment about widgets" in archive_comment.content:
         raise TestTransactionError("Test Delete Comment Failure.")
     return "success"
+
+# Code should be able to work with Comments and Posts
+
+
+def get_comment_create_info(comment):
+    author = ''
+    oldest_date = ''
+    is_create_missing = False
+
+    comment_history = ForumCommentHistory.objects.filter(
+        comment_id=comment.id,  row_action="CREATE")
+
+    # there should be only one value.
+    # we will set a flag if there is no row with method 'CREATE'  in ForumCommentHistory
+    oldest_comment = comment_history.first()
+    if oldest_comment:
+        author = oldest_comment.author
+        oldest_date = oldest_comment.date
+    else:
+        # DBAs TAKE NOTE: If a DBA archives or deletes some older Forum Comments
+        # then the row with the ForumComment creation date/original comment author could have
+        # been deleted and unavailable now!
+        is_create_missing = True
+        author = 'NOT FOUND'
+        oldest_date = 'DATE NOT FOUND'
+    return (author, oldest_date, is_create_missing)
 
 
 # Use to test failure case of delete transaction
