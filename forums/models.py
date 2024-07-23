@@ -11,11 +11,23 @@ class Thread(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     date = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='threads')
     groups = models.ManyToManyField(
         Group, through='ThreadRole', related_name='threads')
+    row_action = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):
         return str(self.name)
+
+
+class ThreadHistory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    thread_id = models.UUIDField(db_index=True)
+    name = models.CharField(max_length=100)
+    date = models.DateTimeField(default=timezone.now)
+    created_by = models.UUIDField(db_index=True)
+    roles = models.JSONField()
 
 
 class ForumPost(models.Model):
