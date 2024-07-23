@@ -94,6 +94,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
             form.instance.thread = get_object_or_404(
                 Thread, id=thread_id)
             form.instance.author = self.request.user
+            form.instance.row_action = 'CREATE'
             form.save()
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': thread_id,  'pk': form.instance.id}))
         else:
@@ -157,7 +158,6 @@ class PostDetailView(LoginRequiredMixin, DetailView):
             comment_form.instance.row_action = 'CREATE'
             comment_form.save()
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': self.object.thread_id,  'pk': self.object.id}))
-        # return self.render_to_response(self.get_context_data(form=form))
 
 
 class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -180,6 +180,19 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context['post_id'] = self.object.id
         return context
 
+    def post(self, request, *args, **kwargs):
+        post_id = self.kwargs.get('pk')
+        post = get_object_or_404(
+            ForumPost, id=post_id)
+        post_form = ForumPostForm(request.POST, instance=post)
+        if post_form.is_valid():
+            post = post_form.save(commit=False)
+            post.author = request.user
+            post.row_action = 'EDIT'
+            post.date = timezone.now()
+            post.save()
+            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': post.thread_id,  'pk': post.id}))
+
     def test_func(self):
         post = self.get_object()
         return self.request.user == post.author or self.request.user.is_staff
@@ -196,15 +209,16 @@ class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = ForumPost
 
-    def get_success_url(self):
-        return reverse_lazy('thread', kwargs={'pk': self.object.thread.id})
+    def post(self, request, *args, **kwargs):
+        archive_post = self.get_object()
+        thread_id = archive_post.thread.id
+        with transaction.atomic():
+            delete_post(request.user, archive_post)
+        return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': thread_id}))
 
     def test_func(self):
         post = self.get_object()
-        if not (self.request.user == post.author or self.request.user.is_staff):
-            return False
-
-        return redirect('thread',  pk=post.thread.id)
+        return (self.request.user == post.author or self.request.user.is_staff)
 
 
 class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -260,7 +274,42 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 # Utility methods
 
+# Since this method has multiple operations that must succeed or fail together,
+# call this method inside of transaction.
+# Not putting a transaction at the top of this method itself,  b/c
+# this method may be called inside of a delete_thread method.
+# I want failures to propagate up the chain and cancel the
+# whole delete sequence - or else have all the "CASCADE" of
+# deletes succeed together.
+def delete_post(usr, archive_post):
 
+    archive_post.row_action = 'DELETE'
+    archive_post.author = usr
+    archive_post.date = timezone.now()
+
+    # First,  try to delete all the comments
+    # If this method is called inside a transaction,
+    # All comment deletions should rollback if one fails
+    comments = archive_post.comments.all().order_by('-date')
+    for comment in comments:
+        delete_comment(usr, comment)
+
+    # specify this is an deleted record
+    # both save and delete must execute or fail together,
+    # this keeps track of the time of deletion and
+    # the user who deleted the record
+    archive_post.save()
+    archive_post.delete()
+    return "success"
+
+
+# Since this method has two operations that must succeed or fail together,
+# call this method inside of transaction.
+# Not putting a transaction at the top of this method itself,  b/c
+# this method may be called inside of a delete_post method.
+# I want failures to propagate up the chain and cancel the
+# whole delete sequence - or else have all the "CASCADE" of
+# deletes succeed together.
 def delete_comment(usr, archive_comment):
 
     archive_comment.row_action = 'DELETE'
@@ -278,9 +327,8 @@ def delete_comment(usr, archive_comment):
         raise TestTransactionError("Test Delete Comment Failure.")
     return "success"
 
-# Code should be able to work with Comments and Posts
 
-
+# Used to get original date/author of an edited comment
 def get_comment_create_info(comment):
     author = ''
     oldest_date = ''
