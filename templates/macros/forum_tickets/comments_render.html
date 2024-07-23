@@ -16,10 +16,10 @@
                  <div> Originally posted by {{comment.original_author |escape}} at {{comment.create_date|escape}}</div>
             {% endif %}
     {% else %}
-    <p style="color: red;" >  
-      <i> Warning: This may be a restored comment's date of deletion. Notify your system administrator</i>
-    </p>
-  {% endif %} 
+          <p style="color: red;" >  
+            <i> Warning: This may be a restored comment's date of deletion. Notify your system administrator</i>
+          </p>
+    {% endif %} 
         
         {% if current_user.is_authenticated %}
           <div class="text-buttons-container">

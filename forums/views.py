@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from forums.models import ForumCommentHistory, Thread, ForumPost, ForumComment, ThreadRole, transaction
+from forums.models import Thread, ForumPost,  ForumPostHistory, ForumComment, ForumCommentHistory, ThreadRole, transaction
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
 from django.utils import timezone
 
@@ -67,11 +67,25 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 class ThreadDetailView(LoginRequiredMixin, DetailView):
     model = Thread
     template_name = 'thread.html'
-    context_object_name = 'thread'
+    pcontext_object_name = 'thread'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         posts = self.object.posts.all().order_by('-date')
+        for forum_post in posts:
+            if forum_post.row_action == 'CREATE':
+                forum_post.is_create_missing = False
+            else:
+                post_creation_info = get_post_create_info(forum_post)
+                print("post creation info")
+                print(post_creation_info)
+                post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
+                if post_author_id != 'NOT FOUND':
+                    post_author = User.objects.get(id=post_author_id).name
+                else:
+                    post_author = 'NOT FOUND'
+                forum_post.original_author = post_author
+
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(posts, 10)
@@ -79,6 +93,7 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
         context['page_obj'] = page_obj
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.name
+
         return context
 
 
@@ -124,20 +139,21 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
+
         comment_form = ForumCommentForm()
         comments = self.object.comments.all().order_by('-date')
-
         for comment in comments:
             if comment.row_action == 'CREATE':
                 comment.is_create_missing = False
             else:
-                creation_info = get_comment_create_info(comment)
-                author_id, comment.create_date, comment.is_create_missing = creation_info
-                if author_id != 'NOT FOUND':
-                    author = User.objects.get(id=author_id).name
+                comment_creation_info = get_comment_create_info(comment)
+                comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
+                if comment_author_id != 'NOT FOUND':
+                    comment_author = User.objects.get(
+                        id=comment_author_id).name
                 else:
-                    author = 'NOT FOUND'
-                comment.original_author = author
+                    comment_author = 'NOT FOUND'
+                comment.original_author = comment_author
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -150,14 +166,14 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         return context
 
     def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        forum_post = self.get_object()
         comment_form = ForumCommentForm(request.POST)
         if comment_form.is_valid():
-            comment_form.instance.post = self.object
+            comment_form.instance.post = forum_post
             comment_form.instance.author = request.user
             comment_form.instance.row_action = 'CREATE'
             comment_form.save()
-            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': self.object.thread_id,  'pk': self.object.id}))
+            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': forum_post.thread_id,  'pk': self.object.id}))
 
 
 class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -303,6 +319,34 @@ def delete_post(usr, archive_post):
     return "success"
 
 
+# Used to get original date/author of an edited post
+def get_post_create_info(post):
+    author = ''
+    oldest_date = ''
+    is_create_missing = False
+
+    print("Post id being checked is: ")
+    print(post.id)
+
+    post_history = ForumPostHistory.objects.filter(
+        post_id=post.id,  row_action="CREATE")
+
+    # there should be only one value.
+    # we will set a flag if there is no row with method 'CREATE'  in ForumPostHistory
+    oldest_post_record = post_history.first()
+
+    if oldest_post_record:
+        author = oldest_post_record.author
+        oldest_date = oldest_post_record.date
+    else:
+        # DBAs TAKE NOTE: If a DBA deletes some older Forum Post History Records
+        # then the row with the ForumPost's initial creation date/original author could have
+        # been deleted and unavailable now!
+        is_create_missing = True
+        author = 'NOT FOUND'
+        oldest_date = 'DATE NOT FOUND'
+    return (author, oldest_date, is_create_missing)
+
 # Since this method has two operations that must succeed or fail together,
 # call this method inside of transaction.
 # Not putting a transaction at the top of this method itself,  b/c
@@ -310,6 +354,8 @@ def delete_post(usr, archive_post):
 # I want failures to propagate up the chain and cancel the
 # whole delete sequence - or else have all the "CASCADE" of
 # deletes succeed together.
+
+
 def delete_comment(usr, archive_comment):
 
     archive_comment.row_action = 'DELETE'
@@ -339,13 +385,13 @@ def get_comment_create_info(comment):
 
     # there should be only one value.
     # we will set a flag if there is no row with method 'CREATE'  in ForumCommentHistory
-    oldest_comment = comment_history.first()
-    if oldest_comment:
-        author = oldest_comment.author
-        oldest_date = oldest_comment.date
+    oldest_comment_record = comment_history.first()
+    if oldest_comment_record:
+        author = oldest_comment_record.author
+        oldest_date = oldest_comment_record.date
     else:
-        # DBAs TAKE NOTE: If a DBA archives or deletes some older Forum Comments
-        # then the row with the ForumComment creation date/original comment author could have
+        # DBAs TAKE NOTE: If a DBA deletes some older Forum Comment History Records
+        # then the row with the ForumComment's initial creation date/original author could have
         # been deleted and unavailable now!
         is_create_missing = True
         author = 'NOT FOUND'

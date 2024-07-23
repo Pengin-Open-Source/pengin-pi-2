@@ -12,6 +12,24 @@
   {% for post in page_obj %}
   <tr><td class="post-container">
     <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|escape }}</a>
+    <div class="comment-title-underline">
+      <div> by {{post.author.name|escape}} at {{post.date|escape}} </div>
+      {% if post.row_action == 'CREATE' %} 
+      {% elif post.row_action == 'EDIT' %}
+      <i> (Edited) </i> 
+            {% if post.is_create_missing %}
+            <p style="color: red;" >  
+              <i> Post Creation Date / Original Author not found!</i>
+            </p>
+            {% else %}
+                 <div> Originally posted by {{post.original_author |escape}} at {{post.create_date|escape}}</div>
+            {% endif %}
+      {% else %}
+          <p style="color: red;" >  
+            <i> Warning: This may be a restored post's date of deletion. Notify your system administrator</i>
+          </p>
+      {% endif %} 
+
     {% if is_admin %}
     <form method="post" action="{% url 'delete_post' post.id %}">
       {% csrf_token %}
