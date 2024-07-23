@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Edit Application Status</h2>
+  <form method="post" action="{% url 'edit_status' job_id=job.id application_id=application.id %}">
+    {% csrf_token %}
+    <label for="status_code">Change Status:</label>
+    <select name="status_code" id="status_code">
+      <option value="pending">Pending</option>
+      <option value="accepted">Accepted</option>
+      <option value="rejected">Rejected</option>
+    </select>
+    <br><br>
+    <button type="submit">Update</button>
+  </form>
+  <br><br>
+  <h2>Accept</h2>
+  <form method="post" action="{% url 'accept_applicant' job_id=job.id application_id=application.id %}">
+    {% csrf_token %}
+    <label for="accept-subject">Subject:</label><br>
+    <input id="accept-subject" name="accept-subject" type="text" value="Thank you for your application!"><br>
+    <label for="accept-body">Message:</label><br>
+    <textarea id="accept-body" name="accept-body" rows="10" cols="30">Thank you for your interest. We have reviewed your application and would like to move forward with an interview. Please reply with your availability.</textarea><br>
+    <button type="submit">Send</button>
+  </form>
+  <br><br>
+  <h2>Reject</h2>
+  <form method="post" action="{% url 'reject_applicant' job_id=job.id application_id=application.id %}">
+    {% csrf_token %}
+    <label for="reject-subject">Subject:</label><br>
+    <input id="reject-subject" name="reject-subject" type="text" value="Thank you for your application"><br>
+    <label for="reject-body">Message:</label><br>
+    <textarea id="reject-body" name="reject-body" rows="10" cols="30">Thank you for your application. We have reviewed your application and have decided not to move forward at this time. We appreciate your interest and wish you the best of luck in your job search.</textarea><br>
+    <button type="submit">Send</button>
+  </form>
+  <br><br>
+  <form method="post" action="{% url 'delete_applicant' job_id=job.id application_id=application.id %}">
+    {% csrf_token %}
+    <button type="submit">Delete Application</button>
+    <p><i>This action cannot be undone.</i></p>
+  </form>
+{% endblock %}

@@ -13,6 +13,7 @@ def group_required(group_name):
         return wrapped_view
     return decorator
 
+
 def is_admin_provider(view_func):
     """
     Decorator for views that checks if the user is authenticated and is_staff.
@@ -23,8 +24,6 @@ def is_admin_provider(view_func):
         return view_func(request, is_admin=is_admin, *args, **kwargs)
     return _wrapped_view
 
-from functools import wraps
-from django.http import HttpResponseForbidden
 
 def is_admin_required(view_func):
     """

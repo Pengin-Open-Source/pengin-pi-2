@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Application for {{ application.job.job_title }}</h1>
+  <p>Applied on {{ application.date_applied }}</p>
+  <p>Resume: <a href="{{ resume_url }}" target="_blank">Download</a></p>
+  {% if cover_letter_url %}
+    <p>Cover Letter: <a href="{{ cover_letter_url }}" target="_blank">Download</a></p>
+  {% endif %}
+  <p>Message: {{ application.message }}</p>
+  <p>Location: {{ application.location }}</p>
+{% endblock %}

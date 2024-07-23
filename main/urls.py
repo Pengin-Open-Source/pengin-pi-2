@@ -28,6 +28,7 @@ urlpatterns = [
     path('orders/', include('orders.urls.orders')),
     path('customers/', include('orders.urls.customers')),
     path('', include('jobs.urls')),
+    path('forums/', include('forums.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('signup/', SignupView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),

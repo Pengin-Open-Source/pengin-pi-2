@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'leads',
     'products',
     'jobs',
+    'applications',
+    'profiles',
     'relationships',
 ]
 
@@ -126,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'main.User'
+AUTH_USER_MODEL = 'main.User' #forces Django to use custom User model main.models.users.__init__.py User
 
 
 # Internationalization
