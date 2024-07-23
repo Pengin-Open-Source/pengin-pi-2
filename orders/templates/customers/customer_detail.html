@@ -9,13 +9,13 @@
 
 {% block pageContent %}
     <p>{{ customer.name }}</p>
-{#    {% if customer.user %}#}
-        {# href="{{ url 'main:detail-user' customer.user.id }}" #}
-{#        <p><a href="">See user (link not functional, need a user view)</a></p>#}
-{#    {% elif customer.company %}#}
-        {# href="{{ url 'companies:detail-company' customer.company.id }}" #}
-{#        <p><a href="">See company (link not functional, need a company view)</a></p>#}
-{#    {% endif %}#}
+    <button class="primary-button" type="button">
+        {% if customer.user %}
+            <a future_href="{\% url 'main:detail-user' customer.user.id %}">See user (link not functional, need a user view)</a>
+        {% elif customer.company %}
+            <a future_href="{\% url 'companies:detail-company' customer.company.id %}">See company (link not functional, need a company view)</a>
+        {% endif %}
+    </button>
 
     <h3>Shipping Address</h3>
     {% if customer.shippingaddress_set %}
