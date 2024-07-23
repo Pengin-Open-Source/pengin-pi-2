@@ -1,34 +1,32 @@
-{% extends "layout/fullPageScroll.html" %}
+{% extends "layout/alternating_color_table.html" %}
 
 {% block pageDropDowns %}
-  <a href="{%  url "orders:create-order" %}">New Order</a>
+    <a href="{%  url "orders:create-order" %}">New Order</a>
 {% endblock %}
 
 
 {% block beforeTableContent %}
     <div class="title-underline">
-      <a class="text-button" href="/orders?is_cancelled=false">active</a>|
-      <a class="text-button" href="/orders?is_cancelled=true">cancelled</a>
+        <a class="text-button" href="/orders?is_cancelled=false">active</a>|
+        <a class="text-button" href="/orders?is_cancelled=true">cancelled</a>
     </div>
 {% endblock %}
-{% block pageContent %}
 
-    {% for order in page_orders %}
-    <table>
-      <thead>
+{% block tableContent %}
+    <thead>
         <tr>
-          <th>Order Date</th>
-          <th>Order ID</th>
-          <th>Customer</th>
+            <th>Order Date</th>
+            <th>Order ID</th>
+            <th>Customer</th>
         </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{ order.order_date|date:"F d, Y" }}</td>
-          <td><a href="{% url 'orders:detail-order' order.id %}">{{ order.id }}</a></td>
-          <td>{{ order.customer.name }}</td>
-        </tr>
-      </tbody>
-    </table>
-    {% endfor %}
+    </thead>
+    <tbody>
+        {% for order in page_orders %}
+            <tr>
+              <td>{{ order.order_date|date:"F d, Y" }}</td>
+              <td><a href="{% url 'orders:detail-order' order.id %}">{{ order.id }}</a></td>
+              <td>{{ order.customer.name }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
 {% endblock %}
