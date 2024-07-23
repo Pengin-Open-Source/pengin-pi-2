@@ -10,7 +10,10 @@
 {% block pageContent %}
     <p>{{ customer.name }}</p>
     <button class="primary-button" type="button">
+        {# Need to create views and urls to access detail pages of users and companies #}
         {% if customer.user %}
+            {# Change "future_href" to ref and remove the "\" from the link #}
+            {# Ensure both url patterns exist in the apps #}
             <a future_href="{\% url 'main:detail-user' customer.user.id %}">See user (link not functional, need a user view)</a>
         {% elif customer.company %}
             <a future_href="{\% url 'companies:detail-company' customer.company.id %}">See company (link not functional, need a company view)</a>
