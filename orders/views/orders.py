@@ -15,7 +15,8 @@ class ListOrders(View):
     @method_decorator(login_required)
     @method_decorator(is_admin_provider)
     def get(self, request, is_admin):
-        orders = Order.objects.all()
+        is_cancelled = request.GET.get('is_cancelled') == "true"
+        orders = Order.objects.filter(is_cancelled=is_cancelled)
 
         paginator = Paginator(orders, 9)
         page_number = request.GET.get("page", 1)
@@ -26,30 +27,6 @@ class ListOrders(View):
             "page_orders": page_orders,
             "primary_title": "Orders",
         })
-
-    # @method_decorator(login_required)
-    # def get(self, request):
-    #
-    #     is_cancelled = request.GET.get('is_cancelled') == True
-    #
-    #     # orders = Order.objects.filter(customer__id=request.user.id,
-    #     #                               is_cancelled=is_cancelled)
-    #
-    #     orders = Order.objects.all()
-    #     print(orders)
-    #     # customers = {order.customer_id: get_object_or_404(Customer, id=order.customer_id) for order in orders}
-    #
-    #     # for customer in customers.values():
-    #     #     customer.company = Company.query.get(customer.company_id)
-    #     #     customer.user = User.query.get(customer.user_id)
-    #
-    #     context = {
-    #         "primary_title": "Orders",
-    #         "orders": orders,
-    #         # "customers": customers,
-    #     }
-    #
-    #     return render(request, 'orders/order_list.html', context)
 
 
 # Display order details
