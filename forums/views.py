@@ -58,8 +58,11 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         form = ThreadForm(request.POST)
         if form.is_valid():
             role = self.request.POST.get('role')
-            thread = form.save()
+            form.instance.user = self.request.user
+            form.instance.row_action = 'CREATE'
             selected_role = request.user.groups.get(pk=role)
+            form.instance.group = selected_role
+            thread = form.save()
             ThreadRole.objects.create(thread=thread, group=selected_role)
             return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': form.instance.pk}))
 
@@ -95,6 +98,18 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
         context['primary_title'] = self.object.name
 
         return context
+
+
+class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Thread
+
+    def post(self, request, *args, **kwargs):
+        archive_thread = self.get_object()
+        delete_thread(request.user, archive_thread)
+        return HttpResponseRedirect(reverse_lazy('forums'))
+
+    def test_func(self):
+        return self.request.user.is_staff
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
@@ -173,7 +188,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
             comment_form.instance.author = request.user
             comment_form.instance.row_action = 'CREATE'
             comment_form.save()
-            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': forum_post.thread_id,  'pk': self.object.id}))
+            return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': forum_post.thread_id,  'pk': forum_post.id}))
 
 
 class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -212,14 +227,6 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         post = self.get_object()
         return self.request.user == post.author or self.request.user.is_staff
-
-
-class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    model = Thread
-    success_url = reverse_lazy('forums')
-
-    def test_func(self):
-        return self.request.user.is_staff
 
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -287,8 +294,44 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         comment = self.get_object()
         return self.request.user == comment.author or self.request.user.is_staff
 
+##                   ##
+#   UTILITY METHODS
+##                   ##
 
-# Utility methods
+
+# THREAD UTILITY METHODS #
+
+
+# Since this method has multiple operations that must succeed or fail together,
+# Putting a transaction at the top of this method itself,  rather than calling
+# the method within a transaction,  as I do with other utility delete methods.
+# (Because Thread is the "top level" model of Forums, and isn't being
+# called in a deletion loop like posts and comments are)
+def delete_thread(usr, archive_thread):
+    with transaction.atomic():
+        archive_thread.row_action = 'DELETE'
+        archive_thread.author = usr
+        archive_thread.date = timezone.now()
+
+        # First,  try to delete all the posts
+        # which will in turn invoke deletion of all their
+        # comments
+        # If any deletion fails down the chain,  the whole deletion
+        # process should be canceled.
+        posts = archive_thread.posts.all().order_by('-date')
+        for post in posts:
+            delete_post(usr, post)
+
+        # specify this is an deleted record
+        # both save and delete must execute or fail together,
+        # this keeps track of the time of deletion and
+        # the user who deleted the record
+        archive_thread.save()
+        archive_thread.delete()
+        return "success"
+
+
+# POST UTILITY METHODS #
 
 # Since this method has multiple operations that must succeed or fail together,
 # call this method inside of transaction.
@@ -346,6 +389,9 @@ def get_post_create_info(post):
         author = 'NOT FOUND'
         oldest_date = 'DATE NOT FOUND'
     return (author, oldest_date, is_create_missing)
+
+
+# COMMENT UTILITY METHODS #
 
 # Since this method has two operations that must succeed or fail together,
 # call this method inside of transaction.
