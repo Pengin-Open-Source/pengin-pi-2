@@ -82,7 +82,7 @@ class ForumPost(models.Model):
     date = models.DateTimeField(default=timezone.now)
     thread = models.ForeignKey(
         Thread, on_delete=models.CASCADE, related_name='posts')
-    author = models.ForeignKey(
+    user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='posts')
     row_action = models.CharField(max_length=10, default='ERROR')
 
@@ -100,7 +100,7 @@ class ForumPost(models.Model):
             if save_method != "CREATE":
                 original_post = ForumPost.objects.get(pk=self.pk)
                 post_backup = ForumPostHistory(post_id=original_post.id, title=original_post.title, content=original_post.content,  tags=original_post.tags, date=original_post.date, thread=original_post.thread.pk,
-                                               author=original_post.author.pk, row_action=original_post.row_action)
+                                               user=original_post.user.pk, row_action=original_post.row_action)
                 post_backup.save()
 
             # else: this is a newly created post don't save it to backup table yet
@@ -118,7 +118,7 @@ class ForumPost(models.Model):
             # by a DBA)
             if save_method == 'DELETE':
                 archived_post = ForumPostHistory(post_id=self.pk, title=self.title, content=self.content,  tags=self.tags, date=self.date, thread=self.thread.pk,
-                                                 author=self.author.pk, row_action=self.row_action)
+                                                 user=self.user.pk, row_action=self.row_action)
                 archived_post.save()
 
 
@@ -130,7 +130,7 @@ class ForumPostHistory(models.Model):
     tags = models.CharField(max_length=150)
     date = models.DateTimeField(default=timezone.now)
     thread = models.UUIDField(db_index=True)
-    author = models.UUIDField(db_index=True)
+    user = models.UUIDField(db_index=True)
     row_action = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):
@@ -143,7 +143,7 @@ class ForumComment(models.Model):
     date = models.DateTimeField(default=timezone.now)
     post = models.ForeignKey(
         ForumPost, on_delete=models.CASCADE, related_name='comments')
-    author = models.ForeignKey(
+    user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='comments')
     # CREATE, EDIT, DELETE - which put the row in this state?
     # (DELETE is used for Comment History)
@@ -163,7 +163,7 @@ class ForumComment(models.Model):
             if save_method != "CREATE":
                 original_comment = ForumComment.objects.get(pk=self.pk)
                 comment_backup = ForumCommentHistory(comment_id=original_comment.id, content=original_comment.content, date=original_comment.date, post=original_comment.post.pk,
-                                                     author=original_comment.author.pk, row_action=original_comment.row_action)
+                                                     user=original_comment.user.pk, row_action=original_comment.row_action)
                 comment_backup.save()
 
             # else: this is a newly created comment don't save it to backup table yet
@@ -181,7 +181,7 @@ class ForumComment(models.Model):
             # by a DBA)
             if save_method == 'DELETE':
                 archived_comment = ForumCommentHistory(comment_id=self.id, content=self.content, date=self.date, post=self.post.pk,
-                                                       author=self.author.pk, row_action=self.row_action)
+                                                       user=self.user.pk, row_action=self.row_action)
                 archived_comment.save()
 
 
@@ -191,7 +191,7 @@ class ForumCommentHistory(models.Model):
     content = models.TextField()
     date = models.DateTimeField(default=timezone.now)
     post = models.UUIDField(db_index=True)
-    author = models.UUIDField(db_index=True)
+    user = models.UUIDField(db_index=True)
     row_action = models.CharField(max_length=10, default='ERROR')
 
 

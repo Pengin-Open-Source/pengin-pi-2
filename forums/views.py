@@ -70,7 +70,7 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 class ThreadDetailView(LoginRequiredMixin, DetailView):
     model = Thread
     template_name = 'thread.html'
-    pcontext_object_name = 'thread'
+    context_object_name = 'thread'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -78,6 +78,7 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
         for forum_post in posts:
             if forum_post.row_action == 'CREATE':
                 forum_post.is_create_missing = False
+                forum_post.author = forum_post.user
             else:
                 post_creation_info = get_post_create_info(forum_post)
                 print("post creation info")
@@ -87,7 +88,7 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
                     post_author = User.objects.get(id=post_author_id).name
                 else:
                     post_author = 'NOT FOUND'
-                forum_post.original_author = post_author
+                forum_post.author = post_author
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -123,7 +124,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         if form.is_valid():
             form.instance.thread = get_object_or_404(
                 Thread, id=thread_id)
-            form.instance.author = self.request.user
+            form.instance.user = self.request.user
             form.instance.row_action = 'CREATE'
             form.save()
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': thread_id,  'pk': form.instance.id}))
@@ -160,6 +161,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         for comment in comments:
             if comment.row_action == 'CREATE':
                 comment.is_create_missing = False
+                comment.author = comment.user
             else:
                 comment_creation_info = get_comment_create_info(comment)
                 comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
@@ -168,7 +170,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
                         id=comment_author_id).name
                 else:
                     comment_author = 'NOT FOUND'
-                comment.original_author = comment_author
+                comment.author = comment_author
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -185,7 +187,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         comment_form = ForumCommentForm(request.POST)
         if comment_form.is_valid():
             comment_form.instance.post = forum_post
-            comment_form.instance.author = request.user
+            comment_form.instance.user = request.user
             comment_form.instance.row_action = 'CREATE'
             comment_form.save()
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': forum_post.thread_id,  'pk': forum_post.id}))
@@ -218,15 +220,21 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         post_form = ForumPostForm(request.POST, instance=post)
         if post_form.is_valid():
             post = post_form.save(commit=False)
-            post.author = request.user
+            post.user = request.user
             post.row_action = 'EDIT'
             post.date = timezone.now()
             post.save()
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': post.thread_id,  'pk': post.id}))
 
     def test_func(self):
-        post = self.get_object()
-        return self.request.user == post.author or self.request.user.is_staff
+        forum_post = self.get_object()
+        post_creation_info = get_post_create_info(forum_post)
+        post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
+        if post_author_id != 'NOT FOUND':
+            post_author = User.objects.get(id=post_author_id).name
+        else:
+            post_author = 'NOT FOUND'
+        return (self.request.user == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
 
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -240,8 +248,18 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': thread_id}))
 
     def test_func(self):
-        post = self.get_object()
-        return (self.request.user == post.author or self.request.user.is_staff)
+        forum_post = self.get_object()
+        if forum_post.row_action == 'CREATE':
+            post_author = forum_post.user
+        else:
+            post_creation_info = get_post_create_info(forum_post)
+            post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
+            if post_author_id != 'NOT FOUND':
+                post_author = User.objects.get(id=post_author_id).name
+            else:
+                post_author = 'NOT FOUND'
+
+        return (self.request.user == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
 
 
 class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -268,7 +286,7 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         comment_form = ForumCommentForm(request.POST, instance=comment)
         if comment_form.is_valid():
             comment = comment_form.save(commit=False)
-            comment.author = request.user
+            comment.user = request.user
             comment.row_action = 'EDIT'
             comment.date = timezone.now()
             comment.save()
@@ -276,7 +294,16 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def test_func(self):
         comment = self.get_object()
-        return self.request.user == comment.author or self.request.user.is_staff
+        if comment.row_action == 'CREATE':
+            comment_author = comment.user
+        else:
+            comment_creation_info = get_comment_create_info(comment)
+            comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
+            if comment_author_id != 'NOT FOUND':
+                comment_author = User.objects.get(id=comment_author_id).name
+            else:
+                comment_author = 'NOT FOUND'
+        return (self.request.user == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
 
 
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -292,7 +319,16 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def test_func(self):
         comment = self.get_object()
-        return self.request.user == comment.author or self.request.user.is_staff
+        if comment.row_action == 'CREATE':
+            comment_author = comment.user
+        else:
+            comment_creation_info = get_comment_create_info(comment)
+            comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
+            if comment_author_id != 'NOT FOUND':
+                comment_author = User.objects.get(id=comment_author_id).name
+            else:
+                comment_author = 'NOT FOUND'
+        return (self.request.user == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
 
 ##                   ##
 #   UTILITY METHODS
@@ -310,7 +346,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 def delete_thread(usr, archive_thread):
     with transaction.atomic():
         archive_thread.row_action = 'DELETE'
-        archive_thread.author = usr
+        archive_thread.user = usr
         archive_thread.date = timezone.now()
 
         # First,  try to delete all the posts
@@ -343,7 +379,7 @@ def delete_thread(usr, archive_thread):
 def delete_post(usr, archive_post):
 
     archive_post.row_action = 'DELETE'
-    archive_post.author = usr
+    archive_post.user = usr
     archive_post.date = timezone.now()
 
     # First,  try to delete all the comments
@@ -352,6 +388,10 @@ def delete_post(usr, archive_post):
     comments = archive_post.comments.all().order_by('-date')
     for comment in comments:
         delete_comment(usr, comment)
+
+    # Uncomment to run test cases for post failures
+    # if "Post Failure" in archive_post.title:
+    #    raise TestTransactionError("Test Delete Post Failure.")
 
     # specify this is an deleted record
     # both save and delete must execute or fail together,
@@ -379,7 +419,7 @@ def get_post_create_info(post):
     oldest_post_record = post_history.first()
 
     if oldest_post_record:
-        author = oldest_post_record.author
+        author = oldest_post_record.user
         oldest_date = oldest_post_record.date
     else:
         # DBAs TAKE NOTE: If a DBA deletes some older Forum Post History Records
@@ -405,7 +445,7 @@ def get_post_create_info(post):
 def delete_comment(usr, archive_comment):
 
     archive_comment.row_action = 'DELETE'
-    archive_comment.author = usr
+    archive_comment.user = usr
     archive_comment.date = timezone.now()
 
     # specify this is an deleted record
@@ -414,9 +454,10 @@ def delete_comment(usr, archive_comment):
     # the user who deleted the record
     archive_comment.save()
     archive_comment.delete()
-    # Test error in a transaction after both operations complete successfully
-    if "Comment about widgets" in archive_comment.content:
-        raise TestTransactionError("Test Delete Comment Failure.")
+
+    # Uncomment to test error in a transaction after both operations complete successfully
+    # if Comment about widgets" in archive_comment.content:
+    #   raise TestTransactionError("Test Delete Comment Failure.")
     return "success"
 
 
@@ -433,7 +474,7 @@ def get_comment_create_info(comment):
     # we will set a flag if there is no row with method 'CREATE'  in ForumCommentHistory
     oldest_comment_record = comment_history.first()
     if oldest_comment_record:
-        author = oldest_comment_record.author
+        author = oldest_comment_record.user
         oldest_date = oldest_comment_record.date
     else:
         # DBAs TAKE NOTE: If a DBA deletes some older Forum Comment History Records
