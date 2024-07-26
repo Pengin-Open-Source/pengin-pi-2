@@ -25,7 +25,17 @@ class ForumsListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = 'Forums'
-        threads = self.queryset.order_by('name')
+
+        # If a staff user is requesting, get all forum threads.
+        # otherwise, just get the threads
+        # associated with a group the user is a part of.
+        if self.request.user.is_staff:
+            threads = self.queryset.order_by('name')
+        else:
+            user_groups = self.request.user.groups.all()
+            threads = self.queryset.filter(
+                groups__in=user_groups).order_by('name')
+
         # Similar to what Sincere is using for companies
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -100,6 +110,14 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
 
         return context
 
+    def test_func(self):
+        thread = self.get_object()
+        if self.request.user.is_staff:
+            return True
+        else:
+            user_groups = self.request.user.groups.all()
+            return thread.groups.filter(id__in=user_groups).exists()
+
 
 class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Thread
@@ -140,6 +158,14 @@ class PostCreateView(LoginRequiredMixin, CreateView):
             Thread, id=self.kwargs['thread_id'])
         context = {'form': form,  'thread': thread}
         return render(request, self.template_name,  context)
+
+    def test_func(self):
+        forum_post = self.get_object()
+        if self.request.user.is_staff:
+            return True
+        else:
+            user_groups = self.request.user.groups.all()
+            return forum_post.thread.groups.filter(id__in=user_groups).exists()
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
@@ -191,6 +217,14 @@ class PostDetailView(LoginRequiredMixin, DetailView):
             comment_form.instance.row_action = 'CREATE'
             comment_form.save()
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': forum_post.thread_id,  'pk': forum_post.id}))
+
+    def test_func(self):
+        forum_post = self.get_object()
+        if self.request.user.is_staff:
+            return True
+        else:
+            user_groups = self.request.user.groups.all()
+            return forum_post.thread.groups.filter(id__in=user_groups).exists()
 
 
 class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
