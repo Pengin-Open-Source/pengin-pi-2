@@ -6,6 +6,7 @@ from django.views import View
 from util.security.auth_tools import is_admin_provider, is_admin_required
 
 from .models import Contract
+from .forms import ContractForm
 from orders.models import Customer
 
 
