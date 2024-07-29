@@ -9,8 +9,8 @@ class Contract(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT, null=False)
     type = models.CharField(max_length=100)
     content = models.TextField()
-    service_date = models.DateTimeField(null=True)
-    expiration_date = models.DateTimeField(null=True)
+    service_date = models.DateField(null=True)
+    expiration_date = models.DateField(null=True)
 
     def __str__(self):
         return f"Contract {self.type} for {self.customer.name}"
