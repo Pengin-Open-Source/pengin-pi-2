@@ -121,7 +121,7 @@ class DeleteContract(View):
     def get(self, request, contract_id):
         contract = get_object_or_404(Contract, id=contract_id)
         context = {
-            "primary_title": f"Delete Contract {contract}",
+            "primary_title": f"Delete Contract",
             "contract": contract,
         }
         return render(request, self.template_name, context)
