@@ -39,15 +39,6 @@ class ShippingAddress(Address):
         verbose_name_plural = "Shipping addresses"
 
 
-class Contract(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    contract_type = models.CharField(max_length=100)
-    content = models.TextField()
-    service_date = models.DateTimeField(null=True)
-    expiration_date = models.DateTimeField(null=True)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=False)
-
-
 # ### Order Models ###
 class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
