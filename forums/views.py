@@ -2,17 +2,19 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
-from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from forums.models import Thread, ForumPost,  ForumPostHistory, ForumComment, ForumCommentHistory, ThreadRole, transaction
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
+from util.security.auth_tools import group_required
 from django.utils import timezone
+
 
 from main.models.users import User
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class ForumsListView(LoginRequiredMixin, ListView):
 
     queryset = Thread.objects.all()
@@ -20,6 +22,9 @@ class ForumsListView(LoginRequiredMixin, ListView):
     model = Thread
 
     context_object_name = 'threads'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -46,16 +51,17 @@ class ForumsListView(LoginRequiredMixin, ListView):
         return context
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+
     model = Thread
     form_class = ThreadForm
     template_name = 'create_thread.html'
     success_url = reverse_lazy('forums')
 
-    def test_func(self):
-        return self.request.user.is_staff
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         query_groups = request.user.groups.all()
         roles = list(query_groups.values('id', 'name'))
@@ -63,7 +69,6 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         context = {'roles': roles, 'form': form}
         return render(request, self.template_name,  context)
 
-    @method_decorator(login_required)
     def post(self, request):
         form = ThreadForm(request.POST)
         if form.is_valid():
@@ -76,11 +81,18 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             ThreadRole.objects.create(thread=thread, group=selected_role)
             return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': form.instance.pk}))
 
+    def test_func(self):
+        return self.request.user.is_staff
 
+
+@method_decorator(group_required('user'), name='dispatch')
 class ThreadDetailView(LoginRequiredMixin, DetailView):
     model = Thread
     template_name = 'thread.html'
     context_object_name = 'thread'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -119,8 +131,12 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
             return thread.groups.filter(id__in=user_groups).exists()
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Thread
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         archive_thread = self.get_object()
@@ -131,12 +147,15 @@ class ThreadDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user.is_staff
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = ForumPost
     form_class = ForumPostForm
     template_name = 'create_post.html'
 
-    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def post(self, request, thread_id):
         form = ForumPostForm(request.POST)
         if form.is_valid():
@@ -151,7 +170,6 @@ class PostCreateView(LoginRequiredMixin, CreateView):
             context = {'form': form,  'thread': thread}
             return render(request, self.template_name, context)
 
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         form = ForumPostForm()
         thread = get_object_or_404(
@@ -168,11 +186,15 @@ class PostCreateView(LoginRequiredMixin, CreateView):
             return forum_post.thread.groups.filter(id__in=user_groups).exists()
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class PostDetailView(LoginRequiredMixin, DetailView):
     model = ForumPost
     template_name = 'post.html'
     context_object_name = 'post'
     form_class = ForumPostForm
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -227,11 +249,15 @@ class PostDetailView(LoginRequiredMixin, DetailView):
             return forum_post.thread.groups.filter(id__in=user_groups).exists()
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = ForumPost
     form_class = ForumPostForm
     template_name = 'edit_post.html'
     context_object_name = 'post'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse_lazy('post', kwargs={'thread_id': self.object.thread.id,  'pk': self.object.id})
@@ -271,8 +297,12 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return (self.request.user == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = ForumPost
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         archive_post = self.get_object()
@@ -296,10 +326,14 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return (self.request.user == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = ForumComment
     form_class = ForumCommentForm
     template_name = 'edit_comment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -340,8 +374,12 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return (self.request.user == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
 
 
+@method_decorator(group_required('user'), name='dispatch')
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = ForumComment
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         archive_comment = self.get_object()
