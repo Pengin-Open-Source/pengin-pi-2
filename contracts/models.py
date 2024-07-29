@@ -14,3 +14,6 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"Contract {self.type} for {self.customer.name}"
+
+    class Meta:
+        ordering = ['-service_date', 'customer']
