@@ -67,6 +67,11 @@ class CreateContract(View):
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         form = ContractForm(request.POST)
+
+        if form.is_valid():
+            new_contract = form.save()
+            return redirect('contracts:detail-contract', contract_id=new_contract.id)
+
         context = self.get_context_data()
         context['form'] = form
         return render(request, self.template_name, context)
@@ -98,6 +103,10 @@ class EditContract(View):
     def post(self, request, contract_id, *args, **kwargs):
         contract = get_object_or_404(Contract, id=contract_id)
         form = ContractForm(request.POST, instance=contract)
+
+        if form.is_valid():
+            form.save()
+            return redirect('contracts:detail-contract', contract_id=contract.id)
 
         context = self.get_context_data(contract)
         context['form'] = form
