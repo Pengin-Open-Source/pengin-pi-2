@@ -1,4 +1,5 @@
 from django.http import HttpResponseRedirect
+from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
@@ -52,7 +53,7 @@ class ForumsListView(LoginRequiredMixin, ListView):
 
 
 @method_decorator(group_required('user'), name='dispatch')
-class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+class ThreadCreateView(LoginRequiredMixin, CreateView):
 
     model = Thread
     form_class = ThreadForm
@@ -86,7 +87,7 @@ class ThreadCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
 
 @method_decorator(group_required('user'), name='dispatch')
-class ThreadDetailView(LoginRequiredMixin, DetailView):
+class ThreadDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Thread
     template_name = 'thread.html'
     context_object_name = 'thread'
@@ -103,8 +104,6 @@ class ThreadDetailView(LoginRequiredMixin, DetailView):
                 forum_post.author = forum_post.user
             else:
                 post_creation_info = get_post_create_info(forum_post)
-                print("post creation info")
-                print(post_creation_info)
                 post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
                 if post_author_id != 'NOT FOUND':
                     post_author = User.objects.get(id=post_author_id).name
@@ -154,7 +153,18 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     template_name = 'create_post.html'
 
     def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+        thread = get_object_or_404(Thread, id=self.kwargs['thread_id'])
+        can_create_post = False
+        if request.user.is_staff:
+            can_create_post = True
+        else:
+            user_groups = self.request.user.groups.all()
+            can_create_post = thread.groups.filter(id__in=user_groups).exists()
+
+        if can_create_post:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return HttpResponseForbidden("<h1>You don't have permission to create posts on this thread. </h1>")
 
     def post(self, request, thread_id):
         form = ForumPostForm(request.POST)
@@ -177,17 +187,9 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         context = {'form': form,  'thread': thread}
         return render(request, self.template_name,  context)
 
-    def test_func(self):
-        forum_post = self.get_object()
-        if self.request.user.is_staff:
-            return True
-        else:
-            user_groups = self.request.user.groups.all()
-            return forum_post.thread.groups.filter(id__in=user_groups).exists()
-
 
 @method_decorator(group_required('user'), name='dispatch')
-class PostDetailView(LoginRequiredMixin, DetailView):
+class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = ForumPost
     template_name = 'post.html'
     context_object_name = 'post'

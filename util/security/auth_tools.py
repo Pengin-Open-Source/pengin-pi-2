@@ -9,7 +9,7 @@ def group_required(group_name):
             if request.user.is_authenticated and request.user.groups.filter(name=group_name).exists():
                 return view_func(request, *args, **kwargs)
             else:
-                return HttpResponseForbidden("You don't have permission to access this page.")
+                return HttpResponseForbidden("<h1> You don't have permission to access this page. </h1>")
         return wrapped_view
     return decorator
 
@@ -34,9 +34,10 @@ def is_admin_required(view_func):
         if request.user.is_authenticated and request.user.is_staff:
             return view_func(request, *args, **kwargs)
         else:
-            return HttpResponseForbidden("You must be an admin to access this page.")
+            return HttpResponseForbidden("<h1> You must be an admin to access this page. </h1>")
     return _wrapped_view
- 
+
+
 def user_group_provider(view_func):
     @wraps(view_func)
     def wrapped_view(request, *args, **kwargs):
