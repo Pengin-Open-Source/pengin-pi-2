@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import Group
 from forums.models import Thread, ForumPost,  ForumPostHistory, ForumComment, ForumCommentHistory, ThreadRole, transaction
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
 from util.security.auth_tools import group_required
@@ -64,7 +65,7 @@ class ThreadCreateView(LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        query_groups = request.user.groups.all()
+        query_groups = Group.objects.all()
         roles = list(query_groups.values('id', 'name'))
         form = ThreadForm()
         context = {'roles': roles, 'form': form}
