@@ -77,7 +77,7 @@ class ThreadCreateView(LoginRequiredMixin, CreateView):
             role = self.request.POST.get('role')
             form.instance.user = self.request.user
             form.instance.row_action = 'CREATE'
-            selected_role = request.user.groups.get(pk=role)
+            selected_role = Group.objects.get(pk=role)
             form.instance.group = selected_role
             thread = form.save()
             ThreadRole.objects.create(thread=thread, group=selected_role)
