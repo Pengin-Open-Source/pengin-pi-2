@@ -107,10 +107,13 @@ class ThreadDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
                 post_creation_info = get_post_create_info(forum_post)
                 post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
                 if post_author_id != 'NOT FOUND':
-                    post_author = User.objects.get(id=post_author_id).name
+                    post_author = User.objects.get(id=post_author_id)
                 else:
                     post_author = 'NOT FOUND'
                 forum_post.author = post_author
+
+            print("Post Author is:")
+            print(forum_post.author)
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -218,11 +221,12 @@ class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
                 comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
                 if comment_author_id != 'NOT FOUND':
                     comment_author = User.objects.get(
-                        id=comment_author_id).name
+                        id=comment_author_id)
                 else:
                     comment_author = 'NOT FOUND'
                 comment.author = comment_author
-
+            print("Comment Author is:")
+            print(comment.author)
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(comments, 10)
