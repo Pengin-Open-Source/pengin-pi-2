@@ -1,0 +1,29 @@
+<h3 class="blog-link-title">Blog Posts</h3>
+  <ul>
+    {% for post in posts %}
+    <li>
+      <a class="text-button" href="{% url 'blogs:blog_post' post.id %}?page={{ page }}">
+          {{ post.title }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+
+    <!-- Pagination links -->
+    <div class="pagination">
+      {% if posts.has_previous %}
+        <a href="?page={{ posts.previous_page_number }}">Previous</a>
+      {% endif %}
+      
+      {% for num in posts.paginator.page_range %}
+        {% if num == posts.number %}
+          <span class="current">{{ num }}</span>
+        {% else %}
+          <a href="?page={{ num }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      
+      {% if posts.has_next %}
+        <a href="?page={{ posts.next_page_number }}">Next</a>
+      {% endif %}
+    </div>

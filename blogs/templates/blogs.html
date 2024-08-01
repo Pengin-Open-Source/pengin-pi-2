@@ -1,21 +1,16 @@
 {% extends "layout/horizontal_split.html" %}
 
-{% block twoThirdContent %}
-    <div class="blog-content">
-        {% block blogContent %}{% endblock %}
-    </div>
+{% block pageDropDowns %}
+  {% if is_admin %}
+    <a href="{% url 'blogs:create_blog_post' %}">New Blog</a>
+  {% endif %}
 {% endblock %}
 
-{% block oneThirdContent %}
-    <div class="blog-links content-section">
-        <h1>Links</h1>
-        {% for link in links %}
-        <div class="blog-link-item" style="color: white">
-            <a href="/blog/{{ link.id }}">
-                {{ link.title }}
-            </a>
-        </div>
-        {% endfor %}
-    </div>
+{% block leftContent %}
+    {% include "link_list.html" %}
+{% endblock %}
+
+{% block rightContent %}
+    <p>Please use the links to navigate to individual blog posts.</p>
 {% endblock %}
 
