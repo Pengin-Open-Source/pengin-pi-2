@@ -4,7 +4,7 @@
   {% for comment in comments %}
   <tr><td>
     <div class="comment-title-underline">
-    <div> <b> by {{comment.author.name|escape}} at {{comment.date|escape}} </b> </div>
+    <div> <b> by {{comment.author.name|escape}} on {{comment.date|escape}} </b> </div>
     {% if comment.row_action == 'CREATE' %} 
        </div>
     {% elif comment.row_action == 'EDIT' %}
@@ -17,7 +17,7 @@
               </p>
               {% else %}
                   <p style="color: orange;" > 
-                       <i> Originally posted by {{comment.author.name |escape}} at {{comment.create_date|escape}} </i>
+                       <i> Originally posted by {{comment.author.name |escape}} on {{comment.create_date|escape}} </i>
                   </p>
               {% endif %}
            </div>

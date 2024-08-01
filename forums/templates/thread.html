@@ -13,7 +13,7 @@
   <tr><td class="post-container">
     <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|escape }}</a>
     <div class="comment-title-underline">
-      <div><b> by {{post.user.name|escape}} at {{post.date|escape}} </b> </div>
+      <div><b> by {{post.user.name|escape}} on {{post.date|escape}} </b> </div>
   
       {% if post.row_action == 'CREATE' %} 
          </div>
@@ -26,7 +26,7 @@
                   </p>
                   {% else %}
                       <p style="color: orange;" > 
-                           Originally posted by {{post.author.name |escape}} at {{post.create_date|escape}}
+                           Originally posted by {{post.author.name |escape}} on {{post.create_date|escape}}
                      </p>
                   {% endif %}
         </div>
