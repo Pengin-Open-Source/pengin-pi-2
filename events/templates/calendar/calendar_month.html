@@ -1,0 +1,27 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns%}
+{#  <a href="/calendar/create_event">Create Event</a>#}
+{#  <a href="/calendar/settings">Calendar Settings</a>#}
+{% endblock %}
+
+{#{% block content %}#}
+{% block pageContent %}
+
+<div class="calendar-month">
+  <section class="calendar-month-header">
+    <div
+      id="selected-month"
+      class="calendar-month-header-selected-month"
+    ></div>
+    <section class="calendar-month-header-selectors">
+      <a id="previous-month-selector" href="{{ url_previous_month }}"><</a>
+      <a id="present-month-selector" href="{{ url_present_month }}">Today</a>
+      <a id="next-month-selector" href="{{ url_next_month }}">></a>
+    </section>
+  </section>
+
+    <div>{{ calendar_html | safe }}</div>
+</div>
+
+{% endblock %}
