@@ -9,6 +9,7 @@
       <button type="submit">Delete</button>
     </form>
   {% else %}
+    <a href="{% url 'create_application' job_id=job.id %}">Apply</a>
     <a href="{% url 'my_applications' %}">My Applications</a>
   {% endif %}
 {% endblock %}

@@ -2,7 +2,12 @@
 
 <!-- Need to set if_admin condition for pageDropDown options -->
 {% block pageDropDowns %}
-  <a href="{% url 'edit_status' job_id=job.id application_id=application.id %}">Edit Status</a>
+  {% if is_admin %}
+    <a href="{% url 'edit_status' job_id=job.id application_id=application.id %}">Edit Status</a>
+  {% else %}
+    <a href="{% url 'job_list' %}">Jobs</a>
+    <a href="{% url 'my_applications' %}">My Applications</a>
+  {% endif %}
 {% endblock %}
 
 {% block pageContent %}

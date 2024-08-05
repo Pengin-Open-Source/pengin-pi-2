@@ -22,12 +22,11 @@
           <td>{{ application.date_applied|date:"F d, Y" }}</td>
           <td><a href="{% url 'application_detail' application.job.id application.id %}">{{ application.job.job_title }}</a></td>
         </tr>
-      {% endfor %}
       {% empty %}
         <tr>
           <td colspan="2">No applications found.</td>
         </tr>
-      {% endempty %}
+      {% endfor %}
     </tbody>
   </table>
 

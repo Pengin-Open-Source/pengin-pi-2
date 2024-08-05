@@ -6,11 +6,9 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from .forms import JobForm
 from .models import Job
-from util.security.auth_tools import group_required, is_admin_provider
+from util.security.auth_tools import is_admin_provider, is_admin_required
 
-# Set view permissions based off of group
-#???_required = group_required('???')
-
+@login_required
 @is_admin_provider
 def jobs(request: HttpRequest, is_admin):
 
@@ -20,18 +18,13 @@ def jobs(request: HttpRequest, is_admin):
     paginator = Paginator(jobs, 10)
     jobs_paginated = paginator.get_page(page)
     
-    # Accessing the current authenticated user
-    current_user = request.user
-
-    # Print current user info to the command line
-    print(f"Current user: {current_user.username} (ID: {current_user.id})")
-
     return render(request, 'jobs.html', {
         'is_admin': is_admin,
         'jobs': jobs_paginated,
         'page_obj': jobs_paginated, 
     })
 
+@login_required
 @is_admin_provider
 def job(request: HttpRequest, job_id: uuid.UUID, is_admin):  # Change to UUID here
     job = get_object_or_404(Job, id=job_id)
@@ -51,6 +44,7 @@ def job(request: HttpRequest, job_id: uuid.UUID, is_admin):  # Change to UUID he
     })
 
 @login_required
+@is_admin_required
 def create_job(request):
     if request.method == 'POST':
         form = JobForm(request.POST)
@@ -69,6 +63,7 @@ def create_job(request):
     return render(request, 'job_create.html', context)
 
 @login_required
+@is_admin_required
 def edit_job(request, job_id):
     job = get_object_or_404(Job, id=job_id)
 
@@ -88,6 +83,7 @@ def edit_job(request, job_id):
     return render(request, 'job_edit.html', context)
 
 @login_required
+@is_admin_required
 def delete_job(request: HttpRequest, job_id: uuid.UUID) -> HttpResponse:
     job = get_object_or_404(Job, id=job_id)
     

@@ -4,24 +4,29 @@ from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import HttpResponseNotFound, HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from .forms import ApplicationForm
 from .models import Application, Job, StatusCode
 from util.security.auth_tools import is_admin_provider, is_admin_required
 
-def application_detail(request, job_id, application_id):
+@login_required
+@is_admin_provider
+def application_detail(request, job_id, application_id, is_admin):
     job = get_object_or_404(Job, id=job_id)
     application = get_object_or_404(Application, id=application_id)
     resume_url = application.resume.url if application.resume else ''
     cover_letter_url = application.cover_letter.url if application.cover_letter else ''
     context = {
         'job': job,
+        'is_admin': is_admin,
         'application': application,
         'resume_url': resume_url,
         'cover_letter_url': cover_letter_url,
     }
     return render(request, 'application_view.html', context)
+
 
 @login_required
 def create_application(request, job_id):
@@ -188,16 +193,23 @@ def reject_applicant(request, job_id, application_id):
 @login_required
 @is_admin_required
 def delete_applicant(request, job_id, application_id):
-    application = get_object_or_404(Application, id=application_id)
-
-    try:
-        # check whether 'deleted' code exists in db; if not, create it
-        new_status_code, created = StatusCode.objects.get_or_create(code='deleted')
-
-        application.status_code = new_status_code.id
+    if request.method == 'POST':
+        # Fetch the application
+        application = get_object_or_404(Application, id=application_id)
+        
+        # Extract status_code_uuid from POST data
+        status_code_id = request.POST.get('status_code_uuid')
+        
+        try:
+            status_code = StatusCode.objects.get(id=status_code_id)
+        except StatusCode.DoesNotExist:
+            return HttpResponseNotFound("StatusCode not found")
+        
+        # Update application status and delete it
+        application.status_code = status_code
         application.save()
-
-    except Exception as e:
-        print('Error: ', e)
-
-    return redirect(reverse('applications:job_applications', args=[job_id]))
+        application.delete()
+        
+        return redirect(reverse('job_applications', args=[job_id]))
+    else:
+        return HttpResponseNotAllowed(['POST'])
