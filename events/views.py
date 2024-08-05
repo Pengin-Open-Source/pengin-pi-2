@@ -25,7 +25,6 @@ class CalendarMonth(View):
 
         calendar_html = myCal.formatmonth(int(year), int(month), withyear=True)
 
-# Create your views here.
         def get_previous_month():
             if int(month) == 1:
                 return {"year": int(year) - 1, "month": 12}
@@ -74,3 +73,22 @@ class CalendarMonth(View):
             },
         )
 
+
+class CreateEvent(View):
+    template_name = "calendar/create_event.html"
+
+    @method_decorator(login_required)
+    def get(self, request):
+        return render(
+            request,
+            self.template_name,
+            {
+                "primary_title": "Create Event",
+                "action": "create",
+                "form": EventForm(),
+            },
+        )
+
+    @method_decorator(login_required)
+    def post(self, request):
+        pass
