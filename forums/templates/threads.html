@@ -1,5 +1,6 @@
 {% extends "layout/alternating_color_table.html" %}
-{% import "macros/paginate.html" as pagination %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
 
 {% block pageDropDowns %}
   <a href="/forums/create">Create Thread</a>
@@ -8,7 +9,7 @@
 {% block tableContent %}
   {% for thread in threads %}
   <tr><td class="thread-container">
-    <a class="alternating-colors-table-links" href="/forums/{{ thread.id }}">{{ thread.name|e }}</a>
+    <a class="alternating-colors-table-links" href="/forums/{{ thread.id }}">{{ thread.name }}</a>
     {% if is_admin %}
     <form method="post" action="/forums/delete/thread/{{ thread.id }}">
       <button class="primary-button" type="submit">Delete</button>
@@ -18,6 +19,4 @@
   {% endfor %}
 {% endblock %}
 
-{% block postTableContent %}
-  {{ pagination.render_pagination(threads, "") }}
-{% endblock %}
+{% use_macro render_pagination threads %}
