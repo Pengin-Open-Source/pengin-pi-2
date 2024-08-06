@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
 from forums.models import Thread, ForumPost,  ForumPostHistory, ForumComment, ForumCommentHistory, ThreadRole, transaction
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
-from util.security.auth_tools import group_required
+from util.security.auth_tools import group_required, is_admin_required
 from django.utils import timezone
 
 
@@ -54,6 +54,7 @@ class ForumsListView(LoginRequiredMixin, ListView):
 
 
 @method_decorator(group_required('user'), name='dispatch')
+@method_decorator(is_admin_required, name='dispatch')
 class ThreadCreateView(LoginRequiredMixin, CreateView):
 
     model = Thread
@@ -82,9 +83,6 @@ class ThreadCreateView(LoginRequiredMixin, CreateView):
             thread = form.save()
             ThreadRole.objects.create(thread=thread, group=selected_role)
             return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': form.instance.pk}))
-
-    def test_func(self):
-        return self.request.user.is_staff
 
 
 @method_decorator(group_required('user'), name='dispatch')
