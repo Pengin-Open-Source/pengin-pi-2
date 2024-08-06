@@ -53,7 +53,7 @@ class LogoutView(View):
     @method_decorator(login_required)
     def get(self, request):
         logout(request)
-        return redirect('home')
+        return redirect('home_view')
 
 class PasswordResetRequestView(View):
     def get(self, request):

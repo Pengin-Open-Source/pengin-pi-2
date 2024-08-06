@@ -1,0 +1,29 @@
+{% extends "layout/alternating_color_table.html" %}
+
+{% block pageDropDowns %}
+    <a href="{% url "contracts:create-contract" %}">New Contract</a>
+{% endblock %}
+
+
+{% block tableContent %}
+    <thead>
+        <tr>
+            <th>Contract ID</th>
+            <th>Customer</th>
+            <th>Type</th>
+            <th>Service Date</th>
+            <th>Expiration Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contract in page_contracts %}
+            <tr>
+                <td><a href="{% url 'contracts:detail-contract' contract.id %}">{{ contract.id }}</a></td>
+                <td>{{ contract.customer }}</td>
+                <td>{{ contract.type }}</td>
+                <td>{{ contract.service_date|date:"F d, Y" }}</td>
+                <td>{{ contract.expiration_date|date:"F d, Y" }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+{% endblock %}

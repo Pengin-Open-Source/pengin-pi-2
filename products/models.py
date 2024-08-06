@@ -12,3 +12,6 @@ class Product(models.Model):
     card_image_url = models.CharField(max_length=500)
     stock_image_url = models.CharField(max_length=500)
     tags = models.CharField(max_length=150)
+
+    def __str__(self):
+        return self.name
