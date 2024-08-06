@@ -58,9 +58,8 @@ INSTALLED_APPS = [
     'jobs',
     'applications',
     'profiles',
-    #'relationships',
+    # 'relationships',
 ]
-
 
 
 MIDDLEWARE = [
@@ -129,7 +128,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'main.User' #forces Django to use custom User model main.models.users.__init__.py User
+# forces Django to use custom User model main.models.users.__init__.py User
+AUTH_USER_MODEL = 'main.User'
+
+
+# Session
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 1800  # After 30 minutes the cookie expires
 
 
 # Internationalization
