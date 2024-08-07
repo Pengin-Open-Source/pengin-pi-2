@@ -9,12 +9,32 @@
 {% endblock %}
 
 {% block tableContent %}
+ {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
+<script>
+  function convertUTCToLocal(utcTime) {
+    const utcMillis = new Date(utcTime).getTime();
+    const localDate = new Date(utcMillis);
+    return localDate.toLocaleString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    });
+  
+  }
+</script>
   {% for post in page_obj %}
   <tr><td class="post-container">
     <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|escape }}</a>
     <div class="comment-title-underline">
-      <div><b> by {{post.user.name|escape}} on {{post.date|escape}} </b> </div>
-  
+      <div><b> by {{post.user.name|escape}}   on  <span id="post-latest-time-{{forloop.counter}}"></span> </b> </div>
+      <script>
+        var utcTime = new Date('{{ post.date|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('post-latest-time-{{forloop.counter}}').textContent = localTime;
+      </script>
       {% if post.row_action == 'CREATE' %} 
          </div>
       {% elif post.row_action == 'EDIT' %}
@@ -26,15 +46,20 @@
                   </p>
                   {% else %}
                       <p style="color: orange;" > 
-                           Originally posted by {{post.author.name |escape}} on {{post.create_date|escape}}
+                           Originally posted by {{post.author.name |escape}} on  <span id="post-creation-time-{{forloop.counter}}"></span>
                      </p>
+                     <script>
+                      var utcTime = new Date('{{ post.create_date|date:"c" }}');
+                      var localTime = convertUTCToLocal(utcTime);
+                      document.getElementById('post-creation-time-{{forloop.counter}}').textContent = localTime;
+                    </script>
                   {% endif %}
         </div>
       {% else %}
         </div>
          <div class="comment-title-underline">
             <p style="color: red;" >  
-              <i> Warning: This may be a restored post's date of deletion. Notify your system administrator</i>
+              <i> Warning: This may be the date a post was deleted,  before being restored - rather than the last edit date. Your system administrator can check on this</i>
             </p>
         </div>
       {% endif %} 
@@ -48,6 +73,10 @@
   </td></tr>
   {% endfor %}
   {% use_macro render_pagination page_obj %}
+
+
+
+
 {% endblock %}
 
 

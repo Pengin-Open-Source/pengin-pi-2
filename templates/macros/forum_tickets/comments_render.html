@@ -1,10 +1,32 @@
 {% load macros %}
 {% loadmacros "macros/pagination.html" %}
 {% macro render_comments comments current_user is_edited %}
+ {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
+  <script>
+    function convertUTCToLocal(utcTime) {
+      const utcMillis = new Date(utcTime).getTime();
+      const localDate = new Date(utcMillis);
+      return localDate.toLocaleString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+    
+    }
+  </script>
+
   {% for comment in comments %}
   <tr><td>
     <div class="comment-title-underline">
-    <div> <b> by {{comment.author.name|escape}} on {{comment.date|escape}} </b> </div>
+    <div> <b> by {{comment.author.name|escape}} on <span id="comment-latest-time-{{forloop.counter}}"></span> </b> </div>
+    <script>
+      var utcTime = new Date('{{ comment.date|date:"c" }}');
+      var localTime = convertUTCToLocal(utcTime);
+      document.getElementById('comment-latest-time-{{forloop.counter}}').textContent = localTime;
+    </script>
     {% if comment.row_action == 'CREATE' %} 
        </div>
     {% elif comment.row_action == 'EDIT' %}
@@ -17,8 +39,13 @@
               </p>
               {% else %}
                   <p style="color: orange;" > 
-                       <i> Originally posted by {{comment.author.name |escape}} on {{comment.create_date|escape}} </i>
+                       <i> Originally posted by {{comment.author.name |escape}} on  <span id="comment-creation-time-{{forloop.counter}}"> </i>
                   </p>
+                  <script>
+                    var utcTime = new Date('{{ comment.create_date|date:"c" }}');
+                    var localTime = convertUTCToLocal(utcTime);
+                    document.getElementById('comment-creation-time-{{forloop.counter}}').textContent = localTime;
+                  </script>
               {% endif %}
            </div>
     {% else %}
