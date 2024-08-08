@@ -39,7 +39,7 @@
           {% endif  %}
           <a class="header-link" href="/jobs">Jobs</a>
           
-          {% if is_admin %}
+          {% if is_admin and user.validated %}
           <div class="dropdown">
             <div class="dropdown-btn">Tools</div>
             <div class="dropdown-content">
