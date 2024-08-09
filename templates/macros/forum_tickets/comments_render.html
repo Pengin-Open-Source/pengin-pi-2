@@ -21,7 +21,7 @@
   {% for comment in comments %}
   <tr><td>
     <div class="comment-title-underline">
-    <div> <b> by {{comment.author.name|escape}} on <span id="comment-latest-time-{{forloop.counter}}"></span> </b> </div>
+    <div> <b> by {{comment.user.name|escape}} on <span id="comment-latest-time-{{forloop.counter}}"></span> </b> </div>
     <script>
       var utcTime = new Date('{{ comment.date|date:"c" }}');
       var localTime = convertUTCToLocal(utcTime);
