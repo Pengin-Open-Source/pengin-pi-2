@@ -7,7 +7,7 @@ def group_required(group_name):
         @wraps(view_func)
         def wrapped_view(request, *args, **kwargs):
             # There is no group staff cannot access
-            if request.user.is_authenticated and (request.user.is_staff or request.user.groups.filter(name=group_name).exists()):
+            if request.user.is_authenticated and request.user.validated and (request.user.is_staff or request.user.groups.filter(name=group_name).exists()):
                 return view_func(request, *args, **kwargs)
             else:
                 return HttpResponseForbidden("<h1> You don't have permission to access this page. </h1>")
@@ -32,7 +32,7 @@ def is_admin_required(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.is_staff:
+        if request.user.is_authenticated and request.user.validated and request.user.is_staff:
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseForbidden("<h1> You must be an admin to access this page. </h1>")
