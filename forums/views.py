@@ -53,7 +53,6 @@ class ForumsListView(LoginRequiredMixin, ListView):
         return context
 
 
-@method_decorator(group_required('user'), name='dispatch')
 @method_decorator(is_admin_required, name='dispatch')
 class ThreadCreateView(LoginRequiredMixin, CreateView):
 
@@ -100,12 +99,12 @@ class ThreadDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         for forum_post in posts:
             if forum_post.row_action == 'CREATE':
                 forum_post.is_create_missing = False
-                forum_post.author = forum_post.user
+                forum_post.author = forum_post.user.name
             else:
                 post_creation_info = get_post_create_info(forum_post)
                 post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
                 if post_author_id != 'NOT FOUND':
-                    post_author = User.objects.get(id=post_author_id)
+                    post_author = User.objects.get(id=post_author_id).name
                 else:
                     post_author = 'NOT FOUND'
                 forum_post.author = post_author
@@ -199,6 +198,7 @@ class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # perhaps this should be refactored to use self.object instead?
         forum_post = get_object_or_404(ForumPost, id=self.kwargs.get('pk'))
         form = ForumPostForm(instance=forum_post)
         for field in form.fields:
@@ -206,7 +206,7 @@ class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context['form'] = form
 
         if forum_post.row_action == 'CREATE':
-            post_author = forum_post.user
+            post_author = forum_post.user.name
             forum_post.is_create_missing = False
         else:
             post_creation_info = get_post_create_info(forum_post)
@@ -221,16 +221,16 @@ class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         for comment in comments:
             if comment.row_action == 'CREATE':
                 comment.is_create_missing = False
-                comment.author = comment.user
+                comment.author = comment.user.name
             else:
                 comment_creation_info = get_comment_create_info(comment)
                 comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
                 if comment_author_id != 'NOT FOUND':
                     comment_author = User.objects.get(
-                        id=comment_author_id)
+                        id=comment_author_id).name
                 else:
                     comment_author = 'NOT FOUND'
-                comment.author = comment_author
+                comment.author = comment_author.name
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -277,6 +277,7 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # perhaps should be refactored to use self.object?
         forum_post = get_object_or_404(ForumPost, id=self.kwargs.get('pk'))
         form = ForumPostForm(instance=forum_post)
         context['form'] = form
@@ -333,7 +334,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         forum_post = self.get_object()
         if forum_post.row_action == 'CREATE':
-            post_author = forum_post.user
+            post_author = forum_post.user.name
             forum_post.is_create_missing = False
         else:
             post_creation_info = get_post_create_info(forum_post)
@@ -343,7 +344,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             else:
                 post_author = 'NOT FOUND'
 
-        return (self.request.user == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
+        return (self.request.user.name == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
 
 
 @method_decorator(group_required('user'), name='dispatch')
@@ -383,7 +384,7 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         comment = self.get_object()
         if comment.row_action == 'CREATE':
-            comment_author = comment.user
+            comment_author = comment.user.name
         else:
             comment_creation_info = get_comment_create_info(comment)
             comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
@@ -391,7 +392,7 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 comment_author = User.objects.get(id=comment_author_id).name
             else:
                 comment_author = 'NOT FOUND'
-        return (self.request.user == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
+        return (self.request.user.name == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
 
 
 @method_decorator(group_required('user'), name='dispatch')
@@ -412,7 +413,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         comment = self.get_object()
         if comment.row_action == 'CREATE':
-            comment_author = comment.user
+            comment_author = comment.user.name
         else:
             comment_creation_info = get_comment_create_info(comment)
             comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
@@ -420,7 +421,7 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
                 comment_author = User.objects.get(id=comment_author_id).name
             else:
                 comment_author = 'NOT FOUND'
-        return (self.request.user == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
+        return (self.request.user.name == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
 
 ##                   ##
 #   UTILITY METHODS
@@ -545,7 +546,7 @@ def delete_comment(usr, archive_comment):
     archive_comment.delete()
 
     # Uncomment to test error in a transaction after both operations complete successfully
-    # if Comment about widgets" in archive_comment.content:
+    # if "Comment about widgets" in archive_comment.content:
     #   raise TestTransactionError("Test Delete Comment Failure.")
     return "success"
 
