@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from django.shortcuts import reverse
 import calendar
 
 from events.models import Event
@@ -16,9 +17,10 @@ class EventCalendar(calendar.HTMLCalendar):
         if events:
             events_html = "<div class='calendar-day-events'><ul class='events-list'>"
             for event in events:
+                event_url = reverse("calendar:detail-event", kwargs={"event_id": event.id})
                 events_html += (
                     f"<li class='calendar-day-event'>"
-                    f"<a href='{event.id}' class='event-link'>"
+                    f"<a href='{event_url}' class='event-link'>"
                     f"<span class='event-start-time'>{event.start_time}</span>"
                     f" - "
                     f"<span class='event-title'>{event.title}</span>"
