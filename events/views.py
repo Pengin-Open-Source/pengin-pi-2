@@ -1,7 +1,10 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, reverse, get_object_or_404
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.shortcuts import render, reverse, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views import View
+
+from .models import Event
 
 from .calendar import EventCalendar
 from .forms import EventForm
@@ -74,21 +77,51 @@ class CalendarMonth(View):
         )
 
 
-class CreateEvent(View):
-    template_name = "calendar/create_event.html"
+class DetailEvent(UserPassesTestMixin, View):
+    template_name = "calendar/detail_event.html"
 
     @method_decorator(login_required)
-    def get(self, request):
+    def get(self, request, event_id):
+        event = get_object_or_404(Event, id=event_id)
         return render(
             request,
             self.template_name,
             {
-                "primary_title": "Create Event",
-                "action": "create",
-                "form": EventForm(),
+                "primary_title": event.title,
+                "event": event,
             },
         )
 
+    def test_func(self):
+        event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        print("text_func called")
+        return self.request.user in [event.author, event.organizer, event.participants]
+
+
+class CreateEvent(View):
+    template_name = "calendar/create_event.html"
+
+    def get_context_data(self, **kwargs):
+        return {
+            "primary_title": "Create Event",
+            "action": "create",
+            "form": EventForm(),
+        }
+
+    @method_decorator(login_required)
+    def get(self, request):
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
+
     @method_decorator(login_required)
     def post(self, request):
-        pass
+        form = EventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.author = request.user
+            event.save()
+            return redirect("calendar:calendar")
+
+        context = self.get_context_data()
+        context["form"] = form
+        return render(request, self.template_name, context)
