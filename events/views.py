@@ -39,21 +39,21 @@ class CalendarMonth(View):
         next_month = get_next_month()
 
         url_previous_month = reverse(
-            "calendar:calendar_month",
+            "calendar:calendar-month",
             kwargs={
                 "year": previous_month["year"],
                 "month": previous_month["month"],
             },
         )
         url_present_month = reverse(
-            "calendar:calendar_month",
+            "calendar:calendar-month",
             kwargs={
                 "year": present_year,
                 "month": present_month,
             },
         )
         url_next_month = reverse(
-            "calendar:calendar_month",
+            "calendar:calendar-month",
             kwargs={
                 "year": next_month["year"],
                 "month": next_month["month"],
