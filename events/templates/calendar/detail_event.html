@@ -1,0 +1,34 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns%}
+  <a href="{% url "calendar:create-event" %}">Create Event</a>
+{#  <a href="{% url "calendar:edit-event" %}">Edit Event</a>#}
+{#  <a href="{% url "calendar:delete-event" %}">Delete Event</a>#}
+{% endblock %}
+
+{% block pageContent %}
+<div class="post-container">
+  <div class="title-underline">
+    <h2 class="post-title">{{event.title}}</h2>
+    <p class="post-info">Created by {{event.author}} @ {{event.date_created}}</p>
+  </div>
+  <p>Roles:</p>
+{#  {% for role in event.role %}#}
+    <p class="post-info">{{event.role}}</p>
+{#  {% endfor %}#}
+  <p class="post-info">Organizer: {{event.organizer}}</p>
+  <p>Participants: </p>
+{{ event.participants.all }}
+{#  {% for participant in event.participants.all %}#}
+{#    <p class="post-info">{{participant.name}}</p>#}
+{#  {% endfor %}#}
+  <p class="post-info">Start time: {{event.start_date}} @ {{event.start_time}}</p>
+  <p class="post-info">End time: {{event.end_date}} @ {{event.end_time}}</p>
+  {% if event.description %}
+    <p class="post-info">Description: {{event.description}}</p>
+  {% endif %}
+  {% if event.location %}
+    <p class="post-info">Location: {{event.location}}</p>
+  {% endif %}
+</div>
+{% endblock %}

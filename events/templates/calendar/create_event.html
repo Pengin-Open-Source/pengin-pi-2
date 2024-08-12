@@ -1,0 +1,40 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+    {%  if event is defined %}
+        <a href="/calendar/{{ event.id }}">Cancel</a>
+    {%  else  %}
+        <a href="/calendar">Cancel</a>
+    {%  endif %}
+{% endblock %}
+
+{% block pageContent %}
+    <form class="form" method="POST">
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {% for error in form.errors %}
+                    <ul>
+                        <li>{{ error}}</li>
+                    </ul>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        {% if action == "update" %}
+            <a href="{% url "calendar:detail-event" event.id %}">
+                <button class="primary-button" type="button">Cancel</button>
+            </a>
+                <button class="primary-button" type="submit">Save changes</button>
+        {% else %}
+            <a href="{% url "calendar:calendar" %}">
+                <button class="primary-button" type="button">Cancel</button>
+            </a>
+            <button class="primary-button" type="submit">Add Event</button>
+        {% endif %}
+
+    </form>
+{% endblock %}
+
+
