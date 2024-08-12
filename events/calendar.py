@@ -79,11 +79,9 @@ class EventCalendar(calendar.HTMLCalendar):
                     .setdefault(day, [])
                 )
                 for event in events_in_month:
-                    event.add_date()
-                    event.add_time()
                     # Check if event is happening during day and not already saved
                     if (
-                        event.start_date <= day_date <= event.end_date
+                        event.start_date() <= day_date <= event.end_date()
                         and event not in day_events
                     ):
                         day_events.append(event)
