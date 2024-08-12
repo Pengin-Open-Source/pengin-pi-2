@@ -205,6 +205,17 @@ class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
 
+        if forum_post.row_action == 'CREATE':
+            post_author = forum_post.user
+            forum_post.is_create_missing = False
+        else:
+            post_creation_info = get_post_create_info(forum_post)
+            post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
+            if post_author_id != 'NOT FOUND':
+                post_author = User.objects.get(id=post_author_id).name
+            else:
+                post_author = 'NOT FOUND'
+
         comment_form = ForumCommentForm()
         comments = self.object.comments.all().order_by('-date')
         for comment in comments:
@@ -226,6 +237,7 @@ class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         paginator = Paginator(comments, 10)
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
+        context['post_author'] = post_author
         context['comment_form'] = comment_form
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.title
@@ -289,13 +301,19 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def test_func(self):
         forum_post = self.get_object()
-        post_creation_info = get_post_create_info(forum_post)
-        post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
-        if post_author_id != 'NOT FOUND':
-            post_author = User.objects.get(id=post_author_id).name
+
+        if forum_post.row_action == 'CREATE':
+            post_author = forum_post.user.name
+            forum_post.is_create_missing = False
         else:
-            post_author = 'NOT FOUND'
-        return (self.request.user == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
+            post_creation_info = get_post_create_info(forum_post)
+            post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
+            if post_author_id != 'NOT FOUND':
+                post_author = User.objects.get(id=post_author_id).name
+            else:
+                post_author = 'NOT FOUND'
+
+        return (self.request.user.name == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
 
 
 @method_decorator(group_required('user'), name='dispatch')
@@ -316,6 +334,7 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         forum_post = self.get_object()
         if forum_post.row_action == 'CREATE':
             post_author = forum_post.user
+            forum_post.is_create_missing = False
         else:
             post_creation_info = get_post_create_info(forum_post)
             post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
