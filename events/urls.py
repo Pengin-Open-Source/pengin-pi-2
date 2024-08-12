@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CalendarMonth
+from .views import CalendarMonth, CreateEvent, DetailEvent
 
 # Add namespace to urls
 app_name = 'calendar'
