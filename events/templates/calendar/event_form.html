@@ -1,10 +1,10 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageDropDowns %}
-    {%  if event is defined %}
-        <a href="/calendar/{{ event.id }}">Cancel</a>
+    {%  if action == "update" %}
+        <a href="{% url "calendar:detail-event" event.id %}">Cancel</a>
     {%  else  %}
-        <a href="/calendar">Cancel</a>
+        <a href="{% url "calendar:calendar" %}">Cancel</a>
     {%  endif %}
 {% endblock %}
 
@@ -14,7 +14,7 @@
             <div class="alert alert-danger">
                 {% for error in form.errors %}
                     <ul>
-                        <li>{{ error}}</li>
+                        <li>{{ error }}</li>
                     </ul>
                 {% endfor %}
             </div>

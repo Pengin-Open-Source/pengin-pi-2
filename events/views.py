@@ -98,7 +98,7 @@ class DetailEvent(UserPassesTestMixin, View):
 
 
 class CreateEvent(View):
-    template_name = "calendar/create_event.html"
+    template_name = "calendar/event_form.html"
 
     def get_context_data(self, **kwargs):
         return {
@@ -124,3 +124,37 @@ class CreateEvent(View):
         context = self.get_context_data()
         context["form"] = form
         return render(request, self.template_name, context)
+
+
+class EditEvent(UserPassesTestMixin, View):
+    template_name = "calendar/event_form.html"
+
+    def get_context_data(self):
+        event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        return {
+            "primary_title": "Edit Event",
+            "action": "update",
+            "form": EventForm(instance=event),
+            "event": event,
+        }
+
+    @method_decorator(login_required)
+    def get(self, request, event_id):
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    def post(self, request, event_id):
+        event = get_object_or_404(Event, id=event_id)
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            event = form.save()
+            return redirect("calendar:detail-event", event_id=event.id)
+
+        context = self.get_context_data()
+        context["form"] = form
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        return self.request.user == event.author or self.request.user == event.organizer

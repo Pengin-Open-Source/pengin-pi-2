@@ -2,7 +2,7 @@
 
 {% block pageDropDowns %}
   <a href="{% url "calendar:create-event" %}">Create Event</a>
-{#  <a href="{% url "calendar:edit-event" %}">Edit Event</a>#}
+  <a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
 {#  <a href="{% url "calendar:delete-event" %}">Delete Event</a>#}
 {% endblock %}
 
