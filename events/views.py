@@ -174,3 +174,26 @@ class EditEvent(UserPassesTestMixin, View):
     def test_func(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
         return self.request.user == event.author or self.request.user == event.organizer
+
+
+class DeleteEvent(UserPassesTestMixin, View):
+    template_name = "calendar/event_confirm_delete.html"
+
+    @method_decorator(login_required)
+    def get(self, request, event_id):
+        event = get_object_or_404(Event, id=event_id)
+        context = {
+            "primary_title": f"Delete Event: {event.title}",
+            "event": event,
+        }
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    def post(self, request, event_id):
+        event = get_object_or_404(Event, id=event_id)
+        event.delete()
+        return redirect('calendar:calendar')
+
+    def test_func(self):
+        event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        return self.request.user == event.author or self.request.user == event.organizer

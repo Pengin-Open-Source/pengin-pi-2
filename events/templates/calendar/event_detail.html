@@ -4,7 +4,7 @@
   <a href="{% url "calendar:create-event" %}">Create Event</a>
   <a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
   <a href="{% url "calendar:copy-event" event.id %}">Duplicate Event</a>
-{#  <a href="{% url "calendar:delete-event" %}">Delete Event</a>#}
+  <a href="{% url "calendar:delete-event" event.id %}">Delete Event</a>
 {% endblock %}
 
 {% block pageContent %}
