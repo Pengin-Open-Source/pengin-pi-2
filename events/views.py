@@ -94,7 +94,6 @@ class DetailEvent(UserPassesTestMixin, View):
 
     def test_func(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
-        print("text_func called")
         return self.request.user in [event.author, event.organizer, event.participants]
 
 
