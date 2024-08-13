@@ -64,6 +64,7 @@ class EventCalendar(calendar.HTMLCalendar):
         self.cssclass_month += " calendar-month"
         self.month_events = {}
 
+        # TODO Filter events by date and whether the user can access them
         events_in_month = Event.objects.all()
         # events_in_month=Event.objects.filter(
         #     Event.start_datetime < datetime(year, month, 1) + relativedelta(months=1),
