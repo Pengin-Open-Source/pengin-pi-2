@@ -109,6 +109,7 @@ class CreateEvent(View):
 
     def get_initial(self):
         if "event_id" in self.kwargs:
+            # TODO: only authorize if user has access to the initial event (author, organizer, participant or role)
             event = get_object_or_404(Event, id=self.kwargs["event_id"])
             return {
                 "title": event.title,
