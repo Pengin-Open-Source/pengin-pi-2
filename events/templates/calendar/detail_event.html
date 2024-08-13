@@ -8,26 +8,30 @@
 
 {% block pageContent %}
 <div class="post-container">
-  <div class="title-underline">
-    <h2 class="post-title">{{ event.title }}</h2>
-    <p class="post-info">Created by {{ event.author }} @ {{ event.date_created }}</p>
-  </div>
-  <p>Roles:</p>
-  {% for role in event.roles.all %}
-    <p class="post-info">{{ role }}</p>
-  {% endfor %}
-  <p class="post-info">Organizer: {{ event.organizer }}</p>
-  <p>Participants: </p>
-  {% for participant in event.participants.all %}
-    <p class="post-info">{{ participant }}</p>
-  {% endfor %}
-  <p class="post-info">Start time: {{ event.start_date }} @ {{ event.start_time }}</p>
-  <p class="post-info">End time: {{ event.end_date }} @ {{ event.end_time }}</p>
-  {% if event.description %}
-    <p class="post-info">Description: {{ event.description }}</p>
-  {% endif %}
-  {% if event.location %}
-    <p class="post-info">Location: {{ event.location }}</p>
-  {% endif %}
+    <div class="title-underline">
+        <h2 class="post-title">{{ event.title }}</h2>
+        <p class="post-info">Created by {{ event.author }} @ {{ event.date_created }}</p>
+    </div>
+    <p class="post-info">Organizer: {{ event.organizer }}</p>
+    <p class="post-info">Start time: {{ event.start_date }} @ {{ event.start_time }}</p>
+    <p class="post-info">End time: {{ event.end_date }} @ {{ event.end_time }}</p>
+    {% if event.description %}
+        <p class="post-info">Description: {{ event.description }}</p>
+    {% endif %}
+    {% if event.location %}
+        <p class="post-info">Location: {{ event.location }}</p>
+    {% endif %}
+    {% if event.participants.all|length > 0 %}
+        <p>Roles:</p>
+        {% for role in event.roles.all %}
+            <p class="post-info">{{ role }}</p>
+        {% endfor %}
+    {% endif %}
+    {% if event.participants.all|length > 0 %}
+        <p>Participants: </p>
+        {% for participant in event.participants.all %}
+            <p class="post-info">{{ participant }}</p>
+        {% endfor %}
+    {% endif %}
 </div>
 {% endblock %}
