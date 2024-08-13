@@ -13,7 +13,7 @@ class EventForm(forms.ModelForm):
             "end_datetime",
             "organizer",
             "participants",
-            "role",
+            "roles",
         ]
         widgets = {
             "start_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"}),

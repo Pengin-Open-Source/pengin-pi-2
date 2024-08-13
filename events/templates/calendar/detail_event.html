@@ -13,10 +13,10 @@
     <p class="post-info">Created by {{event.author}} @ {{event.date_created}}</p>
   </div>
   <p>Roles:</p>
-{#  {% for role in event.role %}#}
-    <p class="post-info">{{event.role}}</p>
-{#  {% endfor %}#}
-  <p class="post-info">Organizer: {{event.organizer}}</p>
+  {% for role in event.roles.all %}
+    <p class="post-info">{{ role }}</p>
+  {% endfor %}
+  <p class="post-info">Organizer: {{ event.organizer }}</p>
   <p>Participants: </p>
 {{ event.participants.all }}
 {#  {% for participant in event.participants.all %}#}

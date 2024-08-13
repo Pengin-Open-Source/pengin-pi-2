@@ -16,7 +16,7 @@ class Event(models.Model):
     author = models.ForeignKey(User, on_delete=models.PROTECT, related_name="authored_events")
     organizer = models.ForeignKey(User, on_delete=models.PROTECT, related_name="organized_events")
     participants = models.ManyToManyField(User, related_name="events")
-    role = models.ForeignKey(Role, on_delete=models.PROTECT)
+    roles = models.ManyToManyField(Role, related_name="events")
 
     def __str__(self):
         return self.title + " at " + self.location
