@@ -226,11 +226,10 @@ class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
                 comment_creation_info = get_comment_create_info(comment)
                 comment_author_id, comment.create_date, comment.is_create_missing = comment_creation_info
                 if comment_author_id != 'NOT FOUND':
-                    comment_author = User.objects.get(
+                    comment.author = User.objects.get(
                         id=comment_author_id).name
                 else:
-                    comment_author = 'NOT FOUND'
-                comment.author = comment_author.name
+                    comment.author = 'NOT FOUND'
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)

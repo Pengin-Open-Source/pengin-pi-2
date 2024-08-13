@@ -46,7 +46,7 @@
                   </p>
                   {% else %}
                       <p style="color: orange;" > 
-                           Originally posted by {{post.author.name |escape}} on  <span id="post-creation-time-{{forloop.counter}}"></span>
+                           Originally posted by {{post.author |escape}} on  <span id="post-creation-time-{{forloop.counter}}"></span>
                      </p>
                      <script>
                       var utcTime = new Date('{{ post.create_date|date:"c" }}');
