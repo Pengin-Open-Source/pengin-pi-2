@@ -78,7 +78,7 @@ class CalendarMonth(View):
 
 
 class DetailEvent(UserPassesTestMixin, View):
-    template_name = "calendar/detail_event.html"
+    template_name = "calendar/event_detail.html"
 
     @method_decorator(login_required)
     def get(self, request, event_id):
