@@ -314,7 +314,10 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             else:
                 post_author = 'NOT FOUND'
 
-        return (self.request.user.name == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
+        if self.request.user.is_staff:
+            return True
+        user_groups = self.request.user.groups.all()
+        return forum_post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == post_author and post_author != 'NOT FOUND'
 
 
 @method_decorator(group_required('user'), name='dispatch')
@@ -344,7 +347,10 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             else:
                 post_author = 'NOT FOUND'
 
-        return (self.request.user.name == post_author and post_author != 'NOT FOUND') or self.request.user.is_staff
+        if self.request.user.is_staff:
+            return True
+        user_groups = self.request.user.groups.all()
+        return forum_post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == post_author and post_author != 'NOT FOUND'
 
 
 @method_decorator(group_required('user'), name='dispatch')
@@ -392,7 +398,10 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 comment_author = User.objects.get(id=comment_author_id).name
             else:
                 comment_author = 'NOT FOUND'
-        return (self.request.user.name == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
+        if self.request.user.is_staff:
+            return True
+        user_groups = self.request.user.groups.all()
+        return comment.post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == comment_author and comment_author != 'NOT FOUND'
 
 
 @method_decorator(group_required('user'), name='dispatch')
@@ -421,7 +430,12 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
                 comment_author = User.objects.get(id=comment_author_id).name
             else:
                 comment_author = 'NOT FOUND'
-        return (self.request.user.name == comment_author and comment_author != 'NOT FOUND') or self.request.user.is_staff
+
+        if self.request.user.is_staff:
+            return True
+
+        user_groups = self.request.user.groups.all()
+        return comment.post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == comment_author and comment_author != 'NOT FOUND'
 
 ##                   ##
 #   UTILITY METHODS
