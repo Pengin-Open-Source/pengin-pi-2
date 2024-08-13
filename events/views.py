@@ -104,16 +104,31 @@ class CreateEvent(View):
         return {
             "primary_title": "Create Event",
             "action": "create",
-            "form": EventForm(),
+            "form": EventForm(initial=self.get_initial()),
         }
 
+    def get_initial(self):
+        if "event_id" in self.kwargs:
+            event = get_object_or_404(Event, id=self.kwargs["event_id"])
+            return {
+                "title": event.title,
+                "description": event.description,
+                "location": event.location,
+                "organizer": event.organizer,
+                "participants": event.participants.all,
+                "roles": event.roles.all,
+                "start_datetime": event.start_datetime,
+                "end_datetime": event.end_datetime,
+            }
+        return {}
+
     @method_decorator(login_required)
-    def get(self, request):
+    def get(self, request, **kwargs):
         context = self.get_context_data()
         return render(request, self.template_name, context)
 
     @method_decorator(login_required)
-    def post(self, request):
+    def post(self, request, **kwargs):
         form = EventForm(request.POST)
         if form.is_valid():
             event = form.save(commit=False)
