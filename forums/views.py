@@ -66,6 +66,9 @@ class ThreadCreateView(LoginRequiredMixin, CreateView):
 
     def get(self, request, *args, **kwargs):
         query_groups = Group.objects.all()
+        if not query_groups.exists():
+            Group.objects.create(name='default_staff_forum')
+            query_groups = Group.objects.all()
         roles = list(query_groups.values('id', 'name'))
         form = ThreadForm()
         context = {'roles': roles, 'form': form}
