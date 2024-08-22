@@ -55,7 +55,7 @@ def post(request, post_id, is_admin):
     page = request.GET.get("page", 1)
     posts = paginator.get_page(page)
 
-    return render(request, 'post.html', {
+    return render(request, 'blogpost.html', {
         'posts': posts,
         'post': blog_post,
         'is_create_missing': is_create_missing,
