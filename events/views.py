@@ -8,6 +8,7 @@ from .models import Event
 
 from .calendar import EventCalendar
 from .forms import EventForm
+from .permissions import can_create_or_see_event, can_change_event
 from datetime import datetime
 
 myCal = EventCalendar()
@@ -81,8 +82,7 @@ class DetailEvent(UserPassesTestMixin, View):
     template_name = "calendar/event_detail.html"
 
     def test_func(self):
-        event = get_object_or_404(Event, id=self.kwargs["event_id"])
-        return self.request.user in [event.author, event.organizer, event.participants]
+        return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
 
     @method_decorator(login_required)
     def get(self, request, event_id):
@@ -101,13 +101,7 @@ class CreateEvent(UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
 
     def test_func(self):
-        if "event_id" in self.kwargs:
-            event = get_object_or_404(Event, id=self.kwargs["event_id"])
-            return any([self.request.user == event.author,
-                        self.request.user == event.organizer,
-                        self.request.user in event.participants.all(),
-                        ])
-        return True
+        return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
 
     def get_context_data(self, **kwargs):
         return {
@@ -154,8 +148,7 @@ class EditEvent(UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
 
     def test_func(self):
-        event = get_object_or_404(Event, id=self.kwargs["event_id"])
-        return self.request.user == event.author or self.request.user == event.organizer
+        return can_change_event(self.request, self.kwargs.get("event_id"))
 
     def get_context_data(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
@@ -188,8 +181,7 @@ class DeleteEvent(UserPassesTestMixin, View):
     template_name = "calendar/event_confirm_delete.html"
 
     def test_func(self):
-        event = get_object_or_404(Event, id=self.kwargs["event_id"])
-        return self.request.user == event.author or self.request.user == event.organizer
+        return can_change_event(self.request, self.kwargs.get("event_id"))
 
     @method_decorator(login_required)
     def get(self, request, event_id):
