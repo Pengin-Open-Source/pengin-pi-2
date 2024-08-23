@@ -48,12 +48,14 @@
         var localTime = convertUTCToLocal(utcTime);
         document.getElementById('blog-post-original-date').textContent = localTime;
       </script>
-      <p class="blog-author-date"> Last Edit:  <span id="blog-post-edited-date"></span>| Edited By: {{ edited_by|escape }} </p>
-      <script>
-        var utcTime = new Date('{{ blog_edited_date|date:"c" }}');
-        var localTime = convertUTCToLocal(utcTime);
-        document.getElementById('blog-post-edited-date').textContent = localTime;
-      </script>
+      {% if blog_edited_date  %}
+        <p class="blog-author-date"> Last Edit:  <span id="blog-post-edited-date"></span>| Edited By: {{ edited_by|escape }} </p>
+        <script>
+          var utcTime = new Date('{{ blog_edited_date|date:"c" }}');
+          var localTime = convertUTCToLocal(utcTime);
+          document.getElementById('blog-post-edited-date').textContent = localTime;
+        </script>
+      {% endif %}
       <div class="commonmark">
         {{ post.content|markdownit }}
       </div>
