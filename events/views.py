@@ -97,8 +97,17 @@ class DetailEvent(UserPassesTestMixin, View):
         )
 
 
-class CreateEvent(View):
+class CreateEvent(UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
+
+    def test_func(self):
+        if "event_id" in self.kwargs:
+            event = get_object_or_404(Event, id=self.kwargs["event_id"])
+            return any([self.request.user == event.author,
+                        self.request.user == event.organizer,
+                        self.request.user in event.participants.all(),
+                        ])
+        return True
 
     def get_context_data(self, **kwargs):
         return {
