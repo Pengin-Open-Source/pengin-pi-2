@@ -93,6 +93,7 @@ class DetailEvent(UserPassesTestMixin, View):
             {
                 "primary_title": event.title,
                 "event": event,
+                "can_change": can_change_event(request, event_id)
             },
         )
 

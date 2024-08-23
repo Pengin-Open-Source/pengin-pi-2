@@ -1,10 +1,12 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageDropDowns %}
-  <a href="{% url "calendar:create-event" %}">Create Event</a>
-  <a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
-  <a href="{% url "calendar:copy-event" event.id %}">Duplicate Event</a>
-  <a href="{% url "calendar:delete-event" event.id %}">Delete Event</a>
+    <a href="{% url "calendar:create-event" %}">Create Event</a>
+    <a href="{% url "calendar:copy-event" event.id %}">Duplicate Event</a>
+    {% if can_change %}
+        <a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
+        <a href="{% url "calendar:delete-event" event.id %}">Delete Event</a>
+    {% endif %}
 {% endblock %}
 
 {% block pageContent %}
