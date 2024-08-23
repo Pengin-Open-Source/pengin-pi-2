@@ -1,33 +1,62 @@
-from blogs.models import BlogPost, BlogHistory, transaction
-from django.core.paginator import Paginator
-from main.models.users import User
-from util.paginate import paginate  # Assuming you have a pagination utility
-# Define the blog post view
 from django.shortcuts import render, redirect, get_object_or_404
-from util.security.auth_tools import is_admin_provider, user_group_provider, is_admin_required
+from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
-from blogs.forms import BlogForm
+from django.http import HttpResponseRedirect
+from django.http import HttpResponseForbidden
+from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
+from util.security.auth_tools import is_admin_provider, user_group_provider, is_admin_required
+from blogs.forms import BlogForm
+from blogs.models import BlogPost, BlogHistory, transaction
+from main.models.users import User
+from util.paginate import paginate
+# Assuming you have a pagination utility
+# Define the blog post view
 
 
 # Define the blog view
 
 
-@is_admin_provider
-def blogs(request, is_admin):
-    page = request.GET.get("page", 1)
+# @is_admin_provider
+# def blogs(request, is_admin):
+#     page = request.GET.get("page", 1)
 
-    blog_posts = BlogPost.objects.all().order_by('date')
-    paginator = Paginator(blog_posts, 10)
-    posts = paginator.get_page(page)
+#     blog_posts = BlogPost.objects.all().order_by('date')
+#     paginator = Paginator(blog_posts, 10)
+#     posts = paginator.get_page(page)
 
-    return render(request, 'blogs.html', {
-        'posts':  posts,
-        'page': page,
-        'primary_title': 'Blog',
-        'is_admin': is_admin,
-        'left_title': 'Blog Posts'
-    })
+#     return render(request, 'blogs.html', {
+#         'posts':  posts,
+#         'page': page,
+#         'primary_title': 'Blog',
+#         'is_admin': is_admin,
+#         'left_title': 'Blog Posts'
+#     })
+
+
+class BlogsListView(LoginRequiredMixin, ListView):
+    queryset = BlogPost.objects.all()
+    template_name = 'blogs.html'
+    model = BlogPost
+
+    context_object_name = 'blog_posts'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_admin'] = self.request.user.is_staff
+        context['left_title'] = 'Blog Posts'
+        context['primary_title'] = 'Blog'
+        blog_posts = self.queryset.order_by('date')
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        context['page_number'] = page_number
+        paginator = Paginator(blog_posts, 10)
+        posts = paginator.get_page(page_number)
+        context['posts'] = posts
+        return context
 
 
 @is_admin_provider
