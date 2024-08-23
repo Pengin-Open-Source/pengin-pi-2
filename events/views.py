@@ -80,6 +80,10 @@ class CalendarMonth(View):
 class DetailEvent(UserPassesTestMixin, View):
     template_name = "calendar/event_detail.html"
 
+    def test_func(self):
+        event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        return self.request.user in [event.author, event.organizer, event.participants]
+
     @method_decorator(login_required)
     def get(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
@@ -91,10 +95,6 @@ class DetailEvent(UserPassesTestMixin, View):
                 "event": event,
             },
         )
-
-    def test_func(self):
-        event = get_object_or_404(Event, id=self.kwargs["event_id"])
-        return self.request.user in [event.author, event.organizer, event.participants]
 
 
 class CreateEvent(View):
@@ -145,6 +145,10 @@ class CreateEvent(View):
 class EditEvent(UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
 
+    def test_func(self):
+        event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        return self.request.user == event.author or self.request.user == event.organizer
+
     def get_context_data(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
         return {
@@ -171,13 +175,13 @@ class EditEvent(UserPassesTestMixin, View):
         context["form"] = form
         return render(request, self.template_name, context)
 
-    def test_func(self):
-        event = get_object_or_404(Event, id=self.kwargs["event_id"])
-        return self.request.user == event.author or self.request.user == event.organizer
-
 
 class DeleteEvent(UserPassesTestMixin, View):
     template_name = "calendar/event_confirm_delete.html"
+
+    def test_func(self):
+        event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        return self.request.user == event.author or self.request.user == event.organizer
 
     @method_decorator(login_required)
     def get(self, request, event_id):
@@ -193,7 +197,3 @@ class DeleteEvent(UserPassesTestMixin, View):
         event = get_object_or_404(Event, id=event_id)
         event.delete()
         return redirect('calendar:calendar')
-
-    def test_func(self):
-        event = get_object_or_404(Event, id=self.kwargs["event_id"])
-        return self.request.user == event.author or self.request.user == event.organizer
