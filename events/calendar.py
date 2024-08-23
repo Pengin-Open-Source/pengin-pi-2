@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from django.db.models import Q
 from django.shortcuts import reverse
 import calendar
 
@@ -63,13 +64,17 @@ class EventCalendar(calendar.HTMLCalendar):
         self.month = month
         self.cssclass_month += " calendar-month"
         self.month_events = {}
+        current_user = kwargs.pop("current_user")
 
-        # TODO Filter events by date and whether the user can access them
-        events_in_month = Event.objects.all()
-        # events_in_month=Event.objects.filter(
-        #     Event.start_datetime < datetime(year, month, 1) + relativedelta(months=1),
-        #     Event.end_datetime >= datetime(year, month, 1),
-        # ).order_by(Event.start_datetime)
+        events_in_month = Event.objects.filter(
+            # Filter events that are happening during the month
+            Q(start_datetime__year=year, start_datetime__month=month)
+            | Q(end_datetime__year=year, end_datetime__month=month),
+            # Filter events that current user is involved in
+            Q(author=current_user)
+            | Q(organizer=current_user)
+            | Q(participants=current_user)
+        ).order_by("start_datetime")
 
         for day in self.itermonthdays(year, month):
             if day > 0:

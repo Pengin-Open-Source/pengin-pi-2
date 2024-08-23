@@ -26,7 +26,7 @@ class CalendarMonth(View):
             year = present_year
             month = present_month
 
-        calendar_html = myCal.formatmonth(int(year), int(month), withyear=True)
+        calendar_html = myCal.formatmonth(int(year), int(month), withyear=True, current_user=request.user)
 
         def get_previous_month():
             if int(month) == 1:
