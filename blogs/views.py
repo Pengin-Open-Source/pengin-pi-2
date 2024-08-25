@@ -36,7 +36,7 @@ from util.paginate import paginate
 #         'left_title': 'Blog Posts'
 #     })
 
-
+@method_decorator(is_admin_provider, name='get_context_data')
 class BlogsListView(LoginRequiredMixin, ListView):
     queryset = BlogPost.objects.all()
     template_name = 'blogs.html'
@@ -46,7 +46,10 @@ class BlogsListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['is_admin'] = self.request.user.is_staff
+       # print("Is Admin?")
+       # print(is_admin)
+        is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
+        context['is_admin'] = is_admin
         context['left_title'] = 'Blog Posts'
         context['primary_title'] = 'Blog'
         blog_posts = self.queryset.order_by('date')

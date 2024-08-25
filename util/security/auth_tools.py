@@ -21,7 +21,7 @@ def is_admin_provider(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        is_admin = request.user.is_authenticated and request.user.is_staff
+        is_admin = request.user.is_authenticated and request.user.validated and request.user.is_staff
         return view_func(request, is_admin=is_admin, *args, **kwargs)
     return _wrapped_view
 
@@ -43,7 +43,7 @@ def user_group_provider(view_func):
     @wraps(view_func)
     def wrapped_view(request, *args, **kwargs):
         groups = []
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and request.user.validated:
             groups = list(request.user.groups.values_list('name', flat=True))
         return view_func(request, groups=groups, *args, **kwargs)
     return wrapped_view
