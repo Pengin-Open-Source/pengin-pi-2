@@ -23,13 +23,10 @@ class BlogsListView(ListView):
     queryset = BlogPost.objects.all()
     template_name = 'blogs.html'
     model = BlogPost
-
     context_object_name = 'blog_posts'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-       # print("Is Admin?")
-       # print(is_admin)
         is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
         context['is_admin'] = is_admin
         context['left_title'] = 'Blog Posts'
@@ -44,43 +41,49 @@ class BlogsListView(ListView):
         return context
 
 
-@is_admin_provider
-def post(request, post_id, is_admin):
-    blog_post = get_object_or_404(BlogPost, pk=post_id)
+class BlogPostDetailView(DetailView):
+    model = BlogPost
+    template_name = 'blogpost.html'
+    form_class = BlogForm
+    context_object_name = 'blog_post'
 
-    author_info = get_create_info(blog_post)
-    edit_info = get_last_edit_info(blog_post)
-    author_id, create_date, is_create_missing = author_info
-    if author_id != 'NOT FOUND':
-        author = User.objects.get(id=author_id).name
-    else:
-        author = 'NOT FOUND'
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # perhaps this should be refactored to use self.object instead?
+        blog_post = get_object_or_404(BlogPost, pk=self.kwargs.get('pk'))
 
-    if edit_info:
-        edited_date, edited_by_id = edit_info
-        edited_by = User.objects.get(id=edited_by_id).name
-    else:
-        edited_date = ''
-        edited_by = ''
+        author_info = get_create_info(blog_post)
+        edit_info = get_last_edit_info(blog_post)
+        author_id, create_date, is_create_missing = author_info
+        if author_id != 'NOT FOUND':
+            author = User.objects.get(id=author_id).name
+        else:
+            author = 'NOT FOUND'
 
-    blog_posts = BlogPost.objects.all().order_by('date')
-    paginator = Paginator(blog_posts, 10)
+        if edit_info:
+            edited_date, edited_by_id = edit_info
+            edited_by = User.objects.get(id=edited_by_id).name
+        else:
+            edited_date = ''
+            edited_by = ''
 
-    page = request.GET.get("page", 1)
-    posts = paginator.get_page(page)
+        blog_posts = BlogPost.objects.all().order_by('date')
+        paginator = Paginator(blog_posts, 10)
 
-    return render(request, 'blogpost.html', {
-        'posts': posts,
-        'post': blog_post,
-        'is_create_missing': is_create_missing,
-        'author': author,
-        'blog_author_date': create_date,
-        'edited_by': edited_by,
-        'blog_edited_date': edited_date,
-        'page': page,
-        'is_admin': is_admin,  # Assuming you have authentication
+        page = self.request.GET.get("page", 1)
+        posts = paginator.get_page(page)
+        is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
 
-    })
+        context['posts'] = posts
+        context['post'] = blog_post
+        context['is_create_missing'] = is_create_missing
+        context['author'] = author
+        context['blog_author_date'] = create_date
+        context['edited_by'] = edited_by
+        context['blog_edited_date'] = edited_date
+        context['page'] = page
+        context['is_admin'] = is_admin   # Assuming you have authentication
+        return context
 
 
 @method_decorator(is_admin_required, name='dispatch')
@@ -106,20 +109,26 @@ class BlogPostCreateView(LoginRequiredMixin, CreateView):
             query_groups = request.user.groups.all()
             blog_post.roles = list(query_groups.values('pk', 'name'))
             blog_post.save()
-            return HttpResponseRedirect(reverse_lazy('blogs:blog_post', kwargs={'post_id': blog_post.id}))
+            return HttpResponseRedirect(reverse_lazy('blogs:blog_post', kwargs={'pk': blog_post.id}))
 
     def get(self, request, *args, **kwargs):
         form = BlogForm()
         form_rendered_for_create = form.render("configure_blog_form.html")
-        return render(request, 'create_blog_post.html', {'form': form_rendered_for_create, 'is_admin': True})
+        return render(request, self.template_name, {'form': form_rendered_for_create, 'is_admin': True})
 
 
-@login_required
-@is_admin_provider
-@user_group_provider
-@is_admin_required
-def edit_post(request, post_id, is_admin, groups):
-    if request.method == 'POST':
+@method_decorator(is_admin_required, name='dispatch')
+class BlogPostEditView(LoginRequiredMixin, UpdateView):
+    model = BlogPost
+    form_class = BlogForm
+    template_name = 'edit_blog_post.html'
+    context_object_name = 'blog_post'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        post_id = self.kwargs.get('pk')
         blog_post = get_object_or_404(BlogPost, id=post_id)
         form = BlogForm(request.POST, instance=blog_post)
         if form.is_valid():
@@ -131,39 +140,40 @@ def edit_post(request, post_id, is_admin, groups):
             query_groups = request.user.groups.all()
             blog_post.roles = list(query_groups.values('pk', 'name'))
             blog_post.save()
-            return redirect('blogs:blog_post', post_id=blog_post.id)
-        else:
-            return render(request, 'edit_blog_post.html', {'form': form, 'is_admin': is_admin, 'post_id': post_id})
-    else:
-        blog_post = get_object_or_404(BlogPost, id=post_id)
-        form = BlogForm(instance=blog_post)
+            return HttpResponseRedirect(reverse_lazy('blogs:blog_post', kwargs={'pk': post_id}))
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # perhaps should be refactored to use self.object?
+        blog_post = get_object_or_404(BlogPost, pk=self.kwargs.get('pk'))
+        form = BlogForm(instance=blog_post)
         form_rendered_for_edit = form.render(
             "configure_blog_form.html")
-        return render(request, 'edit_blog_post.html',  {'form': form_rendered_for_edit, 'is_admin': is_admin,  'post_id': post_id})
+        context['form'] = form_rendered_for_edit
+        context['is_admin'] = True
+        context['pk'] = self.kwargs.get('pk')
+        return context
 
 
-@login_required
-@is_admin_provider
-@user_group_provider
-@is_admin_required
-def delete_post(request, post_id, is_admin, groups):
-    blog_post = get_object_or_404(BlogPost, id=post_id)
-    blog_post.method = 'DELETE'
-    blog_post.user = request.user
-    blog_post.date = timezone.now()
-    query_groups = request.user.groups.all()
-    blog_post.roles = list(query_groups.values('pk', 'name'))
-    with transaction.atomic():
-        # specify this is an deleted record
-        # both save and delete must execute or fail together,
-        # since we are saving changes to history first.
-        # this keeps track of the time of deletion and
-        # the user who deleted the record
-        blog_post.save()
-        blog_post.delete()
-        # if successful return to main blog post
-    return redirect('blogs:blogs')
+@method_decorator(is_admin_required, name='dispatch')
+class BlogPostDeleteView(LoginRequiredMixin, DeleteView):
+    model = BlogPost
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        post_id = self.kwargs.get('pk')
+        blog_post = get_object_or_404(BlogPost, id=post_id)
+        blog_post.method = 'DELETE'
+        blog_post.user = request.user
+        blog_post.date = timezone.now()
+        query_groups = request.user.groups.all()
+        blog_post.roles = list(query_groups.values('pk', 'name'))
+        with transaction.atomic():
+            blog_post.save()
+            blog_post.delete()
+        return HttpResponseRedirect(reverse_lazy('blogs:blogs'))
 
 
 # utility methods
