@@ -36,7 +36,6 @@ from util.paginate import paginate
 #         'left_title': 'Blog Posts'
 #     })
 
-@method_decorator(is_admin_provider, name='get_context_data')
 class BlogsListView(LoginRequiredMixin, ListView):
     queryset = BlogPost.objects.all()
     template_name = 'blogs.html'
