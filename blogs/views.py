@@ -19,24 +19,7 @@ from util.paginate import paginate
 
 # Define the blog view
 
-
-# @is_admin_provider
-# def blogs(request, is_admin):
-#     page = request.GET.get("page", 1)
-
-#     blog_posts = BlogPost.objects.all().order_by('date')
-#     paginator = Paginator(blog_posts, 10)
-#     posts = paginator.get_page(page)
-
-#     return render(request, 'blogs.html', {
-#         'posts':  posts,
-#         'page': page,
-#         'primary_title': 'Blog',
-#         'is_admin': is_admin,
-#         'left_title': 'Blog Posts'
-#     })
-
-class BlogsListView(LoginRequiredMixin, ListView):
+class BlogsListView(ListView):
     queryset = BlogPost.objects.all()
     template_name = 'blogs.html'
     model = BlogPost
@@ -100,12 +83,17 @@ def post(request, post_id, is_admin):
     })
 
 
-@login_required
-@is_admin_provider
-@user_group_provider
-@is_admin_required
-def create_post(request, is_admin, groups):
-    if request.method == 'POST':
+@method_decorator(is_admin_required, name='dispatch')
+class BlogPostCreateView(LoginRequiredMixin, CreateView):
+
+    model = BlogPost
+    form_class = BlogForm
+    template_name = 'create_blog_post.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request):
         form = BlogForm(request.POST)
         if form.is_valid():
             # add these fields to the form
@@ -113,17 +101,17 @@ def create_post(request, is_admin, groups):
             blog_post.method = 'CREATE'
             blog_post.user = request.user
             # date will be auto-filled by data model with "now"
+
+            # this should just save a blank '[]' if there are no groups
             query_groups = request.user.groups.all()
             blog_post.roles = list(query_groups.values('pk', 'name'))
             blog_post.save()
-            return redirect('blogs:blog_post', post_id=blog_post.id)
-        else:
-            return render(request, 'create_blog_post.html', {'form': form, 'is_admin': is_admin})
-    else:
-        form = BlogForm()
+            return HttpResponseRedirect(reverse_lazy('blogs:blog_post', kwargs={'post_id': blog_post.id}))
 
+    def get(self, request, *args, **kwargs):
+        form = BlogForm()
         form_rendered_for_create = form.render("configure_blog_form.html")
-        return render(request, 'create_blog_post.html', {'form': form_rendered_for_create, 'is_admin': is_admin})
+        return render(request, 'create_blog_post.html', {'form': form_rendered_for_create, 'is_admin': True})
 
 
 @login_required
