@@ -108,6 +108,8 @@ class BlogPostCreateView(LoginRequiredMixin, CreateView):
             # this should just save a blank '[]' if there are no groups
             query_groups = request.user.groups.all()
             blog_post.roles = list(query_groups.values('pk', 'name'))
+            # note comment over equivalent line in Blog Post Deletion
+            blog_post.roles.append({"pk": -2, "name": "STAFF"})
             blog_post.save()
             return HttpResponseRedirect(reverse_lazy('blogs:blog_post', kwargs={'pk': blog_post.id}))
 
@@ -139,6 +141,8 @@ class BlogPostEditView(LoginRequiredMixin, UpdateView):
             blog_post.date = timezone.now()
             query_groups = request.user.groups.all()
             blog_post.roles = list(query_groups.values('pk', 'name'))
+            # note comment over equivalent line in Blog Post Deletion
+            blog_post.roles.append({"pk": -2, "name": "STAFF"})
             blog_post.save()
             return HttpResponseRedirect(reverse_lazy('blogs:blog_post', kwargs={'pk': post_id}))
 
@@ -170,6 +174,12 @@ class BlogPostDeleteView(LoginRequiredMixin, DeleteView):
         blog_post.date = timezone.now()
         query_groups = request.user.groups.all()
         blog_post.roles = list(query_groups.values('pk', 'name'))
+        # Since at this point only Staff can perform Deletes,  append the
+        # Staff role for our records.
+        # (Note the negative pk,  which will never exist as an id -
+        # - no Staff group exists at this point,  but we want to note
+        # that a Staff member did this.
+        blog_post.roles.append({"pk": -2, "name": "STAFF"})
         with transaction.atomic():
             blog_post.save()
             blog_post.delete()
