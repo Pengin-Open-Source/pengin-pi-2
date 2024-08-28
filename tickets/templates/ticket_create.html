@@ -1,0 +1,9 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+    <form class="form" method="POST" action="{% url 'create_ticket' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="primary-button" type="submit">Post</button>
+    </form>
+{% endblock %}
