@@ -14,7 +14,7 @@ class Ticket(models.Model):
     content = models.TextField()
     tags = models.CharField(max_length=150)
     date = models.DateTimeField(default=timezone.now)
-    user = models.ForeignKey(
+    author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='tickets')
     row_action = models.CharField(max_length=10, default='ERROR')
     resolution_status = models.CharField(max_length=100)
