@@ -14,8 +14,12 @@ class Ticket(models.Model):
     content = models.TextField()
     tags = models.CharField(max_length=150)
     date = models.DateTimeField(default=timezone.now)
+    # Warning: Cascade deletes won't save tickets to history!
+    # This class might need to be used with signals at some point
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='tickets')
+        User, on_delete=models.CASCADE, related_name='tickets'),
+    last_edited_by = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING,  null=True,)
     row_action = models.CharField(max_length=10, default='ERROR')
     resolution_status = models.CharField(max_length=100)
     resolution_date = models.CharField(max_length=100)
