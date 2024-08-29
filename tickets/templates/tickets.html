@@ -5,7 +5,6 @@
 
 {% block pageDropDowns %}
   <a href="{% url 'create_ticket' %}">Create Ticket</a>
-  <a href="{% url 'tickets' %}">Back to Tickets </a>
 {% endblock %}
 
 {% block tableContent %}
@@ -27,7 +26,7 @@
 </script>
   {% for ticket in page_obj %}
   <tr><td class="post-container">
-    <a class="alternating-colors-table-links" href="{% url 'ticket' %}">{{ ticket.summary|escape }}</a>
+    <a class="alternating-colors-table-links" href="{% url 'ticket'  ticket.id %}">{{ ticket.summary|escape }}</a>
     <div class="comment-title-underline">
       <div><b> by {{ticket.user.name|escape}}   on  <span id="ticket-latest-time-{{forloop.counter}}"></span> </b> </div>
       <script>
@@ -64,12 +63,12 @@
         </div>
       {% endif %} 
    
-    {% if is_admin %}
+    {% comment %} {% if is_admin %}
     <form method="post" action="{% url 'delete_ticket' ticket.id %}">
       {% csrf_token %}
       <button class="primary-button" style="color: purple;" type="submit" onclick="return confirm('Are you sure you want to delete this ticket?')">Delete</button>
     </form>
-    {% endif %}
+    {% endif %} {% endcomment %}
   </td></tr>
   {% endfor %}
   {% use_macro render_pagination page_obj %}

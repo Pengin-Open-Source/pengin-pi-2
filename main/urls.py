@@ -26,10 +26,12 @@ urlpatterns = [
     path('', include('blogs.urls')),
     path('products/', include('products.urls')),
     path('', include('jobs.urls')),
+    path('tickets/', include('tickets.urls')),
     path('forums/', include('forums.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('signup/', SignupView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('generate-prt/', PasswordResetRequestView.as_view(), name='generate_prt'),
-    path('reset-password/<str:token>/', PasswordResetView.as_view(), name='reset_password'),
+    path('reset-password/<str:token>/',
+         PasswordResetView.as_view(), name='reset_password'),
 ]
