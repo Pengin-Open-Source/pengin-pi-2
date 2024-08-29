@@ -13,7 +13,7 @@ class BlogPost(models.Model):
     # BUT I intend to pre-empt delete behavior,  and create a backup entry in the history table.
     # The plan is to leave deletion of history tables to the DBA
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='blogposts')
+        User, on_delete=models.DO_NOTHING)
     date = models.DateTimeField(default=timezone.now)
     content = models.TextField(blank=True)
     tags = models.CharField(max_length=150,  blank=True)
