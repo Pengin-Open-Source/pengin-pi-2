@@ -7,8 +7,8 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
-from tickets.models import Ticket,  transaction  # , TicketHistory,
-from tickets.forms import TicketForm
+from tickets.models import Ticket, TicketComment, transaction  # , TicketHistory,
+from tickets.forms import TicketForm, TicketCommentForm
 from util.security.auth_tools import group_required, is_admin_required
 from django.utils import timezone
 
@@ -108,8 +108,8 @@ class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         #     else:
         #         post_author = 'NOT FOUND'
 
-        # comment_form = ForumCommentForm()
-        # comments = self.object.comments.all().order_by('-date')
+        comment_form = TicketCommentForm()
+        comments = self.object.comments.all().order_by('-date')
         # for comment in comments:
         #     if comment.row_action == 'CREATE':
         #         comment.is_create_missing = False
@@ -123,26 +123,26 @@ class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         #         else:
         #             comment.author = 'NOT FOUND'
 
-       # page_number = self.request.POST.get(
-        #    'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
-        # paginator = Paginator(comments, 10)
-        # page_obj = paginator.get_page(page_number)
-        # context['page_obj'] = page_obj
-        # context['comment_form'] = comment_form
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(comments, 10)
+        page_obj = paginator.get_page(page_number)
+        context['page_obj'] = page_obj
+        context['comment_form'] = comment_form
         is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
         context['is_admin'] = is_admin
         context['primary_title'] = self.object.summary
         return context
 
-    # def post(self, request, *args, **kwargs):
-      #  ticket = self.get_object()
-        # comment_form = ForumCommentForm(request.POST)
-        # if comment_form.is_valid():
-        #     comment_form.instance.post = forum_post
-        #     comment_form.instance.user = request.user
-        #     comment_form.instance.row_action = 'CREATE'
-        #     comment_form.save()
-        # return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': forum_post.thread_id,  'pk': forum_post.id}))
+    def post(self, request, *args, **kwargs):
+        ticket = self.get_object()
+        comment_form = TicketCommentForm(request.POST)
+        if comment_form.is_valid():
+            comment_form.instance.ticket = ticket
+            comment_form.instance.user = request.user
+            comment_form.instance.row_action = 'CREATE'
+            comment_form.save()
+        return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
         ticket = self.get_object()

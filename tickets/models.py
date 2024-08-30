@@ -30,3 +30,23 @@ class Ticket(models.Model):
     def save(self, *args, **kwargs):
         save_method = self.row_action
         super().save(*args, **kwargs)
+
+
+class TicketComment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    content = models.TextField()
+    date = models.DateTimeField(default=timezone.now)
+    ticket = models.ForeignKey(
+        Ticket, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING)
+    # CREATE, EDIT, DELETE - which put the row in this state?
+    # (DELETE is used for Comment History)
+    row_action = models.CharField(max_length=10, default='ERROR')
+
+    def __str__(self):
+        return str(self.content)[:20]
+
+    def save(self, *args, **kwargs):
+        save_method = self.row_action
+        super().save(*args, **kwargs)

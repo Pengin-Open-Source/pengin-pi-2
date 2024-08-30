@@ -31,17 +31,17 @@
 {% endblock %}
 
 {% block tableContent %}
-    {% comment %} {% use_macro render_comments page_obj user  %}    {% endcomment %}
+     {% use_macro render_comments page_obj user  %}  
 {% endblock %}
 
 
 
 
 {% block postTableContent %}
-{% comment %} 
-{% url 'post' post.thread.id post.id as post_url %}  {% endcomment %}
 
-{% comment %} {% use_macro render_comment_form post post_url comment_form %} {% endcomment %}
+{% url 'ticket' ticket.id as ticket_url %} 
+
+{% use_macro render_comment_form ticket ticket_url comment_form %}
 
 {% endblock %}
 
