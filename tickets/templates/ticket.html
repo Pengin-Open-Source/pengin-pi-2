@@ -10,13 +10,13 @@
 {% endblock %}
 
 {% block pageDropDowns %}
-  {% comment %} {% if is_admin or user == ticket.author %}
-    <form method="ticket" action="{% url 'delete_ticket' ticket.id %}">
+{% if is_admin or user == ticket.author %}
+    <form method="post" action="{% url 'delete_ticket' ticket.id %}">
       {% csrf_token %}
       <button type="submit" onclick="return confirm('Are you sure you want to delete this post?')">Delete</button>
     </form> 
-    <a href="{% url 'edit_ticket' ticket.id %}">Edit</a>
-  {% endif %} {% endcomment %}
+    {% comment %} <a href="{% url 'edit_ticket' ticket.id %}">Edit</a> {% endcomment %}
+  {% endif %}
   <a href="{% url 'tickets' %}">Back To Forums</a>
 {% endblock %}
 

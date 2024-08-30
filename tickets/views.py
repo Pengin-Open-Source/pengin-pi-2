@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
-from tickets.models import Ticket  # , TicketHistory, transaction
+from tickets.models import Ticket,  transaction  # , TicketHistory,
 from tickets.forms import TicketForm
 from util.security.auth_tools import group_required, is_admin_required
 from django.utils import timezone
@@ -151,3 +151,26 @@ class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
             return True
         else:
             return self.request.user == ticket.author
+
+
+class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Ticket
+
+    def post(self, request, *args, **kwargs):
+        ticket = self.get_object()
+
+        with transaction.atomic():
+            delete_ticket(request.user, ticket)
+
+        return HttpResponseRedirect(reverse_lazy('tickets'))
+
+    def test_func(self):
+        ticket = self.get_object()
+        is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
+        if is_admin:
+            return True
+        return self.request.user == ticket.author
+
+
+def delete_ticket(usr, ticket):
+    ticket.delete()
