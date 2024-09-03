@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
-from tickets.models import Ticket, TicketComment, transaction  # , TicketHistory,
+from tickets.models import Ticket, TicketComment, transaction, TicketHistory
 from tickets.forms import TicketForm, TicketCommentForm
 from util.security.auth_tools import group_required, is_admin_required
 from django.utils import timezone
@@ -71,11 +71,10 @@ class TicketCreateView(LoginRequiredMixin, CreateView):
     def post(self, request):
         form = TicketForm(request.POST)
         if form.is_valid():
-            form.instance.user = self.request.user
+            form.instance.author = self.request.user
             form.instance.row_action = 'CREATE'
             form.instance.resolution_status = 'open'
             ticket = form.save()
-            # return HttpResponseRedirect(reverse_lazy('tickets'))
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.pk}))
 
 
@@ -97,16 +96,13 @@ class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
 
-        # if forum_post.row_action == 'CREATE':
-        #     post_author = forum_post.user.name
-        #     forum_post.is_create_missing = False
-        # else:
-        #     post_creation_info = get_post_create_info(forum_post)
-        #     post_author_id, forum_post.create_date, forum_post.is_create_missing = post_creation_info
-        #     if post_author_id != 'NOT FOUND':
-        #         post_author = User.objects.get(id=post_author_id).name
-        #     else:
-        #         post_author = 'NOT FOUND'
+        # Get date ticket originally created, if available
+        # and flag that tells you if it is not available
+        if ticket.row_action == 'CREATE':
+            ticket.is_create_missing = False
+        else:
+            ticket_creation_info = get_ticket_create_info(ticket)
+            ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
         comment_form = TicketCommentForm()
         comments = self.object.comments.all().order_by('-date')
@@ -151,6 +147,58 @@ class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         return self.request.user == ticket.author
 
 
+class TicketEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Ticket
+    form_class = TicketForm
+    template_name = 'ticket_edit.html'
+    context_object_name = 'ticket'
+
+    # def dispatch(self, request, *args, **kwargs):
+    #     return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('ticket', kwargs={'pk': self.object.id})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # perhaps should be refactored to use self.object?
+        ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
+        form = TicketForm(instance=ticket)
+        context['form'] = form
+        context['is_admin'] = self.request.user.is_staff
+        context['primary_title'] = self.object.summary
+        context['ticket_id'] = self.object.id
+        return context
+
+    def post(self, request, *args, **kwargs):
+        ticket_id = self.kwargs.get('pk')
+        ticket = get_object_or_404(
+            Ticket, id=ticket_id)
+        ticket_form = TicketForm(request.POST, instance=ticket)
+        if ticket_form.is_valid():
+            ticket = ticket_form.save(commit=False)
+            ticket.last_edited_by = request.user
+            ticket.row_action = 'EDIT'
+            ticket.date = timezone.now()
+            ticket.save()
+            return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
+
+    def test_func(self):
+        is_validated_user = self.request.user.is_authenticated and self.request.user.validated
+        if is_validated_user and self.request.user.is_staff:
+            return True
+
+        ticket = self.get_object()
+
+        if ticket.row_action == 'CREATE':
+            ticket.is_create_missing = False
+        else:
+            ticket_creation_info = get_ticket_create_info(ticket)
+            ticket.create_date, ticket.is_create_missing = ticket_creation_info
+
+        return is_validated_user and self.request.user == ticket.author and ticket.author != 'NOT FOUND'
+
+
 class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Ticket
 
@@ -165,8 +213,8 @@ class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         if self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff:
             return True
 
-        ticket = self.get_object()
-        return self.request.user == ticket.author
+        # ticket = self.get_object()
+        # return self.request.user == ticket.author
 
 
 def delete_ticket(usr, ticket):
@@ -219,3 +267,26 @@ class TicketCommentEditView(LoginRequiredMixin, UpdateView):
         #         return True
         #     user_groups = self.request.user.groups.all()
         #     return comment.post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == comment_author and comment_author != 'NOT FOUND'
+
+
+# Used to get original date/author of an edited ticket
+def get_ticket_create_info(ticket):
+    oldest_date = ''
+    is_create_missing = False
+
+    ticket_history = TicketHistory.objects.filter(
+        ticket_id=ticket.id,  row_action="CREATE")
+
+    # there should be only one value.
+    # we will set a flag if there is no row with method 'CREATE'  in ForumPostHistory
+    oldest_ticket_record = ticket_history.first()
+
+    if oldest_ticket_record:
+        oldest_date = oldest_ticket_record.date
+    else:
+        # DBAs TAKE NOTE: If a DBA deletes some older Forum Post History Records
+        # then the row with the ForumPost's initial creation date/original author could have
+        # been deleted and unavailable now!
+        is_create_missing = True
+        oldest_date = 'DATE NOT FOUND'
+    return (oldest_date, is_create_missing)

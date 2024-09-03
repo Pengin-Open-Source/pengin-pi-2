@@ -73,7 +73,7 @@
                {% if not comment.ticket %}
                     <a class="text-button" style="color: purple;" href="{% url 'edit_comment' comment.post.thread.id comment.post.id comment.id %}">Edit Comment</a>
                {% else %}
-               <a class="text-button" style="color: purple;" href="{% url 'edit_ticket_comment' comment.id %}">Edit Comment</a>
+               <a class="text-button" style="color: purple;" href="{% url 'edit_ticket_comment' ticket.id comment.id %}">Edit Comment</a>
                {% endif %}
             {% endif %}
           </div>
