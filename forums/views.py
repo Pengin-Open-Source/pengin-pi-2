@@ -16,6 +16,8 @@ from django.utils import timezone
 from main.models.users import User
 
 
+# see group_required code; validated, authenticated staff
+# bypass the requirement to be in this group.
 @method_decorator(group_required('user'), name='dispatch')
 class ForumsListView(LoginRequiredMixin, ListView):
 
@@ -30,13 +32,16 @@ class ForumsListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['is_admin'] = self.request.user.is_staff
+        # only checking if the user is staff b/c group_required decorator
+        # already checks if the user is validated and authenticated
+        is_admin = self.request.user.is_staff
+        context['is_admin'] = is_admin
         context['primary_title'] = 'Forums'
 
         # If a staff user is requesting, get all forum threads.
         # otherwise, just get the threads
         # associated with a group the user is a part of.
-        if self.request.user.is_staff:
+        if is_admin:
             threads = self.queryset.order_by('name')
         else:
             user_groups = self.request.user.groups.all()
@@ -123,12 +128,12 @@ class ThreadDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         return context
 
     def test_func(self):
-        thread = self.get_object()
         if self.request.user.is_staff:
             return True
-        else:
-            user_groups = self.request.user.groups.all()
-            return thread.groups.filter(id__in=user_groups).exists()
+
+        thread = self.get_object()
+        user_groups = self.request.user.groups.all()
+        return thread.groups.filter(id__in=user_groups).exists()
 
 
 @method_decorator(group_required('user'), name='dispatch')
@@ -256,12 +261,11 @@ class PostDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': forum_post.thread_id,  'pk': forum_post.id}))
 
     def test_func(self):
-        forum_post = self.get_object()
         if self.request.user.is_staff:
             return True
-        else:
-            user_groups = self.request.user.groups.all()
-            return forum_post.thread.groups.filter(id__in=user_groups).exists()
+        forum_post = self.get_object()
+        user_groups = self.request.user.groups.all()
+        return forum_post.thread.groups.filter(id__in=user_groups).exists()
 
 
 @method_decorator(group_required('user'), name='dispatch')
@@ -305,6 +309,9 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         forum_post = self.get_object()
 
+        if self.request.user.is_staff:
+            return True
+
         if forum_post.row_action == 'CREATE':
             post_author = forum_post.user.name
             forum_post.is_create_missing = False
@@ -316,8 +323,6 @@ class PostEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             else:
                 post_author = 'NOT FOUND'
 
-        if self.request.user.is_staff:
-            return True
         user_groups = self.request.user.groups.all()
         return forum_post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == post_author and post_author != 'NOT FOUND'
 
@@ -337,6 +342,9 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return HttpResponseRedirect(reverse_lazy('thread', kwargs={'pk': thread_id}))
 
     def test_func(self):
+        if self.request.user.is_staff:
+            return True
+
         forum_post = self.get_object()
         if forum_post.row_action == 'CREATE':
             post_author = forum_post.user.name
@@ -349,8 +357,6 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             else:
                 post_author = 'NOT FOUND'
 
-        if self.request.user.is_staff:
-            return True
         user_groups = self.request.user.groups.all()
         return forum_post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == post_author and post_author != 'NOT FOUND'
 
@@ -390,6 +396,8 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': comment.post.thread_id,  'pk': comment.post.id}))
 
     def test_func(self):
+        if self.request.user.is_staff:
+            return True
         comment = self.get_object()
         if comment.row_action == 'CREATE':
             comment_author = comment.user.name
@@ -400,8 +408,7 @@ class CommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 comment_author = User.objects.get(id=comment_author_id).name
             else:
                 comment_author = 'NOT FOUND'
-        if self.request.user.is_staff:
-            return True
+
         user_groups = self.request.user.groups.all()
         return comment.post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == comment_author and comment_author != 'NOT FOUND'
 
@@ -422,6 +429,9 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return HttpResponseRedirect(reverse_lazy('post', kwargs={'thread_id': thread_id,  'pk': post_id}))
 
     def test_func(self):
+        if self.request.user.is_staff:
+            return True
+
         comment = self.get_object()
         if comment.row_action == 'CREATE':
             comment_author = comment.user.name
@@ -432,9 +442,6 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
                 comment_author = User.objects.get(id=comment_author_id).name
             else:
                 comment_author = 'NOT FOUND'
-
-        if self.request.user.is_staff:
-            return True
 
         user_groups = self.request.user.groups.all()
         return comment.post.thread.groups.filter(id__in=user_groups).exists() and self.request.user.name == comment_author and comment_author != 'NOT FOUND'
