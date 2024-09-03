@@ -75,8 +75,8 @@ class TicketCreateView(LoginRequiredMixin, CreateView):
             form.instance.row_action = 'CREATE'
             form.instance.resolution_status = 'open'
             ticket = form.save()
-            return HttpResponseRedirect(reverse_lazy('tickets'))
-            # return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': form.instance.pk}))
+            # return HttpResponseRedirect(reverse_lazy('tickets'))
+            return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.pk}))
 
 
 class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
@@ -145,12 +145,10 @@ class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
-        ticket = self.get_object()
-        is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
-        if is_admin:
+        if self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff:
             return True
-        else:
-            return self.request.user == ticket.author
+        ticket = self.get_object()
+        return self.request.user == ticket.author
 
 
 class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -158,17 +156,16 @@ class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def post(self, request, *args, **kwargs):
         ticket = self.get_object()
-
         with transaction.atomic():
             delete_ticket(request.user, ticket)
 
         return HttpResponseRedirect(reverse_lazy('tickets'))
 
     def test_func(self):
-        ticket = self.get_object()
-        is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
-        if is_admin:
+        if self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff:
             return True
+
+        ticket = self.get_object()
         return self.request.user == ticket.author
 
 
