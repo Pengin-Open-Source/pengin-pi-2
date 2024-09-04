@@ -1,1 +1,9 @@
-<h1> Not Implemented Yet </h1>
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+   <form class="form" method="POST" action="{% url 'edit_ticket_comment' ticket_id comment_id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="primary-button" type="submit">Post Comment</button>
+    </form>
+{% endblock %}
