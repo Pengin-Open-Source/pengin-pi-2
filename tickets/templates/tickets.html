@@ -45,7 +45,7 @@
                   </p>
                   {% else %}
                       <p style="color: orange;" > 
-                           Originally submitted by {{ticket.author |escape}} on  <span id="ticket-creation-time-{{forloop.counter}}"></span>
+                           Originally submitted by {{ticket.author.name |escape}} on  <span id="ticket-creation-time-{{forloop.counter}}"></span>
                      </p>
                      <script>
                       var utcTime = new Date('{{ ticket.create_date|date:"c" }}');
