@@ -54,7 +54,20 @@ class Ticket(models.Model):
 
         super().save(*args, **kwargs)
 
-        # DELETE CODE GOES HERE......
+        # if this is a pre-delete save,  the ticket row will have been updated to contain
+        # 1) The action/method: "DELETE"
+        # 2) The User who did the Delete (saved in last_edited_by)
+        # 3) The time of the deletion
+        # We need to make sure this information is copied into Ticket history
+        # before we delete the Ticket.
+        # (If Ticket history needs to be totally deleted, that should be done
+        # by a DBA)
+        if save_method == 'DELETE':
+            archived_ticket = TicketHistory(ticket_id=self.pk, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
+                                            author=self.author.pk, last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
+                                            resolution_date=self.resolution_date)
+
+            archived_ticket.save()
 
 
 class TicketHistory(models.Model):
@@ -124,10 +137,10 @@ class TicketComment(models.Model):
             # before we delete the comment.
             # (If comment history needs to be totally deleted, that should be done
             # by a DBA)
-            # if save_method == 'DELETE':
-            #     archived_comment = TicketCommentHistory(comment_id=self.id, content=self.content, date=self.date, post=self.ticket.pk,
-            #                                             author=self.author.pk, last_edited_by=self.last_edited_by.pk, row_action=self.row_action)
-            #     archived_comment.save()
+            if save_method == 'DELETE':
+                archived_comment = TicketCommentHistory(comment_id=self.id, content=self.content, date=self.date, ticket=self.ticket.pk,
+                                                        author=self.author.pk, last_edited_by=self.last_edited_by.pk, row_action=self.row_action)
+                archived_comment.save()
 
         super().save(*args, **kwargs)
 

@@ -199,17 +199,13 @@ class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
     def post(self, request, *args, **kwargs):
         ticket = self.get_object()
-        with transaction.atomic():
-            delete_ticket(request.user, ticket)
+        delete_ticket(request.user, ticket)
 
         return HttpResponseRedirect(reverse_lazy('tickets'))
 
     def test_func(self):
         if self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff:
             return True
-
-        # ticket = self.get_object()
-        # return self.request.user == ticket.author
 
 
 def delete_ticket(usr, ticket):
@@ -254,6 +250,31 @@ class TicketCommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView)
         return is_validated_user and self.request.user == comment.author
 
 
+class TicketCommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = TicketComment
+
+    def post(self, request, *args, **kwargs):
+        archive_comment = self.get_object()
+        ticket_id = archive_comment.ticket.id
+        with transaction.atomic():
+            delete_comment(request.user, archive_comment)
+        return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket_id}))
+
+    def test_func(self):
+        is_validated_user = self.request.user.is_authenticated and self.request.user.validated
+        if is_validated_user and self.request.user.is_staff:
+            return True
+
+        comment = self.get_object()
+
+        return is_validated_user and self.request.user == comment.author
+
+
+##                   ##
+#   UTILITY METHODS
+##                   ##
+
+
 # Used to get original date/author of an edited ticket
 def get_ticket_create_info(ticket):
     oldest_date = ''
@@ -277,6 +298,32 @@ def get_ticket_create_info(ticket):
     return (oldest_date, is_create_missing)
 
 
+# Since this method can have multiple operations that must succeed or fail together,
+# I'm putting a transaction at the top of this method.
+def delete_ticket(usr, archive_ticket):
+    with transaction.atomic():
+        archive_ticket.row_action = 'DELETE'
+        archive_ticket.last_edited_by = usr
+        archive_ticket.date = timezone.now()
+
+        # First,  try to delete all the posts
+        # which will in turn invoke deletion of all their
+        # comments
+        # If any deletion fails down the chain,  the whole deletion
+        # process should be canceled.
+        comments = archive_ticket.comments.all().order_by('-date')
+        for comment in comments:
+            delete_comment(usr, comment)
+
+        # specify this is an deleted record
+        # both save and delete must execute or fail together,
+        # this keeps track of the time of deletion and
+        # the user who deleted the record
+        archive_ticket.save()
+        archive_ticket.delete()
+        return "success"
+
+
 # Used to get original date/author of an edited comment
 def get_comment_create_info(comment):
     oldest_date = ''
@@ -297,3 +344,26 @@ def get_comment_create_info(comment):
         is_create_missing = True
         oldest_date = 'DATE NOT FOUND'
     return (oldest_date, is_create_missing)
+
+
+# Not putting a transaction at the top of this method itself,  b/c
+# this method may be called inside of the delete_ticket method.
+# I want failures to propagate up the chain and rollback the whole
+# ticket deletion, and not leave a deletion in a half-done state
+def delete_comment(usr, archive_comment):
+
+    archive_comment.row_action = 'DELETE'
+    archive_comment.last_edited_by = usr
+    archive_comment.date = timezone.now()
+
+    # specify this is an deleted record
+    # both save and delete must execute or fail together,
+    # this keeps track of the time of deletion and
+    # the user who deleted the record
+    archive_comment.save()
+    archive_comment.delete()
+
+    # Uncomment to test error in a transaction after both operations complete successfully
+    # if "Comment about widgets" in archive_comment.content:
+    #   raise TestTransactionError("Test Delete Comment Failure.")
+    return "success"

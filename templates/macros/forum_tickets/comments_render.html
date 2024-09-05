@@ -41,9 +41,9 @@
                   <p style="color: orange;" > 
                      {% comment %} If this is ticket comment,  author is a user object, if this comment is on a forum post,  author is only a name {% endcomment %}
                     {% if comment.ticket %}
-                       <i> Originally posted by {{comment.author.name |escape}} on  <span id="comment-creation-time-{{forloop.counter}}"> </i>
+                       <i> Originally posted by {{comment.author.name|escape}} on  <span id="comment-creation-time-{{forloop.counter}}"> </i>
                     {% else  %} 
-                       <i> Originally posted by {{comment.author |escape}} on  <span id="comment-creation-time-{{forloop.counter}}"> </i>
+                       <i> Originally posted by {{comment.author|escape}} on  <span id="comment-creation-time-{{forloop.counter}}"> </i>
                     {% endif  %}
                   </p>
                   <script>
@@ -65,25 +65,25 @@
     <div class="comment-title-underline">
         <p> {{comment.content}} </p>
     </div>
-        {% if current_user.is_authenticated and current_user.is_validated %}
+        {% if current_user.is_authenticated and current_user.validated %}
           <div class="text-buttons-container">
-
-            {% comment %} should operate the same as: 
-            {% if (comment.ticket and user == comment.author) or (comment.post and user.name == comment.author) or is_admin %}
-            if Django allowed parentheses..... {% endcomment %}
-            {% if comment.ticket and user == comment.author or comment.post and user.name == comment.author or is_admin %}
+            {% if is_admin and comment.post or comment.post and current_user.name == comment.author  %}
               <form class="delete-form" method="post" action="{% url 'delete_comment' comment.id  %}">
                 {% csrf_token %}
                 <button class="text-button" style="color: purple;" type="submit" onclick="return confirm('Are you sure you want to delete this comment?')">Delete Comment</button>
               </form> 
               <span class="text-button">|</span>
+            {% elif is_admin and comment.ticket  or comment.ticket and current_user == comment.author %}
+              <form class="delete-form" method="post" action="{% url 'delete_ticket_comment' comment.id  %}">
+                {% csrf_token %}
+                <button class="text-button" style="color: purple;" type="submit" onclick="return confirm('Are you sure you want to delete this comment?')">Delete Comment</button>
+              </form> 
+              <span class="text-button">|</span>
             {% endif %}
-            {% if comment.ticket and user == comment.author or comment.post and user.name == comment.author or is_admin  %}
-               {% if not comment.ticket %}
-                    <a class="text-button" style="color: purple;" href="{% url 'edit_comment' comment.post.thread.id comment.post.id comment.id %}">Edit Comment</a>
-               {% else %}
+            {% if is_admin and comment.post or comment.post and current_user.name == comment.author  %}
+              <a class="text-button" style="color: purple;" href="{% url 'edit_comment' comment.post.thread.id comment.post.id comment.id %}">Edit Comment</a>
+            {% elif is_admin and comment.ticket  or comment.ticket and current_user == comment.author %}
                <a class="text-button" style="color: purple;" href="{% url 'edit_ticket_comment' ticket.id comment.id %}">Edit Comment</a>
-               {% endif %}
             {% endif %}
           </div>
         {% endif %}
