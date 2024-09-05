@@ -39,7 +39,12 @@
               </p>
               {% else %}
                   <p style="color: orange;" > 
+                     {% comment %} If this is ticket comment,  author is a user object, if this comment is on a forum post,  author is only a name {% endcomment %}
+                    {% if comment.ticket %}
                        <i> Originally posted by {{comment.author.name |escape}} on  <span id="comment-creation-time-{{forloop.counter}}"> </i>
+                    {% else  %} 
+                       <i> Originally posted by {{comment.author |escape}} on  <span id="comment-creation-time-{{forloop.counter}}"> </i>
+                    {% endif  %}
                   </p>
                   <script>
                     var utcTime = new Date('{{ comment.create_date|date:"c" }}');
