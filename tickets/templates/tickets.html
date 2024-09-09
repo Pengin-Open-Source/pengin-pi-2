@@ -28,7 +28,7 @@
   <tr><td class="post-container">
     <a class="alternating-colors-table-links" href="{% url 'ticket'  ticket.id %}">{{ ticket.summary|escape }}</a>
     <div class="comment-title-underline">
-      <div><b> by {{ticket.user.name|escape}}   on  <span id="ticket-latest-time-{{forloop.counter}}"></span> </b> </div>
+      <div><b> {% if ticket.last_edited_by %} Last Edited By: {{ticket.last_edited_by.name|escape}} {% else %} by {{ticket.author.name|escape}}  {% endif %} on  <span id="ticket-latest-time-{{forloop.counter}}"></span> </b> </div>
       <script>
         var utcTime = new Date('{{ ticket.date|date:"c" }}');
         var localTime = convertUTCToLocal(utcTime);

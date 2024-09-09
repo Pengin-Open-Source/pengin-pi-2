@@ -21,7 +21,20 @@
   {% for comment in comments %}
   <tr><td>
     <div class="comment-title-underline">
-    <div> <b> by {% if comment.post %} {{comment.user.name|escape}} {% elif comment.last_edited_by  %}  {{comment.last_edited_by.name|escape}} {% else %}   {{comment.author.name|escape}} {% endif %}  on <span id="comment-latest-time-{{forloop.counter}}"></span> </b> </div>
+      <div> <b>
+       {% if comment.post %} 
+          {% if  comment.row_action == 'EDIT' %} 
+             Last Edited
+          {% endif %} 
+          by {{comment.user.name|escape}}
+      {% else %}
+          {% if  comment.row_action == 'EDIT' %} 
+             Last Edited by {{comment.last_edited_by.name|escape}}
+          {% else %}
+             by {{comment.author.name|escape}}
+          {% endif %}
+      {% endif %}
+     on <span id="comment-latest-time-{{forloop.counter}}"></span> </b> </div>
     <script>
       var utcTime = new Date('{{ comment.date|date:"c" }}');
       var localTime = convertUTCToLocal(utcTime);
