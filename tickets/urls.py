@@ -1,7 +1,7 @@
 # tickets/urls.py
 from django.urls import path
 from tickets.views import (
-    TicketsListView, TicketCreateView, TicketDetailView, TicketDeleteView,  TicketCommentEditView, TicketEditView, TicketCommentDeleteView
+    TicketsListView, TicketCreateView, TicketDetailView, TicketDeleteView,  TicketCommentEditView, TicketEditView, TicketCommentDeleteView, TicketEditStatusView
 )
 
 urlpatterns = [
@@ -10,6 +10,8 @@ urlpatterns = [
     path('<uuid:pk>/', TicketDetailView.as_view(), name='ticket'),
     path('<uuid:pk>/edit/',
          TicketEditView.as_view(), name='edit_ticket'),
+    path('<uuid:pk>/edit-status/',
+         TicketEditStatusView.as_view(), name='edit_ticket_status'),
     path('<uuid:ticket_id>/<uuid:pk>/edit/',
          TicketCommentEditView.as_view(), name='edit_ticket_comment'),
     path('delete/Ticket/<uuid:pk>/',

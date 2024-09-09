@@ -8,7 +8,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
-from tickets.forms import TicketForm, TicketCommentForm
+from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from util.security.auth_tools import group_required, is_admin_required
 from django.utils import timezone
 
@@ -128,7 +128,8 @@ class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         context['comment_form'] = comment_form
         is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
         context['is_admin'] = is_admin
-        context['primary_title'] = self.object.summary
+        context['primary_title'] = self.object.summary + \
+            " | Status: " + self.object.resolution_status.upper()
         return context
 
     def post(self, request, *args, **kwargs):
@@ -194,6 +195,51 @@ class TicketEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return is_validated_user and self.request.user == ticket.author
 
 
+class TicketEditStatusView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Ticket
+    form_class = TicketEditStatusForm
+    template_name = 'ticket_edit_status.html'
+    context_object_name = 'ticket'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # perhaps should be refactored to use self.object?
+        ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
+        form = TicketEditStatusForm(instance=ticket)
+        context['form'] = form
+        context['is_admin'] = self.request.user.is_staff
+        context['primary_title'] = self.object.summary
+        context['ticket_id'] = self.object.id
+        return context
+
+    def post(self, request, *args, **kwargs):
+        ticket_id = self.kwargs.get('pk')
+        ticket = get_object_or_404(
+            Ticket, id=ticket_id)
+        ticket_form = TicketEditStatusForm(request.POST, instance=ticket)
+        if ticket_form.is_valid():
+            ticket = ticket_form.save(commit=False)
+            ticket.last_edited_by = request.user
+            ticket.row_action = 'EDIT'
+            ticket.date = timezone.now()
+            if ticket.resolution_status == 'resolved':
+                ticket.resolution_date = timezone.now()
+            else:
+                ticket.resolution_date = ''
+
+            ticket.save()
+            return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
+
+    def test_func(self):
+        is_validated_user = self.request.user.is_authenticated and self.request.user.validated
+        if is_validated_user and self.request.user.is_staff:
+            return True
+
+        ticket = self.get_object()
+
+        return is_validated_user and self.request.user == ticket.author
+
+
 class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Ticket
 
@@ -206,10 +252,6 @@ class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         if self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff:
             return True
-
-
-def delete_ticket(usr, ticket):
-    ticket.delete()
 
 
 class TicketCommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
