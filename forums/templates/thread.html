@@ -29,7 +29,10 @@
   <tr><td class="post-container">
     <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|escape }}</a>
     <div class="comment-title-underline">
-      <div><b> by {{post.user.name|escape}}   on  <span id="post-latest-time-{{forloop.counter}}"></span> </b> </div>
+      {% if  post.row_action == 'EDIT' %} 
+      Last Edited
+      {% endif %} 
+      by {{post.user.name|escape}} on  <span id="post-latest-time-{{forloop.counter}}"></span> </b> </div>
       <script>
         var utcTime = new Date('{{ post.date|date:"c" }}');
         var localTime = convertUTCToLocal(utcTime);
