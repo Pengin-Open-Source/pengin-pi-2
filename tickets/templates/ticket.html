@@ -18,7 +18,7 @@
      <a href="{% url 'edit_ticket' ticket.id %}">Edit</a>
      <a href="{% url 'edit_ticket_status' ticket.id %}">Change Resolution Status</a>
   {% endif %}
-  <a href="{% url 'tickets' %}">Back To Tickets</a>
+  <a href="{% url 'tickets' 'all' %}">Back To Tickets</a>
 {% endblock %}
 
 {% block beforeTableContent %}

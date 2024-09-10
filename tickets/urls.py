@@ -6,6 +6,7 @@ from tickets.views import (
 
 urlpatterns = [
     path('', TicketsListView.as_view(), name='tickets'),
+    path('<status>', TicketsListView.as_view(), name='tickets'),
     path('create/', TicketCreateView.as_view(), name='create_ticket'),
     path('<uuid:pk>/', TicketDetailView.as_view(), name='ticket'),
     path('<uuid:pk>/edit/',

@@ -7,6 +7,17 @@
   <a href="{% url 'create_ticket' %}">Create Ticket</a>
 {% endblock %}
 
+
+{% block beforeTableContent %}
+    <div class="title-underline">
+      <a class="text-button" href="{% url 'tickets' 'all' %}">all</a>|
+      <a class="text-button" href="{% url 'tickets' 'resolved' %}">resolved</a>|
+      <a class="text-button" href="{% url 'tickets' 'open' %}">open</a>|
+      <a class="text-button" href="{% url 'tickets' 'closed' %}">closed</a>
+    </div>
+{% endblock %}
+
+
 {% block tableContent %}
  {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
 <script>

@@ -28,6 +28,7 @@ class TicketsListView(LoginRequiredMixin, ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        status = self.kwargs.get('status')
         context = super().get_context_data(**kwargs)
         is_admin = self.request.user.is_authenticated and self.request.user.validated and self.request.user.is_staff
         context['is_admin'] = is_admin
@@ -37,11 +38,19 @@ class TicketsListView(LoginRequiredMixin, ListView):
         # otherwise, just get the tickets authored
         # by the user
 
-        if is_admin:
-            tickets = self.queryset.order_by('date')
+        if status != 'all':
+            if is_admin:
+                tickets = self.queryset.filter(
+                    resolution_status=status).order_by('date')
+            else:
+                tickets = self.queryset.filter(
+                    author=self.request.user, resolution_status=status).order_by('date')
         else:
-            tickets = self.queryset.filter(
-                author=self.request.user).order_by('date')
+            if is_admin:
+                tickets = self.queryset.order_by('date', )
+            else:
+                tickets = self.queryset.filter(
+                    author=self.request.user).order_by('date')
 
         for ticket in tickets:
             if ticket.row_action == 'CREATE':
