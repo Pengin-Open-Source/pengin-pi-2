@@ -15,7 +15,7 @@ urlpatterns = [
          TicketEditStatusView.as_view(), name='edit_ticket_status'),
     path('<uuid:ticket_id>/<uuid:pk>/edit/',
          TicketCommentEditView.as_view(), name='edit_ticket_comment'),
-    path('delete/Ticket/<uuid:pk>/',
+    path('delete/ticket/<uuid:pk>/',
          TicketDeleteView.as_view(), name='delete_ticket'),
     path('delete/comment/<uuid:pk>/',
          TicketCommentDeleteView.as_view(), name='delete_ticket_comment'),
