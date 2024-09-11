@@ -5,18 +5,19 @@ from django.urls import reverse_lazy
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from util.security.auth_tools import group_required, is_admin_required
 from django.utils import timezone
+from main.mixins import GracefulLoginRequiredMixin
 
 
 from main.models.users import User
 
 
-class TicketsListView(LoginRequiredMixin, ListView):
+class TicketsListView(GracefulLoginRequiredMixin, ListView):
 
     queryset = Ticket.objects.all()
     template_name = 'tickets.html'
@@ -25,7 +26,9 @@ class TicketsListView(LoginRequiredMixin, ListView):
     context_object_name = 'tickets'
 
     def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+        if request.user.validated:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden("<h1> Your Account Must Be Validated Before You Can Access This Page. </h1>")
 
     def get_context_data(self, **kwargs):
         status = self.kwargs.get('status')
@@ -69,7 +72,7 @@ class TicketsListView(LoginRequiredMixin, ListView):
         return context
 
 
-class TicketCreateView(LoginRequiredMixin, CreateView):
+class TicketCreateView(GracefulLoginRequiredMixin, CreateView):
     model = Ticket
     form_class = TicketForm
     template_name = 'ticket_create.html'
@@ -77,7 +80,9 @@ class TicketCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('tickets')
 
     def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+        if request.user.validated:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden("<h1> Your Account Must Be Validated Before You Can Access This Page. </h1>")
 
     def get(self, request, *args, **kwargs):
         form = TicketForm()
@@ -94,14 +99,16 @@ class TicketCreateView(LoginRequiredMixin, CreateView):
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.pk}))
 
 
-class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+class TicketDetailView(GracefulLoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Ticket
     template_name = 'ticket.html'
     context_object_name = 'ticket'
     form_class = TicketForm
 
     def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+        if request.user.validated:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden("<h1> Your Account Must Be Validated Before You Can Access This Page. </h1>")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -158,14 +165,16 @@ class TicketDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         return self.request.user == ticket.author
 
 
-class TicketEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class TicketEditView(GracefulLoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Ticket
     form_class = TicketForm
     template_name = 'ticket_edit.html'
     context_object_name = 'ticket'
 
-    # def dispatch(self, request, *args, **kwargs):
-    #     return super().dispatch(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.validated:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden("<h1> Your Account Must Be Validated Before You Can Access This Page. </h1>")
 
     def get_success_url(self):
         return reverse_lazy('ticket', kwargs={'pk': self.object.id})
@@ -204,11 +213,16 @@ class TicketEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return is_validated_user and self.request.user == ticket.author
 
 
-class TicketEditStatusView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class TicketEditStatusView(GracefulLoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Ticket
     form_class = TicketEditStatusForm
     template_name = 'ticket_edit_status.html'
     context_object_name = 'ticket'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.validated:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden("<h1> Your Account Must Be Validated Before You Can Access This Page. </h1>")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -249,8 +263,13 @@ class TicketEditStatusView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return is_validated_user and self.request.user == ticket.author
 
 
-class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class TicketDeleteView(GracefulLoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Ticket
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.validated:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden("<h1> Your Account Must Be Validated Before You Can Access This Page. </h1>")
 
     def post(self, request, *args, **kwargs):
         ticket = self.get_object()
@@ -263,10 +282,15 @@ class TicketDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             return True
 
 
-class TicketCommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class TicketCommentEditView(GracefulLoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = TicketComment
     form_class = TicketCommentForm
     template_name = 'comment_edit.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.validated:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden("<h1> Your Account Must Be Validated Before You Can Access This Page. </h1>")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -301,8 +325,13 @@ class TicketCommentEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView)
         return is_validated_user and self.request.user == comment.author
 
 
-class TicketCommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class TicketCommentDeleteView(GracefulLoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = TicketComment
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.validated:
+            return super().dispatch(request, *args, **kwargs)
+        return HttpResponseForbidden("<h1> Your Account Must Be Validated Before You Can Access This Page. </h1>")
 
     def post(self, request, *args, **kwargs):
         archive_comment = self.get_object()
