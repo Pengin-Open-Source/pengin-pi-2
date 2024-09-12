@@ -20,6 +20,8 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         status = self.kwargs.get('status')
+        if status is None:
+            status = 'all'
         context = super().get_context_data(**kwargs)
         is_admin = self.request.user.is_staff
         context['is_admin'] = is_admin
