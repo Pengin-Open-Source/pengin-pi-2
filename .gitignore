@@ -12,6 +12,7 @@ instance
 .vscode
 .env
 /env
+/resumes
 containers.json
 public-endpoint.json
 app/static/robots.txt

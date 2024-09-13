@@ -1,0 +1,53 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}
+
+{% block pageContent %}
+    <form class="form" method="POST">
+        {% if form.errors %}
+            <div class="alert alert-danger">
+            {% for error in form.errors %}
+                <ul>
+                    <li>{{ error}}</li>
+                </ul>
+            {% endfor %}
+            </div>
+        {% endif %}
+        {% csrf_token %}
+        <div class="contract-edit-container">
+            <div class="form-section">
+                {{ form.customer.label_tag }}
+                {{ form.customer }}
+            </div>
+            <div class="form-section">
+                {{ form.type.label_tag }}
+                {{ form.type }}
+            </div>
+            <div class="form-section contract-edit-description ">
+                {{ form.content.label_tag }}
+                {{ form.content }}
+            </div>
+            <div class="form-section">
+                {{ form.service_date.label_tag }}
+                {{ form.service_date }}
+            </div>
+            <div class="form-section">
+                {{ form.expiration_date.label_tag }}
+                {{ form.expiration_date }}
+            </div>
+        </div>
+
+        {% if action == "update" %}
+            <a href="{% url "contracts:detail-contract" contract.id %}">
+                <button class="primary-button" type="button">Cancel</button>
+            </a>
+                <button class="primary-button" type="submit">Save changes</button>
+        {% else %}
+            <a href="{% url "contracts:list-contracts" %}">
+                <button class="primary-button" type="button">Cancel</button>
+            </a>
+            <button class="primary-button" type="submit">Add Contract</button>
+        {% endif %}
+
+    </form>
+
+{% endblock %}
