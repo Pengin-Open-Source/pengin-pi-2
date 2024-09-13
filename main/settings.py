@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv
-from decouple import config, Csv
+from decouple import config
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'markdownit',
     'macros',
     # Add your apps here
-    'global_admin',
+    #'global_admin',
     'main',
     'home',
     'about',
@@ -58,12 +58,13 @@ INSTALLED_APPS = [
     'jobs',
     'applications',
     'profiles',
+    'contracts',
     # 'relationships',
 ]
 
 load_dotenv()
 
-=======
+
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('SES_HOST', default='email-smtp.us-west-2.amazonaws.com')
@@ -142,6 +143,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # forces Django to use custom User model main.models.users.__init__.py User
 AUTH_USER_MODEL = 'main.User'
 
+DEFAULT_USER_ID = 1
 
 # Session
 
