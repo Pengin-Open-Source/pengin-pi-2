@@ -1,0 +1,78 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}
+
+{% block pageContent %}
+    <form class="form" method="POST">
+        {% if form.errors %}
+            <div class="alert alert-danger">
+            {% for error in form.errors %}
+                <ul>
+                    <li>{{ error}}</li>
+                </ul>
+            {% endfor %}            </div>
+        {% endif %}
+        {% if formset.errors %}
+            <div class="alert alert-danger">
+            {% for error in formset.errors %}
+                <ul>
+                    <li>{{ error}}</li>
+                </ul>
+            {% endfor %}
+            </div>
+        {% endif %}
+        {% csrf_token %}
+        <div class="order-edit-container">
+            <div class="form-section">
+                {{ form.customer.label_tag }}
+                {{ form.customer }}
+            </div>
+            <div class="form-section">
+                {{ form.order_date.label_tag }}
+                {{ form.order_date }}
+            </div>
+            <div class="form-section order-edit-description ">
+                {{ form.is_cancelled.label_tag }}
+                {{ form.is_cancelled }}
+            </div>
+            <div class="form-section">
+                {{ form.shipping_address.label_tag }}
+                {{ form.shipping_address }}
+            </div>
+
+        </div>
+        <h3>Products</h3>
+        <div id="order-products">
+            {{ formset.management_form }}
+            {% for form in formset %}
+                <div class="form-row">
+                    {{ form.id }}
+                    {{ form.product.label_tag }} {{ form.product }}
+                    {{ form.quantity.label_tag }} {{ form.quantity }}
+                    {% if form.instance.pk %}
+                        <label for="{{ form.prefix }}-DELETE">Delete:</label>
+                        {{ form.DELETE }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+    <div>
+        <button type="button" class="primary-button" id="add-more-products">Add more products</button>
+    </div>
+
+    {% if action == "update" %}
+        <a href="{% url "orders:detail-order" order.id %}">
+            <button class="primary-button" type="button">Cancel</button>
+        </a>
+            <button class="primary-button" type="submit">Save changes</button>
+    {% else %}
+        <a href="{% url "orders:list-orders" %}">
+            <button class="primary-button" type="button">Cancel</button>
+        </a>
+        <button class="primary-button" type="submit">Add Order</button>
+    {% endif %}
+
+    </form>
+
+  <script src="{% static 'javascript/orders.js' %}"></script>
+{% endblock %}

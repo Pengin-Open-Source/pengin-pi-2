@@ -28,7 +28,7 @@ class LoginView(View):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('home')
+            return redirect('home_view')
         messages.error(request, 'Please check your login details and try again.')
         return redirect('login')
 
@@ -53,7 +53,7 @@ class LogoutView(View):
     @method_decorator(login_required)
     def get(self, request):
         logout(request)
-        return redirect('home')
+        return redirect('home_view')
 
 class PasswordResetRequestView(View):
     def get(self, request):

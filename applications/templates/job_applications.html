@@ -3,6 +3,7 @@
 {% loadmacros "macros/pagination.html" %}
 
 {% block pageContent %}
+
   <h2>Job Applications for {{ job.job_title }}</h2>
   <div class="title-underline">
     <a class="text-button" href="{% url 'job_applications' job_id=job.id %}">all</a>|
@@ -31,6 +32,7 @@
     </tbody>
   </table>
 
+
   <!-- Pagination links -->
   {% if page_obj.has_other_pages %}
     <div class="page-items">
@@ -54,4 +56,5 @@
         {% endif %}
     </div>
   {% endif %}
+
 {% endblock %}

@@ -5,6 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Thread, ForumPost, ForumComment, ThreadRole
 from .forms import ThreadForm, ForumPostForm, ForumCommentForm
 
+
 class ForumsListView(LoginRequiredMixin, ListView):
     model = Thread
     template_name = 'forums/threads.html'
@@ -74,6 +75,7 @@ class PostDetailView(LoginRequiredMixin, DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+
         form = ForumCommentForm(request.POST)
         if form.is_valid():
             form.instance.post = self.object
