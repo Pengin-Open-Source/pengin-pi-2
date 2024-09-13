@@ -1,7 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageContent %}
-    <form class="form" method="POST" action="{% url 'forums:edit_comment' thread_id post_id comment_id %}">
+    <form class="form" method="POST" action="{% url 'edit_comment' thread_id post_id comment_id %}">
         {% csrf_token %}
         {{ form.as_p }}
         <button class="primary-button" type="submit">Post Comment</button>

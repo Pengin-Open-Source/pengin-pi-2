@@ -1,5 +1,5 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "layout/fullPageScroll.html" %}
+{% block pageContent %}
   <h2>Edit Application Status</h2>
   <form method="post" action="{% url 'edit_status' job_id=job.id application_id=application.id %}">
     {% csrf_token %}
@@ -35,6 +35,7 @@
   <br><br>
   <form method="post" action="{% url 'delete_applicant' job_id=job.id application_id=application.id %}">
     {% csrf_token %}
+    <input type="hidden" name="status_code_uuid" value="{{ status_code.id }}">
     <button type="submit">Delete Application</button>
     <p><i>This action cannot be undone.</i></p>
   </form>

@@ -10,31 +10,30 @@
 {% endblock %}
 
 {% block pageDropDowns %}
-  {% if is_admin or can_delete_post(post.id).can() %}
-    <form method="post" action="{% url 'forums:delete_post' post.id %}">
+  {% if is_admin or user == post.author %}
+    <form method="post" action="{% url 'delete_post' post.id %}">
       {% csrf_token %}
       <button type="submit">Delete</button>
     </form> 
-  {% endif %}
-  {% if is_admin or can_edit_post(post.id).can() %}
-    <a href="{% url 'forums:edit_post' thread_id post.id %}">Edit</a>
+    <a href="{% url 'edit_post' post.thread.id post.id %}">Edit</a>
   {% endif %}
 {% endblock %}
 
 {% block beforeTableContent %}
-  {{ content.render_content(post.title, author, post.date, post.content) }}
+  {{ content.render_content(post.title, post.author, post.date, post.content) }}
 {% endblock %}
 
 {% block tableContent %}
   {% for comment in comments %}
     {{ comments_render.render_comments(
-        [comment], comment_authors, current_user, can_delete_comment, can_edit_comment, 
-        "{% url 'forums:delete_comment' comment.id %}", 
-        "{% url 'forums:edit_comment' thread_id post.id comment.id %}"
+        [comment], comment.author, user, 
+        user == comment.author or is_admin, user == comment.author or is_admin, 
+        "{% url 'delete_comment' comment.id %}", 
+        "{% url 'edit_comment' comment.post.thread.id comment.post.id comment.id %}"
     ) }}
   {% endfor %}
 {% endblock %}
 
 {% block postTableContent %}
-  {{ comment_form.render_comment_form("post", "{% url 'forums:add_comment' thread_id post.id %}") }}
+  {{ comment_form.render_comment_form("post", "{% url 'post' post.thread.id post.id %}") }}
 {% endblock %}

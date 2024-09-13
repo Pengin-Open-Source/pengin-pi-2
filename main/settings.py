@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+from decouple import config, Csv
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -58,9 +61,20 @@ INSTALLED_APPS = [
     'jobs',
     'applications',
     'profiles',
-    'relationships',
+    'clearcache',
+    #'relationships',
 ]
 
+load_dotenv()
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('SES_HOST', default='email-smtp.us-west-2.amazonaws.com')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('SES_USERNAME_SMTP')
+EMAIL_HOST_PASSWORD = config('SES_PASSWORD_SMTP')
+DEFAULT_FROM_EMAIL = f"{config('SES_SENDER_NAME')} <{config('SES_SENDER')}>"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -129,7 +143,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = 'main.User' #forces Django to use custom User model main.models.users.__init__.py User
-
+DEFAULT_USER_ID = '0c6ae962f019410c9f51d96ff7a7a7f1'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
