@@ -1,8 +1,9 @@
-{% extends "base.html" %}
+{% extends "layout/fullPageScroll.html" %}
 {% load macros %}
 {% loadmacros "macros/pagination.html" %}
 
-{% block content %}
+{% block pageContent %}
+
   <h2>Job Applications for {{ job.job_title }}</h2>
   <div class="title-underline">
     <a class="text-button" href="{% url 'job_applications' job_id=job.id %}">all</a>|
@@ -31,6 +32,29 @@
     </tbody>
   </table>
 
-{% use_macro render_pagination applications.items %}
+
+  <!-- Pagination links -->
+  {% if page_obj.has_other_pages %}
+    <div class="page-items">
+      {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+    </div>
+    <div class="pagination-list">
+        {% if page_obj.has_previous %}
+            <div><a href="?page={{ page_obj.previous_page_number }}{% if status %}&status={{ status }}{% endif %}">Previous</a></div>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <div class="current">{{ num }}</div>
+            {% else %}
+                <div><a href="?page={{ num }}{% if status %}&status={{ status }}{% endif %}">{{ num }}</a></div>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <div><a href="?page={{ page_obj.next_page_number }}{% if status %}&status={{ status }}{% endif %}">Next</a></div>
+        {% endif %}
+    </div>
+  {% endif %}
 
 {% endblock %}

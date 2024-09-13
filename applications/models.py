@@ -1,10 +1,12 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings  # Import settings module
 from jobs.models import Job  # Import Job model from your project structure
 import uuid
 
 class Application(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications', default=settings.DEFAULT_USER_ID)
     resume = models.FileField(upload_to='resumes/')
     cover_letter = models.FileField(upload_to='cover_letters/', null=True, blank=True)
     message = models.TextField()
