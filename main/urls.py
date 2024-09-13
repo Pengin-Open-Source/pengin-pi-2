@@ -18,7 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('home.urls')),
@@ -36,4 +35,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('generate-prt/', PasswordResetRequestView.as_view(), name='generate_prt'),
     path('reset-password/<str:token>/', PasswordResetView.as_view(), name='reset_password'),
+    path('profile/', include('profiles.urls')),  # Include the profiles URLs
 ]
