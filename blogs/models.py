@@ -1,8 +1,6 @@
 from django.db import models, transaction
 import uuid
-from datetime import datetime
 from django.utils import timezone
-from main.models.users import User
 
 
 class BlogPost(models.Model):
@@ -12,14 +10,11 @@ class BlogPost(models.Model):
     # For now, if the user is deleted,  there will be a cascade delete of the blogposts,
     # BUT I intend to pre-empt delete behavior,  and create a backup entry in the history table.
     # The plan is to leave deletion of history tables to the DBA
-    user = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING)
     date = models.DateTimeField(default=timezone.now)
     content = models.TextField(blank=True)
     tags = models.CharField(max_length=150,  blank=True)
     method = models.CharField(
         max_length=10, default='ERROR')
-    roles = models.JSONField()
 
     # this will need to get replaced by db triggers OR Django Signals
     # If bulk actions are involved
@@ -30,8 +25,8 @@ class BlogPost(models.Model):
             # DELETE is included because we will call save with save_method delete before calling delete
             if save_method == "EDIT" or save_method == "DELETE":
                 original_post = BlogPost.objects.get(pk=self.pk)
-                post_backup = BlogHistory(post_id=original_post.id, title=original_post.title, user=original_post.user.pk,
-                                          date=original_post.date, content=original_post.content, method=original_post.method, tags=original_post.tags, roles=original_post.roles)
+                post_backup = BlogHistory(post_id=original_post.id, title=original_post.title,
+                                          date=original_post.date, content=original_post.content, method=original_post.method, tags=original_post.tags)
                 post_backup.save()
             # Else, if this is a newly created row don't save to backup table yet
 
@@ -44,8 +39,8 @@ class BlogPost(models.Model):
             # 3) The time of the deletion
             # ... is saved into the bloghistory,  because our delete_post view is going to delete this information
             if save_method == 'DELETE':
-                post_backup = BlogHistory(post_id=self.id, title=self.title, user=self.user.pk,
-                                          date=self.date, content=self.content, method=self.method, tags=self.tags, roles=self.roles)
+                post_backup = BlogHistory(post_id=self.id, title=self.title, 
+                                          date=self.date, content=self.content, method=self.method, tags=self.tags)
                 post_backup.save()
 
     def __str__(self):

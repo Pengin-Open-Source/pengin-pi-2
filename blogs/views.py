@@ -1,23 +1,28 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
-from django.http import HttpResponseForbidden
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
-from util.security.auth_tools import is_admin_provider, user_group_provider, is_admin_required
+from util.security.auth_tools import is_admin_required #, is_admin_provider, user_group_provider
 from blogs.forms import BlogForm
 from blogs.models import BlogPost, BlogHistory, transaction
 from main.models.users import User
-from util.paginate import paginate
 # Assuming you have a pagination utility
 # Define the blog post view
 
 
 # Define the blog view
+
+'''
+TODO: Remove user and roles.  We are not checking authors or usernames, nor roles.  
+Just use is_admin_provider to send is_admin to views and lock down methods that require admin with the is_admin decorator.
+These classes and methods are overly complicated, I'm not going to try to fix them, I would start over.
+
+'''
+
 
 class BlogsListView(ListView):
     queryset = BlogPost.objects.all()
@@ -52,20 +57,16 @@ class BlogPostDetailView(DetailView):
         # perhaps this should be refactored to use self.object instead?
         blog_post = get_object_or_404(BlogPost, pk=self.kwargs.get('pk'))
 
-        author_info = get_create_info(blog_post)
         edit_info = get_last_edit_info(blog_post)
-        author_id, create_date, is_create_missing = author_info
-        if author_id != 'NOT FOUND':
-            author = User.objects.get(id=author_id).name
-        else:
-            author = 'NOT FOUND'
+        #author_id, create_date, is_create_missing = author_info
+        
 
         if edit_info:
-            edited_date, edited_by_id = edit_info
-            edited_by = User.objects.get(id=edited_by_id).name
+            edited_date = edit_info
+            #edited_by = User.objects.get(id=edited_by_id).name
         else:
             edited_date = ''
-            edited_by = ''
+            #edited_by = ''
 
         blog_posts = BlogPost.objects.all().order_by('date')
         paginator = Paginator(blog_posts, 10)
@@ -76,10 +77,10 @@ class BlogPostDetailView(DetailView):
 
         context['posts'] = posts
         context['post'] = blog_post
-        context['is_create_missing'] = is_create_missing
-        context['author'] = author
-        context['blog_author_date'] = create_date
-        context['edited_by'] = edited_by
+        #context['is_create_missing'] = is_create_missing
+        #context['author'] = author
+        #context['blog_author_date'] = create_date
+        #context['edited_by'] = edited_by
         context['blog_edited_date'] = edited_date
         context['page'] = page
         context['is_admin'] = is_admin   # Assuming you have authentication
@@ -102,14 +103,14 @@ class BlogPostCreateView(LoginRequiredMixin, CreateView):
             # add these fields to the form
             blog_post = form.save(commit=False)
             blog_post.method = 'CREATE'
-            blog_post.user = request.user
+            #blog_post.user = request.user
             # date will be auto-filled by data model with "now"
 
             # this should just save a blank '[]' if there are no groups
-            query_groups = request.user.groups.all()
-            blog_post.roles = list(query_groups.values('pk', 'name'))
+            #query_groups = request.user.groups.all()
+            #blog_post.roles = list(query_groups.values('pk', 'name'))
             # note comment over equivalent line in Blog Post Deletion
-            blog_post.roles.append({"pk": -2, "name": "STAFF"})
+            #blog_post.roles.append({"pk": -2, "name": "STAFF"})
             blog_post.save()
             return HttpResponseRedirect(reverse_lazy('blogs:blog_post', kwargs={'pk': blog_post.id}))
 
@@ -137,12 +138,12 @@ class BlogPostEditView(LoginRequiredMixin, UpdateView):
             blog_post = form.save(commit=False)
             # specify this is an edited record
             blog_post.method = 'EDIT'
-            blog_post.user = request.user
+            #blog_post.user = request.user
             blog_post.date = timezone.now()
-            query_groups = request.user.groups.all()
-            blog_post.roles = list(query_groups.values('pk', 'name'))
+            #query_groups = request.user.groups.all()
+            #blog_post.roles = list(query_groups.values('pk', 'name'))
             # note comment over equivalent line in Blog Post Deletion
-            blog_post.roles.append({"pk": -2, "name": "STAFF"})
+            #blog_post.roles.append({"pk": -2, "name": "STAFF"})
             blog_post.save()
             return HttpResponseRedirect(reverse_lazy('blogs:blog_post', kwargs={'pk': post_id}))
 
@@ -170,16 +171,16 @@ class BlogPostDeleteView(LoginRequiredMixin, DeleteView):
         post_id = self.kwargs.get('pk')
         blog_post = get_object_or_404(BlogPost, id=post_id)
         blog_post.method = 'DELETE'
-        blog_post.user = request.user
+        #blog_post.user = request.user
         blog_post.date = timezone.now()
-        query_groups = request.user.groups.all()
-        blog_post.roles = list(query_groups.values('pk', 'name'))
+        #query_groups = request.user.groups.all()
+        #blog_post.roles = list(query_groups.values('pk', 'name'))
         # Since at this point only Staff can perform Deletes,  append the
         # Staff role for our records.
         # (Note the negative pk,  which will never exist as an id -
         # - no Staff group exists at this point,  but we want to note
         # that a Staff member did this.
-        blog_post.roles.append({"pk": -2, "name": "STAFF"})
+        #blog_post.roles.append({"pk": -2, "name": "STAFF"})
         with transaction.atomic():
             blog_post.save()
             blog_post.delete()
@@ -192,7 +193,7 @@ def get_create_info(blog_post):
     oldest_date = ''
     is_create_missing = False
     if blog_post.method == 'CREATE':
-        author = blog_post.user.id
+        #author = blog_post.user.id
         oldest_date = blog_post.date
 
     else:
@@ -202,7 +203,7 @@ def get_create_info(blog_post):
         # we will set a flag if there is no row with method 'CREATE'  in blog history
         oldest_post = blog_post_history.first()
         if oldest_post:
-            author = oldest_post.user
+            #author = oldest_post.user
             oldest_date = oldest_post.date
         else:
             # DBAs TAKE NOTE: If a DBA archives or deleted some older blog history
@@ -221,7 +222,7 @@ def get_last_edit_info(blog_post):
         if blog_post.method == 'EDIT':
             # Last edit information is already in blog_post
             edit_date = blog_post.date
-            last_edit_user = blog_post.user.id
+            #last_edit_user = blog_post.user.id
         elif blog_post.method == 'DELETE':
             # Likely means A DBA restored a deleted row from history,  with the latest history record,
             # which would have method value: 'DELETE'.
@@ -231,8 +232,8 @@ def get_last_edit_info(blog_post):
                 post_id=blog_post.id, method="EDIT")
             last_edit = blog_post_history.order_by("-date").first()
             edit_date = last_edit.date
-            last_edit_user = last_edit.user
+            #last_edit_user = last_edit.user
 
-        return (edit_date, last_edit_user)
+        return (edit_date)
     # If row was just created,  no edit information is available.
     return None
