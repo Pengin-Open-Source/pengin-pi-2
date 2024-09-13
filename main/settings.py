@@ -49,24 +49,21 @@ INSTALLED_APPS = [
     'main',
     'home',
     'about',
-    'events',
     'forums',
     'tickets',
     'blogs',
     'orders',
     'companies',
-    'contracts',
-    'leads',
     'products',
     'jobs',
     'applications',
     'profiles',
-    'clearcache',
-    #'relationships',
+    # 'relationships',
 ]
 
 load_dotenv()
 
+=======
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('SES_HOST', default='email-smtp.us-west-2.amazonaws.com')
@@ -142,8 +139,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'main.User' #forces Django to use custom User model main.models.users.__init__.py User
-DEFAULT_USER_ID = '0c6ae962f019410c9f51d96ff7a7a7f1'
+# forces Django to use custom User model main.models.users.__init__.py User
+AUTH_USER_MODEL = 'main.User'
+
+
+# Session
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 1800  # After 30 minutes the cookie expires
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
