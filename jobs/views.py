@@ -8,7 +8,7 @@ from .forms import JobForm
 from .models import Job
 from util.security.auth_tools import is_admin_provider, is_admin_required
 
-@login_required
+
 @is_admin_provider
 def jobs(request: HttpRequest, is_admin):
 
@@ -24,7 +24,7 @@ def jobs(request: HttpRequest, is_admin):
         'page_obj': jobs_paginated, 
     })
 
-@login_required
+
 @is_admin_provider
 def job(request: HttpRequest, job_id: uuid.UUID, is_admin):  # Change to UUID here
     job = get_object_or_404(Job, id=job_id)
