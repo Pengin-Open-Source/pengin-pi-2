@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HomeView, HomeCreate, HomeEdit
+from home.views import HomeView, HomeCreate, HomeEdit
 from django.shortcuts import redirect
 
 
@@ -10,4 +10,4 @@ urlpatterns = [
     path('index.html', lambda request: redirect('home_view', permanent=True)),
     path('home/edit/', HomeEdit.as_view(), name='home_edit'),
     path('home/create/', HomeCreate.as_view(), name='home_create'),
-    ]
+]

@@ -61,7 +61,7 @@ class LogoutView(View):
         logout(request)
         return redirect('home_view')
 
-
+      
 class PasswordResetRequestView(View):
     def get(self, request):
         form = PasswordResetForm()

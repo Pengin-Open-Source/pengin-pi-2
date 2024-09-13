@@ -25,6 +25,7 @@ def save_home(request, form):
     home.save()
     return home
 
+# @method_decorator(login_required, name='dispatch')
 
 @method_decorator(is_admin_provider, name='dispatch')
 class HomeView(View):
