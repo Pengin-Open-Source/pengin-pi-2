@@ -4,16 +4,16 @@
 
 {% block pageDropDowns %}
   {% if is_admin %}
-    <a href="/jobs/create">New Job</a>
+    <a href="{% url 'jobs:create_job' %}">New Job</a> <!-- Ensure the namespace is used -->
   {% else %}
-    <a href="{% url 'my_applications' %}">My Applications</a>
+    <a href="{% url 'applications:my_applications' %}">My Applications</a> <!-- Ensure the correct namespace is used -->
   {% endif %}
 {% endblock %}
 
 {% block pageContent %}
   <div class="job-grid">
     {% for job in jobs %}
-      <a href="/jobs/{{ job.id }}">
+      <a href="{% url 'jobs:job' job_id=job.id %}"> <!-- Corrected to include the 'jobs' namespace -->
         <div>{{ job.job_title }}</div>
         <div>Posted on {{ job.date_posted|date:"F d, Y" }}</div>    
       </a>

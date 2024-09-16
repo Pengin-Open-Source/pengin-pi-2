@@ -3,8 +3,8 @@
 {% loadmacros "macros/pagination.html" %}
 
 {% block pageDropDowns %}
-  <a href="{% url 'job_list' %}">Jobs</a>
-  <a href="{% url 'my_applications' %}">My Applications</a>
+  <a href="{% url 'jobs:job_list' %}">Jobs</a>
+  <a href="{% url 'applications:my_applications' %}">My Applications</a> <!-- Ensure the namespace is used -->
 {% endblock %}
 
 {% block pageContent %}
@@ -20,7 +20,7 @@
       {% for application in applications %}
         <tr>
           <td>{{ application.date_applied|date:"F d, Y" }}</td>
-          <td><a href="{% url 'application_detail' application.job.id application.id %}">{{ application.job.job_title }}</a></td>
+          <td><a href="{% url 'applications:application_detail' job_id=application.job.id application_id=application.id %}">{{ application.job.job_title }}</a></td> <!-- Corrected URL namespace -->
         </tr>
       {% empty %}
         <tr>

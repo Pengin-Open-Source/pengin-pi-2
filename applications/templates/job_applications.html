@@ -6,10 +6,10 @@
 
   <h2>Job Applications for {{ job.job_title }}</h2>
   <div class="title-underline">
-    <a class="text-button" href="{% url 'job_applications' job_id=job.id %}">all</a>|
-    <a class="text-button" href="{% url 'job_applications' job_id=job.id %}?status=pending">pending</a>|
-    <a class="text-button" href="{% url 'job_applications' job_id=job.id %}?status=accepted">accepted</a>|
-    <a class="text-button" href="{% url 'job_applications' job_id=job.id %}?status=rejected">rejected</a>
+    <a class="text-button" href="{% url 'applications:job_applications' job_id=job.id %}">all</a>|
+    <a class="text-button" href="{% url 'applications:job_applications' job_id=job.id %}?status=pending">pending</a>|
+    <a class="text-button" href="{% url 'applications:job_applications' job_id=job.id %}?status=accepted">accepted</a>|
+    <a class="text-button" href="{% url 'applications:job_applications' job_id=job.id %}?status=rejected">rejected</a>    
   </div>
   <table class="table">
     <thead>
@@ -22,7 +22,7 @@
     <tbody>
       {% for application in applications %}
         <tr>
-          <td><a href="{% url 'application_detail' job_id=job.id application_id=application.id %}">{{ application.user.name }}</a></td>
+          <td><a href="{% url 'applications:application_detail' job_id=job.id application_id=application.id %}">{{ application.user.name }}</a></td>
           <td>{{ application.date_applied }}</td>
           <td>{{ application.status_code }}</td>
         </tr>
@@ -31,7 +31,6 @@
       {% endfor %}
     </tbody>
   </table>
-
 
   <!-- Pagination links -->
   {% if page_obj.has_other_pages %}
@@ -56,5 +55,4 @@
         {% endif %}
     </div>
   {% endif %}
-
 {% endblock %}

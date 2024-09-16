@@ -1,7 +1,9 @@
+<!-- Correct the template links in applications/edit_application.html -->
+
 {% extends "layout/fullPageScroll.html" %}
 {% block pageContent %}
   <h2>Edit Application Status</h2>
-  <form method="post" action="{% url 'edit_status' job_id=job.id application_id=application.id %}">
+  <form method="post" action="{% url 'applications:edit_status' job_id=job.id application_id=application.id %}">
     {% csrf_token %}
     <label for="status_code">Change Status:</label>
     <select name="status_code" id="status_code">
@@ -14,7 +16,7 @@
   </form>
   <br><br>
   <h2>Accept</h2>
-  <form method="post" action="{% url 'accept_applicant' job_id=job.id application_id=application.id %}">
+  <form method="post" action="{% url 'applications:accept_applicant' job_id=job.id application_id=application.id %}">
     {% csrf_token %}
     <label for="accept-subject">Subject:</label><br>
     <input id="accept-subject" name="accept-subject" type="text" value="Thank you for your application!"><br>
@@ -24,7 +26,7 @@
   </form>
   <br><br>
   <h2>Reject</h2>
-  <form method="post" action="{% url 'reject_applicant' job_id=job.id application_id=application.id %}">
+  <form method="post" action="{% url 'applications:reject_applicant' job_id=job.id application_id=application.id %}">
     {% csrf_token %}
     <label for="reject-subject">Subject:</label><br>
     <input id="reject-subject" name="reject-subject" type="text" value="Thank you for your application"><br>
@@ -33,7 +35,7 @@
     <button type="submit">Send</button>
   </form>
   <br><br>
-  <form method="post" action="{% url 'delete_applicant' job_id=job.id application_id=application.id %}">
+  <form method="post" action="{% url 'applications:delete_applicant' job_id=job.id application_id=application.id %}">
     {% csrf_token %}
     <input type="hidden" name="status_code_uuid" value="{{ status_code.id }}">
     <button type="submit">Delete Application</button>

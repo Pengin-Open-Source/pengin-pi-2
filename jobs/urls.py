@@ -1,10 +1,12 @@
 from django.urls import path
-from .views import jobs, job, create_job, edit_job, delete_job
+from .views import JobListView, JobDetailView, JobCreateView, JobUpdateView, JobDeleteView
+
+app_name = 'jobs'
 
 urlpatterns = [
-    path('jobs/', jobs, name='job_list'),  # Redirect /jobs/ to the jobs view
-    path('jobs/<uuid:job_id>/', job, name='job'),  # View job details
-    path('jobs/create/', create_job, name='create_job'),  # Create a new job
-    path('jobs/<uuid:job_id>/edit/', edit_job, name='edit_job'),  # Edit job details
-    path('jobs/<uuid:job_id>/delete/', delete_job, name='delete_job'),  # Delete job confirmation
+    path('jobs/', JobListView.as_view(), name='job_list'),
+    path('jobs/<uuid:job_id>/', JobDetailView.as_view(), name='job'),
+    path('jobs/create/', JobCreateView.as_view(), name='create_job'),
+    path('jobs/<uuid:job_id>/edit/', JobUpdateView.as_view(), name='edit_job'),
+    path('jobs/<uuid:job_id>/delete/', JobDeleteView.as_view(), name='delete_job'),
 ]
