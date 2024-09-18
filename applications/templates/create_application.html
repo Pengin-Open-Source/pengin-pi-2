@@ -1,6 +1,16 @@
-{% extends "base.html" %}
-{% block content %}
-  <h2>Apply for Job</h2>
+<!-- applications/templates/create_application.html -->
+{% extends "layout/fullPageScroll.html" %}
+{% block pageContent %}
+  <h2>Apply for Job: {{ job.job_title }}</h2>
+  
+  <!-- Display success and error messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Display form errors if any -->
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}

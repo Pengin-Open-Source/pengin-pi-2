@@ -1,0 +1,18 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load markdownit %}
+
+{% block pageDropDowns %}
+  {% if is_admin %}
+    <a href="{% url 'contracts:edit-contract' contract.id %}">Edit Contract</a>
+    <a href="{% url 'contracts:delete-contract' contract.id %}">Delete Contract</a>
+  {% endif %}
+{% endblock %}
+
+{% block pageContent %}
+    <div class="commonmark"><p>Customer: <a href="{% url "customers:detail-customer" contract.customer.id %}">{{ contract.customer }}</a></p></div>
+    <div><p>Contract type: {{ contract.type }}</p></div>
+    <div><p>Service date: {{ contract.service_date|date:"M d, Y" }}</p></div>
+    <div><p>Expiration date: {{ contract.expiration_date|date:"M d, Y" }}</p></div>
+    <div><p>Content: {{ contract.content|markdownit }}</p></div>
+
+{% endblock %}

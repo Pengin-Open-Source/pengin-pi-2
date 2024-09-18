@@ -12,7 +12,7 @@ class Thread(models.Model):
     name = models.CharField(max_length=100)
     date = models.DateTimeField(default=timezone.now)
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='threads')
+        User, on_delete=models.DO_NOTHING, related_name='threads')
     groups = models.ManyToManyField(
         Group, through='ThreadRole', related_name='threads')
     row_action = models.CharField(max_length=10, default='ERROR')
@@ -83,7 +83,7 @@ class ForumPost(models.Model):
     thread = models.ForeignKey(
         Thread, on_delete=models.CASCADE, related_name='posts')
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='posts')
+        User, on_delete=models.DO_NOTHING)
     row_action = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):
@@ -144,7 +144,7 @@ class ForumComment(models.Model):
     post = models.ForeignKey(
         ForumPost, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='comments')
+        User, on_delete=models.DO_NOTHING)
     # CREATE, EDIT, DELETE - which put the row in this state?
     # (DELETE is used for Comment History)
     row_action = models.CharField(max_length=10, default='ERROR')
@@ -197,5 +197,5 @@ class ForumCommentHistory(models.Model):
 
 class ThreadRole(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.RESTRICT)
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)

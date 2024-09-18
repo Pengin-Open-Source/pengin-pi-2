@@ -37,15 +37,16 @@
             <a href="{% url 'tickets' 'all' %}">Tickets</a>
             <a class="header-link" href="/calendar">Calendar</a>
           {% endif  %}
-          <a class="header-link" href="/jobs">Jobs</a>
+          <a class="header-link" href={% url 'jobs:job_list' %}>Jobs</a>
           
           {% if is_admin and user.validated %}
           <div class="dropdown">
             <div class="dropdown-btn">Tools</div>
             <div class="dropdown-content">
               <a href="/company">Company</a>
-              <a href="/orders/editor">Orders</a>
-              <a href="/customers/editor">Customers</a>
+              <a href="{% url "orders:list-orders" %}">Orders</a>
+              <a href="{% url "customers:list-customers" %}">Customers</a>
+              <a href="{% url "contracts:list-contracts" %}">Contracts</a>
               <a href="/blog/create">New Blog</a>
             </div>
           </div>
