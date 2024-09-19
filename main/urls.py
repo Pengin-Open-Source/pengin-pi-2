@@ -20,7 +20,6 @@ from .views import LoginView, SignupView, LogoutView, PasswordResetRequestView, 
 
 
 urlpatterns = [
-    path('admin/clearcache/', include('clearcache.urls')),
     path('admin/', admin.site.urls),
     path('', include('home.urls')),
     path('', include('about.urls')),
@@ -33,5 +32,6 @@ urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('generate-prt/', PasswordResetRequestView.as_view(), name='generate_prt'),
-    path('reset-password/<str:token>/', PasswordResetView.as_view(), name='reset_password'),
+    path('reset-password/<str:token>/',
+         PasswordResetView.as_view(), name='reset_password'),
 ]

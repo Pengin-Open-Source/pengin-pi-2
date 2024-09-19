@@ -58,10 +58,7 @@ INSTALLED_APPS = [
     'jobs',
     'applications',
     'profiles',
-    'clearcache',
-    'relationships',
 ]
-
 
 
 MIDDLEWARE = [
@@ -130,7 +127,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'main.User' #forces Django to use custom User model main.models.users.__init__.py User
+# forces Django to use custom User model main.models.users.__init__.py User
+AUTH_USER_MODEL = 'main.User'
 
 
 # Internationalization
