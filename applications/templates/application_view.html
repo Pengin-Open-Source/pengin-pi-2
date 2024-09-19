@@ -1,5 +1,16 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "layout/fullPageScroll.html" %}
+
+<!-- Need to set if_admin condition for pageDropDown options -->
+{% block pageDropDowns %}
+  {% if is_admin %}
+    <a href="{% url 'applications:edit_status' job_id=job.id application_id=application.id %}">Edit Status</a> <!-- Corrected with namespace -->
+  {% else %}
+    <a href="{% url 'jobs:job_list' %}">Jobs</a> <!-- Corrected with namespace -->
+    <a href="{% url 'applications:my_applications' %}">My Applications</a> <!-- Corrected with namespace -->
+  {% endif %}
+{% endblock %}
+
+{% block pageContent %}
   <h1>Application for {{ application.job.job_title }}</h1>
   <p>Applied on {{ application.date_applied }}</p>
   <p>Resume: <a href="{{ resume_url }}" target="_blank">Download</a></p>

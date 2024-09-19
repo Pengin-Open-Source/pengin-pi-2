@@ -3,13 +3,17 @@
 
 {% block pageDropDowns %}
   {% if is_admin %}
-    <a href="/jobs/{{ job.id }}/edit">Edit Job</a>
-    <form method="post" action="/jobs/{{ job.id }}/delete">
+    <a href="{% url 'jobs:edit_job' job_id=job.id %}">Edit Job</a>
+    <form method="post" action="{% url 'jobs:delete_job' job_id=job.id %}">
       {% csrf_token %}
+      <input type="checkbox" name="confirm_delete" required> Confirm Delete
       <button type="submit">Delete</button>
     </form>
   {% else %}
-    <a href="/applications/my-applications">My Applications</a>
+    {% if request.user.is_authenticated %}
+      <a href="{% url 'applications:create_application' job_id=job.id %}">Apply</a>  <!-- Corrected URL namespace -->
+      <a href="{% url 'applications:my_applications' %}">My Applications</a>
+    {% endif %}
   {% endif %}
 {% endblock %}
 
@@ -23,23 +27,27 @@
     <p>Hiring Manager: {{ job.hiring_manager }}</p>
     <div class="commonmark">More about this job: {{ job.long_description|markdownit }}</div>
 
-    {% if not is_admin %}
+    {% if not is_admin and request.user.is_authenticated %}
       {% if not user_applied %}
-        <form method="get" action="/applications/{{ job.id }}/application">
+      <form method="get" action="{% url 'applications:create_application' job_id=job.id %}">
           <button type="submit">Apply</button>
-        </form>
+      </form>
       {% else %}
-        <p>You have already applied for this job. <a href="/applications/{{ job.id }}/application/{{ user_application_id }}">View Application</a></p>
+      <p>You have already applied for this job. 
+        <a href="{% url 'applications:application_detail' job_id=job.id application_id=user_application_id %}">
+            View Application
+        </a>
+    </p>
       {% endif %}
-    {% else %}
+    {% elif is_admin %}
       {% if applications.count == 0 %}
         <p>This job has received 0 applications.</p>
       {% elif applications.count == 1 %}
         <p>This job has received 1 application.</p>
-        <a href="/applications/{{ job.id }}/job-applications">View Applications</a>
+        <a href="{% url 'applications:job_applications' job_id=job.id %}">View Applications</a>
       {% else %}
         <p>This job has received {{ applications.count }} applications.</p>
-        <a href="/applications/{{ job.id }}/job-applications">View Applications</a>
+        <a href="{% url 'applications:job_applications' job_id=job.id %}">View Applications</a>
       {% endif %}
     {% endif %}
 {% endblock %}

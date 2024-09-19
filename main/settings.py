@@ -11,10 +11,12 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+from decouple import config
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -26,7 +28,6 @@ SECRET_KEY = 'django-insecure-14nmqptb91000ao@b&c-a1*%=8b)!f-g2=^gsxcbo+d7!h&onj
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -42,24 +43,31 @@ INSTALLED_APPS = [
     'markdownit',
     'macros',
     # Add your apps here
-    'global_admin',
+    #'global_admin',
     'main',
     'home',
     'about',
-    'events',
     'forums',
     'tickets',
     'blogs',
     'orders',
     'companies',
-    'contracts',
-    'leads',
     'products',
     'jobs',
     'applications',
     'profiles',
+    'contracts',
 ]
+load_dotenv()
 
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_PORT = config('SES_PORT')
+EMAIL_USE_TLS = config('SES_USE_TLS')
+EMAIL_HOST_USER = config('SES_USERNAME_SMTP')
+EMAIL_HOST_USER = config('SES_USERNAME_SMTP')
+EMAIL_HOST_PASSWORD = config('SES_PASSWORD_SMTP')
+DEFAULT_FROM_EMAIL = f"{config('SES_SENDER_NAME')} <{config('SES_SENDER')}>"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -89,9 +97,7 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'main.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -130,6 +136,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # forces Django to use custom User model main.models.users.__init__.py User
 AUTH_USER_MODEL = 'main.User'
 
+DEFAULT_USER_ID = 1
+
+# Session
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 1800  # After 30 minutes the cookie expires
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -141,7 +153,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/

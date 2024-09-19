@@ -1,7 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageContent %}
-  <form class="form" method="POST" action="{% url 'create_job' %}">
+  <form class="form" method="POST" action="{% url 'jobs:create_job' %}">
     {% csrf_token %}
     {{ form.as_p }}
     <button class="primary-button">Create Job</button>
