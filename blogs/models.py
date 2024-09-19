@@ -35,11 +35,10 @@ class BlogPost(models.Model):
 
             # if this is a pre-delete save,  we need to make sure the row we just saved in blogpost, which records
             # 1) The action/method: "DELETE"
-            # 2) The User who did the Delete
-            # 3) The time of the deletion
+            # 2) The time of the deletion
             # ... is saved into the bloghistory,  because our delete_post view is going to delete this information
             if save_method == 'DELETE':
-                post_backup = BlogHistory(post_id=self.id, title=self.title, 
+                post_backup = BlogHistory(post_id=self.id, title=self.title,
                                           date=self.date, content=self.content, method=self.method, tags=self.tags)
                 post_backup.save()
 
@@ -51,10 +50,8 @@ class BlogHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     post_id = models.UUIDField(db_index=True)
     title = models.CharField(max_length=100,  default='Error Getting Title')
-    user = models.UUIDField(db_index=True)
     date = models.DateTimeField(default=timezone.now)
     content = models.TextField(blank=True)
     tags = models.CharField(max_length=150, blank=True)
     method = models.CharField(
         max_length=10, default='ERROR')
-    roles = models.JSONField()

@@ -6,23 +6,6 @@ from blogs.models import BlogPost
 
 class BlogForm(forms.ModelForm):
 
-    def __init__(self, *args, **kwargs):
-        # LIST of fields to hide.
-        # Don't make it an attribute of BlogForm,  we don't want these fields in the template at all
-        # and the form gets passed to the template
-        remove_fields = kwargs.pop('remove_fields', [])
-        # DICT with fields to prefill and their prefill data
-        self.prefill_data = kwargs.pop('prefill_data', {})
-        super().__init__(*args, **kwargs)
-
-        # It only makes sense to remove populate the data once we remove the fields
-        for field in remove_fields:
-            self.fields.pop(field)
-
-        for field_name,  value in self.prefill_data.items():
-            if field_name in self.fields:
-                self.initial[field_name] = value
-
     # Set values for fields,  - useful when you want
     # to add in new fields that weren't included in the form
     # and wouldn't have gone through form validation.
