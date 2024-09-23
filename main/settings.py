@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'markdownit',
     'macros',
     # Add your apps here
-    #'global_admin',
+    # 'global_admin',
     'main',
     'home',
     'about',
@@ -110,11 +110,19 @@ DATABASES = {
 }
 
 CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+    # You can use this in production:
+    # "default": {
+    #     "BACKEND": "django_redis.cache.RedisCache",
+    #     "LOCATION": "redis://127.0.0.1:6379",
+    # }
+    # Using for local development:
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+        'LOCATION': '127.0.0.1:11211',
     }
 }
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
