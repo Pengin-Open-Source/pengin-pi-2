@@ -1,6 +1,10 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  {# Load static files #}
 
+{% block pageDropDowns %}
+  <a href="{% url 'create_company' %}">Create New Company</a>
+{% endblock %}
+
 {% block pageContent %}
   <p>Please click on a link below to view a specific company's information.</p>
   <ul class="company-list">
