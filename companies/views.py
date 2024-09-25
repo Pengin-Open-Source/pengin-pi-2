@@ -112,14 +112,14 @@ def edit_company_members(request, company_id):
         'page-number', 1) if request.method == "POST" else request.GET.get('page', 1)
     paginator = Paginator(User.objects.all(), 10)  # 10 users per page
     page_obj = paginator.get_page(page_number)
-    members_ids = CompanyMembers.objects.filter(
+    member_uids = CompanyMembers.objects.filter(
         company_id=company.id).values_list('user_id', flat=True)
-    members_ids_list = list(members_ids)
+    member_uid_list = list(member_uids)
     return render(request, 'edit_members.html', {
         'users': page_obj.object_list,
         'company': company,
         'page_obj': page_obj,
-        'members_ids_list': members_ids_list
+        'member_uid_list': member_uid_list
     })
 
 
@@ -129,15 +129,13 @@ def edit_company_members_post(request, company_id):
     if request.method == 'POST':
         company = get_object_or_404(Company, id=company_id)
         checkbox_values = request.POST.getlist('member-checkbox')
-        page_number = request.POST.get('page-number')
-        users_for_delete = Paginator(
-            User.objects.all(), 10).page(int(page_number))
-        members_ids = CompanyMembers.objects.filter(
-            company_id=company.id).values_list('user_id', flat=True)
-        members_ids_list = list(members_ids)
-        CompanyMembers.objects.filter(user_id__in=users_for_delete).delete()
+        # delete every member who is in this company and NOT currently checked
+        delete_member_uids = CompanyMembers.objects.filter(
+            company_id=company.id).exclude(user_id__in=checkbox_values).values_list('id', flat=True)
+        delete_member_uids_list = list(delete_member_uids)
+        CompanyMembers.objects.filter(id__in=delete_member_uids_list).delete()
         for value in checkbox_values:
             user = get_object_or_404(User, id=value)
-            new_member = CompanyMembers.objects.create(
+            company_member = CompanyMembers.objects.get_or_create(
                 company_id=company.id, user_id=user.id)
         return redirect('display_company_members', company_id=company.id)
