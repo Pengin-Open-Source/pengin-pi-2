@@ -1,37 +1,54 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.utils.decorators import method_decorator
+from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import Company, CompanyMembers
 from main.models.users import User
 from .forms import CompanyForm
 from django_ratelimit.decorators import ratelimit
+from main.mixins import LoginAndValidationRequiredMixin
 
 
-@login_required
-def display_companies_home(request):
-    if request.user.is_staff:
-        return handle_admin_view(request)
-    else:
-        return handle_user_view(request)
+class CompaniesHomeView(LoginAndValidationRequiredMixin,  View):
+
+    def get(self, request):
+        if request.user.is_staff:
+            return redirect('companies_list')
+        else:
+            member_company = CompanyMembers.objects.filter(
+                user_id=request.user.id).first()
+            if member_company:
+                return redirect('display_company_info', company_id=member_company.company_id)
+            return render(request, 'no_company.html')
 
 
-def handle_admin_view(request):
-    page_number = request.POST.get(
-        'page_number', 1) if request.method == "POST" else request.GET.get('page', 1)
-    companies = Company.objects.all()
-    paginator = Paginator(companies, 10)  # 10 companies per page
-    page_obj = paginator.get_page(page_number)
-    return render(request, 'company_info_main.html', {
-        'companies': page_obj, 'is_admin': True, 'primary_title': 'Companies'
-    })
+class CompaniesListView(LoginAndValidationRequiredMixin,  ListView):
 
+    queryset = Company.objects.all()
+    template_name = 'company_info_main.html'
+    model = Company
+    context_object_name = 'companies'
 
-def handle_user_view(request):
-    member_company = CompanyMembers.objects.filter(
-        user_id=request.user.id).first()
-    if member_company:
-        return redirect('display_company_info', company_id=member_company.company_id)
-    return render(request, 'no_company.html')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.is_staff:
+            companies = Company.objects.all()
+        else:
+            company_ids = CompanyMembers.objects.filter(
+                user_id=self.request.user.id).values_list('company_id', flat=True)
+            company_ids_list = list(company_ids)
+            companies = Company.objects.filter(id__in=company_ids_list)
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(companies, 10)
+        page_obj = paginator.get_page(page_number)
+        context['companies'] = page_obj
+        context['is_admin'] = self.request.user.is_staff
+        context['primary_title'] = 'Companies'
+
+        return context
 
 
 @login_required

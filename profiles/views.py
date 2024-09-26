@@ -17,8 +17,11 @@ from main.models.users import User
 import uuid
 
 # Example utility function if generate_uuid is required
+
+
 def generate_uuid():
     return str(uuid.uuid4())
+
 
 @method_decorator(login_required, name='dispatch')
 class ProfileView(LoginRequiredMixin, View):
@@ -30,7 +33,8 @@ class ProfileView(LoginRequiredMixin, View):
             'name': request.user.name,
             'email': request.user.email,
             'can_do': can_re_validate,
-            'primary_title': 'Profile Information'
+            'primary_title': 'Profile Information',
+            'is_admin': self.request.user.validated and self.request.user.is_staff
         }
         return render(request, 'profile.html', context)
 
@@ -43,7 +47,8 @@ class SendEmailView(LoginRequiredMixin, View):
         delta = user.validation_date + timedelta(minutes=5)
         if not user.validated and now > delta:
             user.validation_date = now
-            user.validation_id = generate_uuid()  # Assuming generate_uuid generates a unique identifier
+            # Assuming generate_uuid generates a unique identifier
+            user.validation_id = generate_uuid()
             user.save()
             send_mail(
                 'Validate Your Account',
@@ -75,7 +80,8 @@ class EditProfileView(LoginRequiredMixin, View):
         form = EditProfileForm(instance=request.user)
         return render(request, 'profile_edit.html', {
             'form': form,
-            'primary_title': 'Edit Profile'
+            'primary_title': 'Edit Profile',
+            'is_admin': self.request.user.validated and self.request.user.is_staff
         })
 
     def post(self, request):
@@ -95,7 +101,8 @@ class EditPasswordView(LoginRequiredMixin, View):
         form = EditPasswordForm()
         return render(request, 'password_edit.html', {
             'form': form,
-            'primary_title': 'Edit Password'
+            'primary_title': 'Edit Password',
+            'is_admin': self.request.user.validated and self.request.user.is_staff
         })
 
     def post(self, request):
@@ -103,7 +110,8 @@ class EditPasswordView(LoginRequiredMixin, View):
         if form.is_valid():
             old_password = form.cleaned_data.get('curr_password')
             new_password = form.cleaned_data.get('new_password')
-            confirm_new_password = form.cleaned_data.get('confirm_new_password')
+            confirm_new_password = form.cleaned_data.get(
+                'confirm_new_password')
             if new_password == confirm_new_password:
                 if check_password(request.user.password, old_password):
                     request.user.password = make_password(new_password)

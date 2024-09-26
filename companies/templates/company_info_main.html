@@ -2,7 +2,9 @@
 {% load static %}  {# Load static files #}
 
 {% block pageDropDowns %}
-  <a href="{% url 'create_company' %}">Create New Company</a>
+  {% if is_admin %}
+    <a href="{% url 'create_company' %}">Create New Company</a>
+  {% endif %}
 {% endblock %}
 
 {% block pageContent %}
