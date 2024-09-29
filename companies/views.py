@@ -16,8 +16,12 @@ class CompaniesHomeView(LoginAndValidationRequiredMixin,  View):
         if request.user.is_staff:
             return redirect('companies_list')
         else:
-            member_company = CompanyMembers.objects.filter(
-                user_id=request.user.id).first()
+            member_companies = CompanyMembers.objects.filter(
+                user_id=request.user.id)
+            if member_companies and member_companies.count() > 1:
+                return redirect('companies_list')
+            else:
+                member_company = member_companies.first()
             if member_company:
                 return redirect('display_company_info', company_id=member_company.company_id)
             return render(request, 'no_company.html')

@@ -5,7 +5,7 @@
 
 {% block pageDropDowns %}
     <a href="{% url 'display_company_members' company_id=company.id %}">View Members</a>
-    <a href="{% url 'display_companies_home' %}">Return To Companies List</a>
+    <a href="{% url 'companies_list' %}">Return To Companies List</a>
     {%if is_admin %}
        <a href="{% url 'edit_company_info_post' company_id=company.id %}">Edit Company</a>
        <a href="{% url 'edit_company_members' company_id=company.id %}">Edit Members</a>
