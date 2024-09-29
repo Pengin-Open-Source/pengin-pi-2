@@ -7,6 +7,7 @@ from .models import Company, CompanyMembers
 from main.models.users import User
 from .forms import CompanyForm
 from django_ratelimit.decorators import ratelimit
+from django.contrib.auth.mixins import UserPassesTestMixin
 from main.mixins import LoginAndValidationRequiredMixin
 
 
@@ -55,22 +56,28 @@ class CompaniesListView(LoginAndValidationRequiredMixin,  ListView):
         return context
 
 
-@login_required
-def display_company_info(request, company_id):
-    company = get_object_or_404(Company, id=company_id)
-    page_number = request.POST.get(
-        'page-number', 1) if request.method == "POST" else request.GET.get('page', 1)
-    members = CompanyMembers.objects.filter(
-        company_id=company_id).select_related('user')
-    paginator = Paginator(members, 10)  # 10 members per page
-    page_obj = paginator.get_page(page_number)
-    is_admin = request.user.is_staff
-    return render(request, 'company_info.html', {
-        'primary_title': 'Company Info',
-        'company': company,
-        'members': page_obj,
-        'is_admin': is_admin
-    })
+class CompanyDetailView(LoginAndValidationRequiredMixin, DetailView):
+    model = Company
+    template_name = 'company_info.html'
+    context_object_name = 'company'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # company = get_object_or_404(Company, id=company_id)
+
+        company = self.get_object()
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        members = CompanyMembers.objects.filter(
+            company_id=company.id).select_related('user')
+        paginator = Paginator(members, 10)  # 10 members per page
+        page_obj = paginator.get_page(page_number)
+        is_admin = self.request.user.is_staff
+        context['is_admin'] = is_admin
+        context['primary_title'] = 'Company Info'
+        context['company'] = company
+        context['members'] = members
+        return context
 
 
 @login_required
