@@ -56,7 +56,7 @@ class CompaniesListView(LoginAndValidationRequiredMixin,  ListView):
         return context
 
 
-class CompanyDetailView(LoginAndValidationRequiredMixin, DetailView):
+class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     model = Company
     template_name = 'company_info.html'
     context_object_name = 'company'
@@ -78,6 +78,19 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, DetailView):
         context['company'] = company
         context['members'] = members
         return context
+
+    def test_func(self):
+        if self.request.user.is_staff:
+            return True
+
+        company = self.get_object()
+        company_member = CompanyMembers.objects.filter(
+            user_id=self.request.user.id, company_id=company.id)
+
+        # if company_member is "truthy"/exists, let the member see the Company Info
+        if company_member:
+            return True
+        return False
 
 
 @login_required
