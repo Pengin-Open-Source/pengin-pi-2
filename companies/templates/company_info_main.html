@@ -11,7 +11,7 @@
   <p>Please click on a link below to view a specific company's information.</p>
   <ul class="company-list">
     {% for company in companies %}
-      <li><a href="{% url 'display_company_info' company_id=company.id %}">{{ company.name }}</a></li>
+      <li><a href="{% url 'display_company_info' pk=company.id %}">{{ company.name }}</a></li>
     {% endfor %}
   </ul>
 {% endblock %}
