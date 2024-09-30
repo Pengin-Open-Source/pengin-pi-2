@@ -93,21 +93,25 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         return False
 
 
-@login_required
-def create_company(request):
-    if request.method == 'POST':
+class CompanyCreateView(LoginAndValidationRequiredMixin, CreateView):
+
+    model = Company
+    form_class = CompanyForm
+    template_name = 'company_create.html'
+
+    def get(self, request, *args, **kwargs):
+        form = CompanyForm()
+        context = {'form': form, 'primary_title': 'Create New Company'}
+        return render(request, self.template_name,  context)
+
+    def post(self, request):
         form = CompanyForm(request.POST)
         if form.is_valid():
             company = form.save(commit=False)
             company.save()
             CompanyMembers.objects.create(company=company, user=request.user)
             print("Company created successfully:", company)
-            return redirect('display_company_info', company_id=company.id)
-        else:
-            print("Form is not valid:", form.errors)
-    else:
-        form = CompanyForm()
-    return render(request, 'company_info_create.html', {'form': form, 'primary_title': 'Create New Company'})
+            return redirect('display_company_info', pk=company.id)
 
 
 @login_required
