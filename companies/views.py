@@ -74,6 +74,7 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         page_obj = paginator.get_page(page_number)
         is_admin = self.request.user.is_staff
         context['is_admin'] = is_admin
+        context['page_obj'] = page_obj
         context['primary_title'] = 'Company Info'
         context['company'] = company
         context['members'] = members
