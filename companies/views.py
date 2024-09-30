@@ -24,7 +24,7 @@ class CompaniesHomeView(LoginAndValidationRequiredMixin,  View):
             else:
                 member_company = member_companies.first()
             if member_company:
-                return redirect('display_company_info', company_id=member_company.company_id)
+                return redirect('display_company_info', pk=member_company.company_id)
             return render(request, 'no_company.html')
 
 
