@@ -94,7 +94,7 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         return False
 
 
-class CompanyCreateView(LoginAndValidationRequiredMixin, CreateView):
+class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):
 
     model = Company
     form_class = CompanyForm
@@ -115,6 +115,12 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, CreateView):
             CompanyMembers.objects.create(company=company, user=request.user)
             print("Company created successfully:", company)
             return redirect('display_company_info', pk=company.id)
+
+    # only staff can create companies
+    def test_func(self):
+        if self.request.user.is_staff:
+            return True
+        return False
 
 
 @login_required
