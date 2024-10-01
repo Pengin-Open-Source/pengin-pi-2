@@ -18,7 +18,7 @@
         {% if page.has_previous %}
             <div><a href="?page={{ page.previous_page_number }}">Previous</a></div>
         {% endif %}
-
+        <br/>
         {% for num in page.paginator.page_range %}
             {% if num == page.number %}
                 <div class="current">{{ num }}</div>
