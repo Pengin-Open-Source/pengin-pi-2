@@ -10,13 +10,11 @@
 
 {% block pageContent %}
 <div class="content-section">
-  <h1 class="profile-title">Members of {{ company.name }}</h1>
   <div class="member-list">
     <ul>
+      {% comment %} The Users List was pre-filtered on membership in Company {% endcomment %}
       {% for user in users %}
-        {% if user.id in members_ids_list %}
           <li>{{ user.name }} - {{ user.email }}</li>
-        {% endif %}
       {% endfor %}
     </ul>
   </div>

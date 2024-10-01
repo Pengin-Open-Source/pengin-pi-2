@@ -140,23 +140,60 @@ def edit_company_info_post(request, company_id):
     })
 
 
-@login_required
-def display_company_members(request, company_id):
-    company = get_object_or_404(Company, id=company_id)
-    page_number = request.POST.get(
-        'page-number', 1) if request.method == "POST" else request.GET.get('page', 1)
-    members_ids = CompanyMembers.objects.filter(
-        company_id=company.id).values_list('user_id', flat=True)
-    users = User.objects.filter(id__in=members_ids)
-    paginator = Paginator(users, 10)  # 10 users per page
-    page_obj = paginator.get_page(page_number)
-    members_ids_list = list(members_ids)
-    return render(request, 'display_members.html', {
-        'users': page_obj.object_list,
-        'company': company,
-        'page_obj': page_obj,
-        'members_ids_list': members_ids_list
-    })
+# def display_company_members(request, company_id):
+#     company = get_object_or_404(Company, id=company_id)
+#     page_number = request.POST.get(
+#         'page-number', 1) if request.method == "POST" else request.GET.get('page', 1)
+#     members_ids = CompanyMembers.objects.filter(
+#         company_id=company.id).values_list('user_id', flat=True)
+#     users = User.objects.filter(id__in=members_ids)
+#     paginator = Paginator(users, 10)  # 10 users per page
+#     page_obj = paginator.get_page(page_number)
+#     members_ids_list = list(members_ids)
+#     return render(request, 'display_members.html', {
+#         'users': page_obj.object_list,
+#         'company': company,
+#         'page_obj': page_obj,
+#         'members_ids_list': members_ids_list
+#     })
+
+
+class MembersListCompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Company
+    template_name = 'display_members.html'
+    context_object_name = 'company'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        company = self.get_object()
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        members_ids = CompanyMembers.objects.filter(
+            company_id=company.id).values_list('user_id', flat=True)
+        users = User.objects.filter(id__in=members_ids)
+        paginator = Paginator(users, 10)  # 10 users per page
+        page_obj = paginator.get_page(page_number)
+
+        is_admin = self.request.user.is_staff
+        context['is_admin'] = is_admin
+        context['users'] = page_obj.object_list
+        context['page_obj'] = page_obj
+        context['primary_title'] = 'Members of Company: ' + company.name
+        context['company'] = company
+        return context
+
+    def test_func(self):
+        if self.request.user.is_staff:
+            return True
+
+        company = self.get_object()
+        company_member = CompanyMembers.objects.filter(
+            user_id=self.request.user.id, company_id=company.id)
+
+        if company_member:
+            return True
+        return False
 
 
 @login_required
