@@ -7,7 +7,7 @@
     <a href="{% url 'display_company_members' pk=company.id %}">View Members</a>
     <a href="{% url 'companies_list' %}">Return To Companies List</a>
     {%if is_admin %}
-       <a href="{% url 'edit_company_info_post' company_id=company.id %}">Edit Company</a>
+       <a href="{% url 'edit_company_info_post' pk=company.id %}">Edit Company</a>
        <a href="{% url 'edit_company_members' company_id=company.id %}">Edit Members</a>
     {% endif %}
 {% endblock %}

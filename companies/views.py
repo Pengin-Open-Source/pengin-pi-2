@@ -113,7 +113,6 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Cr
             company = form.save(commit=False)
             company.save()
             CompanyMembers.objects.create(company=company, user=request.user)
-            print("Company created successfully:", company)
             return redirect('display_company_info', pk=company.id)
 
     # only staff can create companies
@@ -123,39 +122,34 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Cr
         return False
 
 
-@login_required
-def edit_company_info_post(request, company_id):
-    company = get_object_or_404(Company, id=company_id)
-    if request.method == 'POST':
+class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
+
+    model = Company
+    form_class = CompanyForm
+    template_name = 'company_edit.html'
+
+    def get_context_data(self,  **kwargs):
+        context = super().get_context_data(**kwargs)
+        company = self.get_object()
+        form = CompanyForm(instance=company)
+        form_rendered_for_edit = form.render("configure_company_form.html")
+        context['form'] = form_rendered_for_edit
+        context['primary_title'] = 'Edit Company'
+        return context
+
+    def post(self, request, *args, **kwargs):
+        company = self.get_object()
         form = CompanyForm(request.POST, instance=company)
         if form.is_valid():
-            form.save()
-            return redirect('display_company_info', company_id=company.id)
-    else:
-        form = CompanyForm(instance=company)
-    return render(request, 'company_edit.html', {
-        'form': form,
-        'company': company,
-        'primary_title': 'Edit Company'
-    })
+            company = form.save(commit=False)
+            company.save()
+            return redirect('display_company_info', pk=company.id)
 
-
-# def display_company_members(request, company_id):
-#     company = get_object_or_404(Company, id=company_id)
-#     page_number = request.POST.get(
-#         'page-number', 1) if request.method == "POST" else request.GET.get('page', 1)
-#     members_ids = CompanyMembers.objects.filter(
-#         company_id=company.id).values_list('user_id', flat=True)
-#     users = User.objects.filter(id__in=members_ids)
-#     paginator = Paginator(users, 10)  # 10 users per page
-#     page_obj = paginator.get_page(page_number)
-#     members_ids_list = list(members_ids)
-#     return render(request, 'display_members.html', {
-#         'users': page_obj.object_list,
-#         'company': company,
-#         'page_obj': page_obj,
-#         'members_ids_list': members_ids_list
-#     })
+    # only staff can Edit companies
+    def test_func(self):
+        if self.request.user.is_staff:
+            return True
+        return False
 
 
 class MembersListCompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
