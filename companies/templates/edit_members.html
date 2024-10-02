@@ -10,7 +10,7 @@
 {% block pageContent %}
   <div class="content-section">
     <h1 class="profile-title">Edit Company Members</h1>
-    <form class="form" method="POST" action="{% url 'edit_company_members_post' company_id=company.id %}">
+    <form class="form" method="POST" action="{% url 'edit_company_members' pk=company.id %}">
       {% csrf_token %}
       <input type="hidden" name="page-number" value="{{ page_obj.number }}"/>
       <div class="member-grid">

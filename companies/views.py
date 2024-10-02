@@ -152,7 +152,7 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Upda
         return False
 
 
-class MembersListCompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+class CompanyMembersListDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     model = Company
     template_name = 'display_members.html'
     context_object_name = 'company'
@@ -190,29 +190,29 @@ class MembersListCompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTe
         return False
 
 
-@login_required
-def edit_company_members(request, company_id):
-    company = get_object_or_404(Company, id=company_id)
-    page_number = request.POST.get(
-        'page-number', 1) if request.method == "POST" else request.GET.get('page', 1)
-    paginator = Paginator(User.objects.all(), 10)  # 10 users per page
-    page_obj = paginator.get_page(page_number)
-    member_uids = CompanyMembers.objects.filter(
-        company_id=company.id).values_list('user_id', flat=True)
-    member_uid_list = list(member_uids)
-    return render(request, 'edit_members.html', {
-        'users': page_obj.object_list,
-        'company': company,
-        'page_obj': page_obj,
-        'member_uid_list': member_uid_list
-    })
+class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
+    model = Company
+    template_name = 'edit_members.html'
+    form_class = CompanyForm
 
+    def get_context_data(self,  **kwargs):
+        context = super().get_context_data(**kwargs)
+        company = self.get_object()
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(User.objects.all(), 10)  # 10 users per page
+        page_obj = paginator.get_page(page_number)
+        member_uids = CompanyMembers.objects.filter(
+            company_id=company.id).values_list('user_id', flat=True)
+        member_uid_list = list(member_uids)
+        context['users'] = page_obj.object_list
+        context['company'] = company
+        context['page_obj'] = page_obj
+        context['member_uid_list'] = member_uid_list
+        return context
 
-@ratelimit(key='ip', rate='10/m', method='POST', block=True)
-@login_required
-def edit_company_members_post(request, company_id):
-    if request.method == 'POST':
-        company = get_object_or_404(Company, id=company_id)
+    def post(self, request, *args, **kwargs):
+        company = self.get_object()
         checkbox_values = request.POST.getlist('member-checkbox')
         # delete every member who is in this company and NOT currently checked
         delete_member_uids = CompanyMembers.objects.filter(
@@ -223,4 +223,21 @@ def edit_company_members_post(request, company_id):
             user = get_object_or_404(User, id=value)
             company_member = CompanyMembers.objects.get_or_create(
                 company_id=company.id, user_id=user.id)
-        return redirect('display_company_members', company_id=company.id)
+        return redirect('display_company_members', pk=company.id)
+
+
+# # @ratelimit(key='ip', rate='10/m', method='POST', block=True)
+# # @login_required
+# def edit_company_members_post(request, company_id):
+#     if request.method == 'POST':
+#         checkbox_values = request.POST.getlist('member-checkbox')
+#         # delete every member who is in this company and NOT currently checked
+#         delete_member_uids = CompanyMembers.objects.filter(
+#             company_id=company.id).exclude(user_id__in=checkbox_values).values_list('id', flat=True)
+#         delete_member_uids_list = list(delete_member_uids)
+#         CompanyMembers.objects.filter(id__in=delete_member_uids_list).delete()
+#         for value in checkbox_values:
+#             user = get_object_or_404(User, id=value)
+#             company_member = CompanyMembers.objects.get_or_create(
+#                 company_id=company.id, user_id=user.id)
+#         return redirect('display_company_members', company_id=company.id)
