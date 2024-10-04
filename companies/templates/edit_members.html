@@ -10,7 +10,7 @@
 {% block pageContent %}
   <div class="content-section">
     <h1 class="profile-title">Edit Company Members</h1>
-    <form class="form" method="POST" action="{% url 'edit_company_members' pk=company.id %}">
+    <form class="form" id="memberForm" method="POST" action="{% url 'edit_company_members' pk=company.id %}">
       {% csrf_token %}
       <input type="hidden" name="page-number" value="{{ page_obj.number }}"/>
       <div class="member-grid">
@@ -25,5 +25,60 @@
       <button class="primary-button" type="submit">Save</button>
     </form>
     {% use_macro render_pagination page_obj %}
+{% comment %} 
+    {% for object in object_list %}
+    <form method="post">
+        {% csrf_token %}
+        <input type="checkbox" name="select" value="{{ object.id }}" {% if object.id in selected_ids %}checked{% endif %}>
+        <input type="hidden" name="deselect" value="{{ object.id }}">
+        <label>{{ object }}</label>
+        <button type="submit">Update</button>
+    </form>
+{% endfor %}
+    <form class = "form">
+    <div>
+      {% for id in selected_ids %}
+        {{ id }}
+      {% endfor %}
+    </div>
   </div>
+   </form> {% endcomment %}
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+   <script type="text/javascript">
+
+    const checkedValues = [];
+    const formData = new FormData(document.getElementById('memberForm'));
+
+    const checkboxes = document.querySelectorAll('input[name="member-checkbox"]');
+
+
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          checkedValues.push(checkbox.value);
+        }
+      ;
+    });
+    
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          checkedValues.push(checkbox.value);
+        } else {
+          checkedValues.splice(checkedValues.indexOf(checkbox.value), 1);
+        }
+      });
+    });
+
+    function myJavaScriptFunction() {
+      formData.append('checked_values', JSON.stringify(checkedValues));
+      confirm(JSON.stringify(checkedValues))
+      return JSON.stringify(checkedValues)
+    }
+
+   </script>
+
+
 {% endblock %}
+
+
+

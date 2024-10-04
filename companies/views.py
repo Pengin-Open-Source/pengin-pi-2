@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -195,8 +196,23 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
     template_name = 'edit_members.html'
     form_class = CompanyForm
 
+    def get(self, request, *args, **kwargs):
+        # test code for trying to grab values from a link.
+        if request.GET.get('action') == 'perform':
+            value = request.GET.get('value')
+            print("checked values (not submitted)")
+            print(value)
+
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self,  **kwargs):
         context = super().get_context_data(**kwargs)
+        # test code for session items
+        selected_ids = self.request.session.get('selected_ids', [])
+        selected_ids.append("A Get Context Item")
+        self.request.session['selected_ids'] = selected_ids
+        context['selected_ids'] = selected_ids
+
         company = self.get_object()
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -213,6 +229,12 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
 
     def post(self, request, *args, **kwargs):
         company = self.get_object()
+
+        # test code for session variable persistance
+        selected_ids = self.request.session.get('selected_ids', [])
+        selected_ids.append("An Item")
+        self.request.session['selected_ids'] = selected_ids
+
         checkbox_values = request.POST.getlist('member-checkbox')
         # delete every member who is in this company and NOT currently checked
         delete_member_uids = CompanyMembers.objects.filter(
