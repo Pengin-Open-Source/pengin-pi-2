@@ -50,6 +50,7 @@
     const formData = new FormData(document.getElementById('memberForm'));
 
     const checkboxes = document.querySelectorAll('input[name="member-checkbox"]');
+    const navigationLink = document.getElementById('navigate-next');
 
 
     checkboxes.forEach(checkbox => {
@@ -69,10 +70,12 @@
       });
     });
 
-    function myJavaScriptFunction() {
-      formData.append('checked_values', JSON.stringify(checkedValues));
-      confirm(JSON.stringify(checkedValues))
-      return JSON.stringify(checkedValues)
+    function myJavaScriptFunction(page_number) {
+      confirm(page_number)
+      const stringifiedValues = JSON.stringify(checkedValues);
+      confirm(stringifiedValues)
+      fetch('{% url 'edit_company_members' pk=company.id %}?page=' + page_number + '&checked_values=' + encodeURIComponent(stringifiedValues), {
+        method: 'GET'});
     }
 
    </script>

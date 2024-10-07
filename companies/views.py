@@ -1,4 +1,6 @@
 import json
+from venv import logger
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -196,17 +198,21 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
     template_name = 'edit_members.html'
     form_class = CompanyForm
 
-    def get(self, request, *args, **kwargs):
-        # test code for trying to grab values from a link.
-        if request.GET.get('action') == 'perform':
-            value = request.GET.get('value')
-            print("checked values (not submitted)")
-            print(value)
+    # def get(self, request, *args, **kwargs):
+    #     # test code for trying to grab values from a link.
+    #     checked_values = request.GET.get('checked_values')
+    #     print("checked values (not submitted yet)")
+    #     print(checked_values)
 
-        return super().get(request, *args, **kwargs)
+    #     return super().get(request, *args, **kwargs)
 
     def get_context_data(self,  **kwargs):
         context = super().get_context_data(**kwargs)
+
+        checked_values = self.request.GET.get('checked_values')
+        print("checked values (not submitted yet)")
+        print(checked_values)
+
         # test code for session items
         selected_ids = self.request.session.get('selected_ids', [])
         selected_ids.append("A Get Context Item")
