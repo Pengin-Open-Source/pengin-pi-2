@@ -30,7 +30,7 @@
         {% if page.has_next %}
             {% comment %} <div><a href="?page={{ page.next_page_number }}">Next</a></div> {% endcomment %}
             {% comment %} <div><a href="?page={{ page.next_page_number }}&action=perform&value={{ action_function }}" onclick="{{ action_function }}">Next</a></div> {% endcomment %}
-            <button onclick="myJavaScriptFunction({{ page.next_page_number }});">Next</button>
+            <div><a href="?page={{ page.next_page_number }}" onclick="myJavaScriptFunction();">Next</a></div> 
 
         {% endif %}
     </div>
