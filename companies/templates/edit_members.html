@@ -17,7 +17,7 @@
         {% for user in users %}
           <div>
             <input type="checkbox" id="{{ user.id }}" name="member-checkbox" value="{{ user.id }}"
-                   {% if user.id in member_uid_list %} checked {% endif %} />
+                   {% if user.id in selected_ids %} checked {% endif %} />
             <label for="{{ user.id }}">{{ user.name }}</label>
           </div>
         {% endfor %}
@@ -40,9 +40,13 @@
       checkbox.addEventListener('change', () => {
         if (checkbox.checked) {
           checkedValues.push(checkbox.value);
-          uncheckedValues.splice(uncheckedValues.indexOf(checkbox.value), 1);
+          if(uncheckedValues.indexOf(checkbox.value) > -1) {
+             uncheckedValues.splice(uncheckedValues.indexOf(checkbox.value), 1);
+          }
         } else {
-          checkedValues.splice(checkedValues.indexOf(checkbox.value), 1);
+          if(checkedValues.indexOf(checkbox.value) > -1) {
+            checkedValues.splice(checkedValues.indexOf(checkbox.value), 1);
+          }
           uncheckedValues.push(checkbox.value);
         }
       });
@@ -51,8 +55,6 @@
     function myJavaScriptFunction() {
       const selectedUsers = JSON.stringify(checkedValues);
       const deselectedUsers = JSON.stringify(uncheckedValues);
-      confirm(selectedUsers)
-      confirm(deselectedUsers)
       fetch('{% url 'edit_company_members' pk=company.id %}?selected_users=' + encodeURIComponent(selectedUsers) + '&unselected_users=' + encodeURIComponent(deselectedUsers), {
         method: 'GET'});
     }

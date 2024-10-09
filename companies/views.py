@@ -209,48 +209,60 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
 
     def get_context_data(self,  **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # selected_ids = self.request.session.get('selected_ids', [])
-
         company = self.get_object()
-        member_uids = CompanyMembers.objects.filter(
-            company_id=company.id).values_list('user_id', flat=True)
-        member_uid_list = list(member_uids)
-        selected_ids = member_uid_list
+
+        if self.request.session.get('selected_ids'):
+            # pull the existing selected members in the checkbox list
+            # print("theory of everything yesterday")
+            print(self.request.session.get('selected_ids'))
+            selected_values = self.request.session.get('selected_ids')
+            selected_ids = [UUID(value) for value in selected_values]
+        else:
+            # Get the initial selected members from the CompanyMembers table
+            member_uids = CompanyMembers.objects.filter(
+                company_id=company.id).values_list('user_id', flat=True)
+            member_uid_list = list(member_uids)
+            selected_ids = member_uid_list
+
+        # Either way,  add all the new members the user has selected and
+        # remove all the members the user has unchecked from the list of user ids
         if self.request.GET.get('selected_users'):
-            # checked_values = self.request.GET.get('selected_users', [])
+            print("newly checked")
+            print(self.request.GET.get('selected_users'))
+            checked_values = json.loads(
+                self.request.GET.get('selected_users'))
+            checked_uuid_list = [UUID(value) for value in checked_values]
 
-            # unchecked_uuid_list = [UUID(value) for value in unchecked_values]
-            print("selected")
-            # print(unchecked_uuid_list)
-            # # selected_ids = list(set(selected_ids).union(checked_values))
+            selected_ids = list(
+                set(selected_ids).union(set(checked_uuid_list)))
+
         if self.request.GET.get('unselected_users'):
-            unchecked_values = self.request.GET.get('unselected_users', [])
-            unchecked_values = [str(value) for value in unchecked_values]
-            print("deselected 1")
-            print(unchecked_values)
+            unchecked_values = json.loads(
+                self.request.GET.get('unselected_users'))
             unchecked_uuid_list = [UUID(value) for value in unchecked_values]
-            print("deselected")
+            print("Deselected")
             print(unchecked_uuid_list)
-            # selected_ids = list(set(selected_ids) ^ unchecked_values)
-
-        print("theory of everything")
-        print(selected_ids)
-       # print(member_uid_list)
+            selected_ids = list(set(selected_ids) ^ set(unchecked_uuid_list))
+            print("List with ids removed:")
+            print(selected_ids)
 
         # test code for session items
-        # self.request.session['selected_ids'] = selected_ids
-        # context['selected_ids'] = selected_ids
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
-        paginator = Paginator(User.objects.all(), 10)  # 10 users per page
+        paginator = Paginator(User.objects.all().order_by(
+            '-name'), 10)  # 10 users per page
         page_obj = paginator.get_page(page_number)
 
         context['users'] = page_obj.object_list
         context['company'] = company
         context['page_obj'] = page_obj
-        context['member_uid_list'] = member_uid_list
+        context['selected_ids'] = selected_ids
+        string_serialize_ids = [str(uuid) for uuid in selected_ids]
+
+        self.request.session['selected_ids'] = string_serialize_ids
+
+        # context['member_uid_list'] = member_uid_list
         return context
 
     def post(self, request, *args, **kwargs):
