@@ -22,7 +22,7 @@
           </div>
         {% endfor %}
       </div>
-      <button class="primary-button" type="submit">Save</button>
+      <button class="primary-button" onclick="event.preventDefault(); saveSelectedMembers({{ company.id  }});" type="submit">Save</button>
     </form>
     {% use_macro render_pagination page_obj %}
    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -52,11 +52,23 @@
       });
     });
 
-    function myJavaScriptFunction() {
+
+    function saveSelectedMembers(company_id) {
       const selectedUsers = JSON.stringify(checkedValues);
       const deselectedUsers = JSON.stringify(uncheckedValues);
       fetch('{% url 'edit_company_members' pk=company.id %}?selected_users=' + encodeURIComponent(selectedUsers) + '&unselected_users=' + encodeURIComponent(deselectedUsers), {
-        method: 'GET'});
+        method: 'POST'}).then(data => {
+          window.location.href = `company/${company_id}/members/`
+         })
+    }
+
+    function myJavaScriptFunction(page_number) {
+      const selectedUsers = JSON.stringify(checkedValues);
+      const deselectedUsers = JSON.stringify(uncheckedValues);
+      fetch('{% url 'edit_company_members' pk=company.id %}?page=' + page_number + '&selected_users=' + encodeURIComponent(selectedUsers) + '&unselected_users=' + encodeURIComponent(deselectedUsers), {
+        method: 'GET'}).then(data => {
+         window.location.href = `?page=${page_number}`
+        })
     }
 
    </script>

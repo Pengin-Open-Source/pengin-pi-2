@@ -199,40 +199,28 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
     template_name = 'edit_members.html'
     form_class = CompanyForm
 
-    # def get(self, request, *args, **kwargs):
-    #     # test code for trying to grab values from a link.
-    #     checked_values = request.GET.get('checked_values')
-    #     print("checked values (not submitted yet)")
-    #     print(checked_values)
-
-    #     return super().get(request, *args, **kwargs)
-
     def get_context_data(self,  **kwargs):
         context = super().get_context_data(**kwargs)
         company = self.get_object()
 
         if self.request.session.get('selected_ids'):
             # pull the existing selected members in the checkbox list
-            # print("theory of everything yesterday")
-            print(self.request.session.get('selected_ids'))
             selected_values = self.request.session.get('selected_ids')
             selected_ids = [UUID(value) for value in selected_values]
         else:
-            # Get the initial selected members from the CompanyMembers table
+            # Get the initial list of selected members from the CompanyMembers table
             member_uids = CompanyMembers.objects.filter(
                 company_id=company.id).values_list('user_id', flat=True)
             member_uid_list = list(member_uids)
             selected_ids = member_uid_list
 
-        # Either way,  add all the new members the user has selected and
-        # remove all the members the user has unchecked from the list of user ids
+        # Either way, add any new members the user has selected and
+        # remove any member selections the user has unchecked - on this particular page
+        # - from the list of available user ids
         if self.request.GET.get('selected_users'):
-            print("newly checked")
-            print(self.request.GET.get('selected_users'))
             checked_values = json.loads(
                 self.request.GET.get('selected_users'))
             checked_uuid_list = [UUID(value) for value in checked_values]
-
             selected_ids = list(
                 set(selected_ids).union(set(checked_uuid_list)))
 
@@ -262,27 +250,46 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
 
         self.request.session['selected_ids'] = string_serialize_ids
 
-        # context['member_uid_list'] = member_uid_list
         return context
 
     def post(self, request, *args, **kwargs):
         company = self.get_object()
 
-        # test code for session variable persistance
-        # selected_ids = self.request.session.get('selected_ids', [])
-        # selected_ids.append("An Item")
-        # self.request.session['selected_ids'] = selected_ids
+        selected_ids = self.request.session.get('selected_ids')
 
-        checkbox_values = request.POST.getlist('member-checkbox')
+        # Add all the new members the user has selected,
+        # remove all the members the user has unchecked - on this page -
+        # to finalize the list of selected user ids for the member list update
+        if self.request.GET.get('selected_users'):
+            checked_values = json.loads(
+                self.request.GET.get('selected_users'))
+            checked_uuid_list = [UUID(value) for value in checked_values]
+            selected_ids = list(
+                set(selected_ids).union(set(checked_uuid_list)))
+        if self.request.GET.get('unselected_users'):
+            unchecked_values = json.loads(
+                self.request.GET.get('unselected_users'))
+            unchecked_uuid_list = [UUID(value) for value in unchecked_values]
+            selected_ids = list(set(selected_ids) ^ set(unchecked_uuid_list))
+
+        # checkbox_values = request.POST.getlist('member-checkbox')
         # delete every member who is in this company and NOT currently checked
-        # delete_member_uids = CompanyMembers.objects.filter(
-        #     company_id=company.id).exclude(user_id__in=checkbox_values).values_list('id', flat=True)
-        # delete_member_uids_list = list(delete_member_uids)
-        # CompanyMembers.objects.filter(id__in=delete_member_uids_list).delete()
-        for value in checkbox_values:
+        delete_member_uids = CompanyMembers.objects.filter(
+            company_id=company.id).exclude(user_id__in=selected_ids).values_list('id', flat=True)
+        delete_member_uids_list = list(delete_member_uids)
+        print(delete_member_uids_list)
+        CompanyMembers.objects.filter(id__in=delete_member_uids_list).delete()
+
+        # Add every checked User to the CompanyMember db table - where
+        # there isn't an entry for this user in this company already.
+        for value in selected_ids:
             user = get_object_or_404(User, id=value)
             company_member = CompanyMembers.objects.get_or_create(
                 company_id=company.id, user_id=user.id)
+
+        # Clear away selected ids session variable.  It will be re-populated from the
+        # CompanyMember table the next time the user wants to edit the Member list.
+        self.request.session['selected_ids'] = None
         return redirect('display_company_members', pk=company.id)
 
 
