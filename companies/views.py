@@ -258,23 +258,21 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         company = self.get_object()
 
         selected_ids = self.request.session.get('selected_ids')
+        selected_uuids = [UUID(value) for value in selected_ids]
 
-        # Add all the new members the user has selected,
-        # remove all the members the user has unchecked - on this page -
-        # to finalize the list of selected user ids for the member list update
-        if self.request.GET.get('selected_users'):
-            checked_values = json.loads(
-                self.request.GET.get('selected_users'))
-            checked_uuid_list = [UUID(value) for value in checked_values]
-            selected_ids = list(
-                set(selected_ids).union(set(checked_uuid_list)))
-        if self.request.GET.get('unselected_users'):
-            unchecked_values = json.loads(
-                self.request.GET.get('unselected_users'))
-            unchecked_uuid_list = [UUID(value) for value in unchecked_values]
-            selected_ids = list(set(selected_ids) ^ set(unchecked_uuid_list))
+        # only checked user ids on the current page
+        checkbox_values = request.POST.getlist("member-checkbox")
+        checked_uuid_list = [UUID(value) for value in checkbox_values]
+        # all options on the current page.
+        user_options = request.POST.getlist("member-checkbox-option")
+        user_options_uuid_list = [UUID(value) for value in user_options]
 
-        # checkbox_values = request.POST.getlist('member-checkbox')
+        unchecked_uuid_set = set(
+            user_options_uuid_list) - set(checked_uuid_list)
+
+        selected_ids = list(set(selected_uuids).union(
+            set(checked_uuid_list)) - unchecked_uuid_set)
+
         # delete every member who is in this company and NOT currently checked
         delete_member_uids = CompanyMembers.objects.filter(
             company_id=company.id).exclude(user_id__in=selected_ids).values_list('id', flat=True)
