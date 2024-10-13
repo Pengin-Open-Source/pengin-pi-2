@@ -170,7 +170,7 @@ class CompanyMembersListDetailView(LoginAndValidationRequiredMixin, UserPassesTe
         members_ids = CompanyMembers.objects.filter(
             company_id=company.id).values_list('user_id', flat=True)
         users = User.objects.filter(id__in=members_ids)
-        paginator = Paginator(users, 10)  # 10 users per page
+        paginator = Paginator(users.order_by('-name'), 10)  # 10 users per page
         page_obj = paginator.get_page(page_number)
 
         is_admin = self.request.user.is_staff
@@ -192,6 +192,8 @@ class CompanyMembersListDetailView(LoginAndValidationRequiredMixin, UserPassesTe
         if company_member:
             return True
         return False
+
+#  Working with/Reworking ideas from Google's AI / Gemini on the checklist selection perservation problem
 
 
 class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
