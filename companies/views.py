@@ -170,7 +170,7 @@ class CompanyMembersListDetailView(LoginAndValidationRequiredMixin, UserPassesTe
         members_ids = CompanyMembers.objects.filter(
             company_id=company.id).values_list('user_id', flat=True)
         users = User.objects.filter(id__in=members_ids)
-        paginator = Paginator(users.order_by('-name'), 10)  # 10 users per page
+        paginator = Paginator(users.order_by('name'), 10)  # 10 users per page
         page_obj = paginator.get_page(page_number)
 
         is_admin = self.request.user.is_staff
@@ -241,7 +241,7 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(User.objects.all().order_by(
-            '-name'), 10)  # 10 users per page
+            'name'), 10)  # 10 users per page
         page_obj = paginator.get_page(page_number)
 
         context['users'] = page_obj.object_list

@@ -55,6 +55,32 @@
     });
 
 
+
+  
+const originalUrl = window.location.href;
+
+window.addEventListener('popstate', function() {
+    if (window.location.href !== originalUrl) {
+        // User navigated using back/forward buttons
+        handleNavigationAway();
+    }
+});
+
+window.addEventListener('click', function(event) {
+    if (event.target.tagName === 'A' && event.target.href !== originalUrl) {
+        // User clicked a link to a different page
+        handleNavigationAway();
+    }
+});
+
+
+
+function handleNavigationAway() {
+    // Your logic here
+    confirm('User is navigating away');
+}
+
+
     function saveSelectedMembers(company_id) {
       const selectedUsers = JSON.stringify(checkedValues);
       const deselectedUsers = JSON.stringify(uncheckedValues);
