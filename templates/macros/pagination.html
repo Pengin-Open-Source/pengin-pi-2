@@ -7,7 +7,7 @@
 {# The paginator.current_page is the page object returned by the Paginator class #}
 
 {% load macros %}
-{% macro render_pagination page %}
+{% macro render_pagination page change_page_function="None" %}
 
 <!-- Pagination links -->
 {% if page.has_other_pages %}
@@ -17,7 +17,7 @@
     <div class="pagination-list">
         {% if page.has_previous %}
             {% comment %} <div><a href="?page={{ page.previous_page_number }}">Previous</a></div> {% endcomment %}
-            <div><a href="#" onclick="event.preventDefault(); myJavaScriptFunction({{ page.previous_page_number  }});">Previous</a></div>
+            <div><a href="#" onclick="event.preventDefault(); myJavaScriptFunction({{ page.previous_page_number  }});"> Previous</a></div>
         {% endif %}
         <br/>
         {% for num in page.paginator.page_range %}
@@ -32,9 +32,15 @@
         {% if page.has_next %}
             {% comment %} <div><a href="?page={{ page.next_page_number }}">Next</a></div> {% endcomment %}
             {% comment %} <div><a href="?page={{ page.next_page_number }}&action=perform&value={{ action_function }}" onclick="{{ action_function }}">Next</a></div> {% endcomment %}
-            <div><a href="#" onclick="event.preventDefault(); myJavaScriptFunction({{ page.next_page_number }});">Next</a></div> 
-
+            {% comment %} <div><a href="#" onclick="event.preventDefault(); myJavaScriptFunction({{ page.next_page_number }});">Next</a></div>  {% endcomment %}
+            {{ change_page_function }}
+            {% if  change_page_function != "None"  %} 
+                <div><a href="#" onclick="event.preventDefault(); {{ change_page_function }}({{ page.next_page_number }});">Next</a></div>
+            {% else %}
+                <div><a href="?page={{ page.next_page_number }}">Next</a></div>    
+            {% endif  %}
         {% endif %}
+    
     </div>
 {% endif %}
 

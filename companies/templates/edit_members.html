@@ -5,6 +5,7 @@
 
 {% block pageDropDowns %}
   <a href="{% url 'display_company_info' pk=company.id %}">Company Home</a>
+  
 {% endblock %}
 
 {% block pageContent %}
@@ -22,10 +23,11 @@
             <label for="{{ user.id }}">{{ user.name }}</label>
           </div>
         {% endfor %}
+        {{ change_page_function }}
       </div>
       <button class="primary-button" onclick="event.preventDefault(); saveSelectedMembers({{ company.id  }});" type="submit">Save</button>
     </form>
-    {% use_macro render_pagination page_obj %}
+    {% use_macro render_pagination page_obj change_page_function = "myJavaScriptFunction" %}
     {% comment %} Working with/Reworking ideas from Google's AI / Gemini on the checklist selection perservation problem {% endcomment %}
    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
    <script type="text/javascript">
@@ -56,39 +58,7 @@
 
 
 
-  
-{% comment %} const originalUrl = window.location.href;
 
-window.addEventListener('popstate', function() {
-    if (window.location.href !== originalUrl) {
-        // User navigated using back/forward buttons
-        handleNavigationAway();
-    }
-});
-
-window.addEventListener('click', function(event) {
-    if (event.target.tagName === 'A' && event.target.href !== originalUrl) {
-        // User clicked a link to a different page
-        handleNavigationAway();
-    }
-}); {% endcomment %}
-
-{% comment %} window.onbeforeunload = handleNavigationAway;
-
-
-function handleNavigationAway() {
-    // Your logic here
-  targetHref = event.target.location.href;  
-  console.log(targetHref)
-  return confirm('User is navigating away');
-} {% endcomment %}
-
-{% comment %} Tweak Gemini's suggestion for executing code when the page loads. Trying 
-not to keep any unsubmitted user selections when the user navigates away.
-This wipeout code isn't foolproof, If you navigate to another page and then hit back you may still have 
-your unsaved selections,  but I think that's ok since some other sites seem to behave 
-like this
-{% endcomment %}
 function checkReferringPage() {
   const referrer = document.referrer;
 
