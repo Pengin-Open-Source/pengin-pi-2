@@ -205,10 +205,14 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         company = self.get_object()
 
+        if self.request.GET.get('wipe_out'):
+            self.request.session['selected_ids'] = None
+
         if self.request.session.get('selected_ids'):
             # pull the existing selected members in the checkbox list
             selected_values = self.request.session.get('selected_ids')
             selected_ids = [UUID(value) for value in selected_values]
+
         else:
             # Get the initial list of selected members from the CompanyMembers table
             member_uids = CompanyMembers.objects.filter(
@@ -230,11 +234,8 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
             unchecked_values = json.loads(
                 self.request.GET.get('unselected_users'))
             unchecked_uuid_list = [UUID(value) for value in unchecked_values]
-            print("Deselected")
-            print(unchecked_uuid_list)
+
             selected_ids = list(set(selected_ids) ^ set(unchecked_uuid_list))
-            print("List with ids removed:")
-            print(selected_ids)
 
         # test code for session items
 
@@ -277,7 +278,7 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         delete_member_uids = CompanyMembers.objects.filter(
             company_id=company.id).exclude(user_id__in=selected_ids).values_list('id', flat=True)
         delete_member_uids_list = list(delete_member_uids)
-        print(delete_member_uids_list)
+
         CompanyMembers.objects.filter(id__in=delete_member_uids_list).delete()
 
         # Add every checked User to the CompanyMember db table - where

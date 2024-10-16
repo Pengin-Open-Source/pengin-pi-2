@@ -57,7 +57,7 @@
 
 
   
-const originalUrl = window.location.href;
+{% comment %} const originalUrl = window.location.href;
 
 window.addEventListener('popstate', function() {
     if (window.location.href !== originalUrl) {
@@ -71,14 +71,41 @@ window.addEventListener('click', function(event) {
         // User clicked a link to a different page
         handleNavigationAway();
     }
-});
+}); {% endcomment %}
 
+{% comment %} window.onbeforeunload = handleNavigationAway;
 
 
 function handleNavigationAway() {
     // Your logic here
-    confirm('User is navigating away');
+  targetHref = event.target.location.href;  
+  console.log(targetHref)
+  return confirm('User is navigating away');
+} {% endcomment %}
+
+{% comment %} Tweak Gemini's suggestion for executing code when the page loads. Trying 
+not to keep any unsubmitted user selections when the user navigates away.
+This wipeout code isn't foolproof, If you navigate to another page and then hit back you may still have 
+your unsaved selections,  but I think that's ok since some other sites seem to behave 
+like this
+{% endcomment %}
+function checkReferringPage() {
+  const referrer = document.referrer;
+
+  // Check if the referrer is empty or something other than a page in this editable list of members
+  if (!referrer || !referrer.includes('{% url 'edit_company_members' pk=company.id %}')  ) {
+    // if we came from anything but another page in this list,  trigger a wipe out of 
+    // The users prior selections
+    const this_page = document.getElementsByName("page-number");
+
+    fetch('{% url 'edit_company_members' pk=company.id %}?wipe_out=True', {
+      method: 'GET'}).then(data => {
+       window.location.href = `?page=${this_page}`
+      })
+  } 
 }
+
+window.addEventListener("load", checkReferringPage);
 
 
     function saveSelectedMembers(company_id) {
@@ -99,10 +126,14 @@ function handleNavigationAway() {
         })
     }
 
+    
+
    </script>
 
 
 {% endblock %}
+
+
 
 
 
