@@ -249,7 +249,7 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         context['company'] = company
         context['page_obj'] = page_obj
         context['selected_ids'] = selected_ids
-        context['change_page_function'] = "myJavaScriptFunction"
+        context['change_page_function'] = "navigateToPage"
         string_serialize_ids = [str(uuid) for uuid in selected_ids]
 
         self.request.session['selected_ids'] = string_serialize_ids

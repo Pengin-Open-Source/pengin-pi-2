@@ -23,11 +23,21 @@
             <label for="{{ user.id }}">{{ user.name }}</label>
           </div>
         {% endfor %}
-        {{ change_page_function }}
       </div>
       <button class="primary-button" onclick="event.preventDefault(); saveSelectedMembers({{ company.id  }});" type="submit">Save</button>
     </form>
-    {% use_macro render_pagination page_obj change_page_function = "myJavaScriptFunction" %}
+     {% comment %} Changed to follow an alternate call form on the django-macros page: https://pypi.org/project/django-macros/
+       I'm using a second parameter in the macro now,  which has a default argument,  and was having trouble passing something 
+       to it with the "use_macro" syntax
+      {% endcomment %}
+    {% macro_block render_pagination page_obj %}
+
+        {% macro_kwarg change_page_function %}
+          {{ change_page_function }}
+        {% endmacro_kwarg %}
+    {% endmacro_block %}
+
+    
     {% comment %} Working with/Reworking ideas from Google's AI / Gemini on the checklist selection perservation problem {% endcomment %}
    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
    <script type="text/javascript">
@@ -87,7 +97,7 @@ window.addEventListener("load", checkReferringPage);
          })
     }
 
-    function myJavaScriptFunction(page_number) {
+    function navigateToPage(page_number) {
       const selectedUsers = JSON.stringify(checkedValues);
       const deselectedUsers = JSON.stringify(uncheckedValues);
       fetch('{% url 'edit_company_members' pk=company.id %}?page=' + page_number + '&selected_users=' + encodeURIComponent(selectedUsers) + '&unselected_users=' + encodeURIComponent(deselectedUsers), {

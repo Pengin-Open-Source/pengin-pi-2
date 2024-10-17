@@ -6,6 +6,15 @@
 {# {% use_macro render_pagination paginator.current_page %} #}
 {# The paginator.current_page is the page object returned by the Paginator class #}
 
+<!-- Revamped this with help from Gemini AI,  so that programmers may elect to use this macro
+ with a function that executes when the user tries to change the page.  Any views that don't 
+ need to have this new functionality may still use this macro as before, with no change to the macro call.
+ (The new defaults change_page_function parameter defaults to None)
+ This change was initially made to preserve Company Member selections after the user navigates to  
+ a new page in the Edit Company Member view.  It can be used for any number of actions a view might 
+ need performed when navigating between pages in paginated lists.
+ -->
+
 {% load macros %}
 {% macro render_pagination page change_page_function="None" %}
 
@@ -16,16 +25,22 @@
     </div>
     <div class="pagination-list">
         {% if page.has_previous %}
-            {% comment %} <div><a href="?page={{ page.previous_page_number }}">Previous</a></div> {% endcomment %}
-            <div><a href="#" onclick="event.preventDefault(); myJavaScriptFunction({{ page.previous_page_number  }});"> Previous</a></div>
+            {% if  change_page_function != "None"  %} 
+                <div><a href="#" onclick="event.preventDefault(); {{ change_page_function }}({{ page.previous_page_number  }});"> Previous</a></div>
+            {% else %}
+                <div><a href="?page={{ page.previous_page_number }}">Previous</a></div>
+            {% endif %}
         {% endif %}
         <br/>
         {% for num in page.paginator.page_range %}
             {% if num == page.number %}
                 <div class="current">{{ num }}</div>
             {% else %}
-                {% comment %} <div><a href="?page={{ num }}">{{ num }}</a></div> {% endcomment %}
-                <div><a href="#" onclick="event.preventDefault(); myJavaScriptFunction({{ num }});"> {{ num }}</a></div>
+                {% if  change_page_function != "None"  %} 
+                    <div><a href="#" onclick="event.preventDefault(); {{ change_page_function }}({{ num }});"> {{ num }}</a></div>
+                {% else %}
+                    <div><a href="?page={{ num }}">{{ num }}</a></div> 
+                {% endif %}
             {% endif %}
         {% endfor %}
 
@@ -33,7 +48,6 @@
             {% comment %} <div><a href="?page={{ page.next_page_number }}">Next</a></div> {% endcomment %}
             {% comment %} <div><a href="?page={{ page.next_page_number }}&action=perform&value={{ action_function }}" onclick="{{ action_function }}">Next</a></div> {% endcomment %}
             {% comment %} <div><a href="#" onclick="event.preventDefault(); myJavaScriptFunction({{ page.next_page_number }});">Next</a></div>  {% endcomment %}
-            {{ change_page_function }}
             {% if  change_page_function != "None"  %} 
                 <div><a href="#" onclick="event.preventDefault(); {{ change_page_function }}({{ page.next_page_number }});">Next</a></div>
             {% else %}
