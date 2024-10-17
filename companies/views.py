@@ -257,6 +257,7 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
 
         return context
 
+    @ratelimit(key='ip', rate='10/m', block=True)
     def post(self, request, *args, **kwargs):
         company = self.get_object()
 
@@ -294,20 +295,3 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         # CompanyMember table the next time the user wants to edit the Member list.
         self.request.session['selected_ids'] = None
         return redirect('display_company_members', pk=company.id)
-
-
-# # @ratelimit(key='ip', rate='10/m', method='POST', block=True)
-# # @login_required
-# def edit_company_members_post(request, company_id):
-#     if request.method == 'POST':
-#         checkbox_values = request.POST.getlist('member-checkbox')
-#         # delete every member who is in this company and NOT currently checked
-#         delete_member_uids = CompanyMembers.objects.filter(
-#             company_id=company.id).exclude(user_id__in=checkbox_values).values_list('id', flat=True)
-#         delete_member_uids_list = list(delete_member_uids)
-#         CompanyMembers.objects.filter(id__in=delete_member_uids_list).delete()
-#         for value in checkbox_values:
-#             user = get_object_or_404(User, id=value)
-#             company_member = CompanyMembers.objects.get_or_create(
-#                 company_id=company.id, user_id=user.id)
-#         return redirect('display_company_members', company_id=company.id)
