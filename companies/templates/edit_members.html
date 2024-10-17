@@ -11,6 +11,7 @@
 {% block pageContent %}
   <div class="content-section">
     <h1 class="profile-title">Edit Company Members</h1>
+    <input type="hidden" id="company-member-edit-link" value='{% url 'edit_company_members' pk=company.id %}'>
     <form class="form" id="memberForm" method="POST" action="{% url 'edit_company_members' pk=company.id %}">
       {% csrf_token %}
       <input type="hidden" name="page-number" value="{{ page_obj.number }}"/>
@@ -39,76 +40,9 @@
 
     
     {% comment %} Working with/Reworking ideas from Google's AI / Gemini on the checklist selection perservation problem {% endcomment %}
-   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-   <script type="text/javascript">
-
-    const checkedValues = [];
-    const uncheckedValues = [];
-    const formData = new FormData(document.getElementById('memberForm'));
-
-    const checkboxes = document.querySelectorAll('input[name="member-checkbox"]');
-
-
-  
-    checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-          checkedValues.push(checkbox.value);
-          if(uncheckedValues.indexOf(checkbox.value) > -1) {
-             uncheckedValues.splice(uncheckedValues.indexOf(checkbox.value), 1);
-          }
-        } else {
-          if(checkedValues.indexOf(checkbox.value) > -1) {
-            checkedValues.splice(checkedValues.indexOf(checkbox.value), 1);
-          }
-          uncheckedValues.push(checkbox.value);
-        }
-      });
-    });
-
-
-
-
-function checkReferringPage() {
-  const referrer = document.referrer;
-
-  // Check if the referrer is empty or something other than a page in this editable list of members
-  if (!referrer || !referrer.includes('{% url 'edit_company_members' pk=company.id %}')  ) {
-    // if we came from anything but another page in this list,  trigger a wipe out of 
-    // The users prior selections
-    const this_page = document.getElementsByName("page-number");
-
-    fetch('{% url 'edit_company_members' pk=company.id %}?wipe_out=True', {
-      method: 'GET'}).then(data => {
-       window.location.href = `?page=${this_page}`
-      })
-  } 
-}
-
-window.addEventListener("load", checkReferringPage);
-
-
-    function saveSelectedMembers(company_id) {
-      const selectedUsers = JSON.stringify(checkedValues);
-      const deselectedUsers = JSON.stringify(uncheckedValues);
-      fetch('{% url 'edit_company_members' pk=company.id %}?selected_users=' + encodeURIComponent(selectedUsers) + '&unselected_users=' + encodeURIComponent(deselectedUsers), {
-        method: 'POST'}).then(data => {
-          window.location.href = `company/${company_id}/members/`
-         })
-    }
-
-    function navigateToPage(page_number) {
-      const selectedUsers = JSON.stringify(checkedValues);
-      const deselectedUsers = JSON.stringify(uncheckedValues);
-      fetch('{% url 'edit_company_members' pk=company.id %}?page=' + page_number + '&selected_users=' + encodeURIComponent(selectedUsers) + '&unselected_users=' + encodeURIComponent(deselectedUsers), {
-        method: 'GET'}).then(data => {
-         window.location.href = `?page=${page_number}`
-        })
-    }
-
-    
-
-   </script>
+   <script src="{% static 'javascript/jquery/1.12.4/jquery.min.js' %}"></script>
+   <script src="{% static 'javascript/scripts.js' %}"></script>
+   <script src="{% static 'javascript/editCompanyMembers.js' %}"></script> 
 
 
 {% endblock %}
