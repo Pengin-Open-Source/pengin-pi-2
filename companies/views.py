@@ -67,21 +67,22 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # company = get_object_or_404(Company, id=company_id)
 
         company = self.get_object()
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
-        members = CompanyMembers.objects.filter(
-            company_id=company.id).select_related('user')
-        paginator = Paginator(members, 10)  # 10 members per page
+        members_ids = CompanyMembers.objects.filter(
+            company_id=company.id).values_list('user_id', flat=True)
+        users = User.objects.filter(id__in=members_ids)
+        paginator = Paginator(users.order_by('name'), 10)  # 10 users per page
         page_obj = paginator.get_page(page_number)
+
         is_admin = self.request.user.is_staff
         context['is_admin'] = is_admin
+        context['users'] = page_obj.object_list
         context['page_obj'] = page_obj
         context['primary_title'] = 'Company Info'
         context['company'] = company
-        context['members'] = members
         return context
 
     def test_func(self):

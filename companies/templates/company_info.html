@@ -59,15 +59,15 @@
                 <th>Name</th>
                 <th>Email</th>
             </tr>
-            {% for member in members %}
+            {% for user in users %}
                 <tr>
-                    <td>{{ member.user.name }}</td>
-                    <td>{{ member.user.email }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
                 </tr>
             {% endfor %}
         </table>
 
         <!-- Pagination -->
-        {% use_macro render_pagination members %}
+        {% use_macro render_pagination page_obj %}
     </div>
 {% endblock %}
