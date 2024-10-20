@@ -197,6 +197,7 @@ class CompanyMembersListDetailView(LoginAndValidationRequiredMixin, UserPassesTe
 #  Working with/Reworking ideas from Google's AI / Gemini on the checklist selection perservation problem
 
 
+@method_decorator(ratelimit(key='ip', rate='10/m', block=True), name='post')
 class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
     model = Company
     template_name = 'edit_members.html'
@@ -257,7 +258,6 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
 
         return context
 
-    @ratelimit(key='ip', rate='10/m', block=True)
     def post(self, request, *args, **kwargs):
         company = self.get_object()
 
