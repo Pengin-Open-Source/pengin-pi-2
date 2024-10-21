@@ -114,6 +114,7 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Cr
         form = CompanyForm(request.POST)
         if form.is_valid():
             company = form.save(commit=False)
+            company.row_action = 'CREATE'
             company.save()
             CompanyMembers.objects.create(company=company, user=request.user)
             return redirect('display_company_info', pk=company.id)
@@ -145,6 +146,7 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Upda
         form = CompanyForm(request.POST, instance=company)
         if form.is_valid():
             company = form.save(commit=False)
+            company.row_action = 'EDIT'
             company.save()
             return redirect('display_company_info', pk=company.id)
 
