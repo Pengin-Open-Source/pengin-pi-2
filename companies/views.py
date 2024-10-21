@@ -1,9 +1,7 @@
 import json
 from uuid import UUID
-from venv import logger
-from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -295,3 +293,32 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         # CompanyMember table the next time the user wants to edit the Member list.
         self.request.session['selected_ids'] = None
         return redirect('display_company_members', pk=company.id)
+
+
+class CompanyDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Company
+
+    def post(self, request, *args, **kwargs):
+        del_company = self.get_object()
+        delete_company(del_company)
+        return redirect('companies_list')
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+# Since this method has operations that must succeed or fail together,
+# Putting a transaction at the top of this method.
+def delete_company(del_company):
+    with transaction.atomic():
+
+        # First,  try to delete all the Company members
+        # If any deletion fails down the chain,  the whole deletion
+        # process should be canceled.
+        delete_member_ids = CompanyMembers.objects.filter(
+            company_id=del_company.id)
+        for member in delete_member_ids:
+            member.delete()
+
+        del_company.delete()
+        return "success"
