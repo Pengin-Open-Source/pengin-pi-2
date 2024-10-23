@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
+from django.utils import timezone
 from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import Company, CompanyMembers
 from main.models.users import User
@@ -114,6 +115,7 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Cr
         form = CompanyForm(request.POST)
         if form.is_valid():
             company = form.save(commit=False)
+            company.created_by = request.user
             company.row_action = 'CREATE'
             company.save()
             CompanyMembers.objects.create(company=company, user=request.user)
@@ -146,7 +148,9 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Upda
         form = CompanyForm(request.POST, instance=company)
         if form.is_valid():
             company = form.save(commit=False)
+            company.user = request.user
             company.row_action = 'EDIT'
+            company.date = timezone.now()
             company.save()
             return redirect('display_company_info', pk=company.id)
 
