@@ -6,10 +6,6 @@ from django.utils import timezone
 class BlogPost(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100, unique=True)
-    # EITHER editor (if one exists) or the author.
-    # For now, if the user is deleted,  there will be a cascade delete of the blogposts,
-    # BUT I intend to pre-empt delete behavior,  and create a backup entry in the history table.
-    # The plan is to leave deletion of history tables to the DBA
     date = models.DateTimeField(default=timezone.now)
     content = models.TextField(blank=True)
     tags = models.CharField(max_length=150,  blank=True)
