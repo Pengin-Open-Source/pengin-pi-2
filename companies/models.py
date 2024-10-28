@@ -100,4 +100,4 @@ class CompanyMembers(models.Model):
         User, on_delete=models.CASCADE, null=True)  # Allow null for user
 
     def __str__(self):
-        return str(self.id)
+        return str(self.user.name + ", " + self.company.name)

@@ -46,7 +46,8 @@ class CompaniesListView(LoginAndValidationRequiredMixin,  ListView):
             company_ids = CompanyMembers.objects.filter(
                 user_id=self.request.user.id).values_list('company_id', flat=True)
             company_ids_list = list(company_ids)
-            companies = Company.objects.filter(id__in=company_ids_list)
+            companies = Company.objects.filter(
+                id__in=company_ids_list).order_by('name')
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -70,6 +71,7 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         company = self.get_object()
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+
         members_ids = CompanyMembers.objects.filter(
             company_id=company.id).values_list('user_id', flat=True)
         users = User.objects.filter(id__in=members_ids)
@@ -82,6 +84,9 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         context['page_obj'] = page_obj
         context['primary_title'] = 'Company Info'
         context['company'] = company
+        members = CompanyMembers.objects.filter(company_id=company.id)
+        for member in members:
+            print(member)
         return context
 
     def test_func(self):
