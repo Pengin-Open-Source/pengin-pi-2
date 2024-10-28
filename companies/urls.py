@@ -1,7 +1,7 @@
 from django.urls import path
 from companies.views import (
     CompaniesHomeView, CompaniesListView, CompanyDetailView,  CompanyCreateView, CompanyEditView,
-    CompanyMembersListDetailView, CompanyMemberListUpdateView, CompanyDeleteView
+    CompanyMemberListDetailView, CompanyMemberListUpdateView, CompanyDeleteView
 )
 
 urlpatterns = [
@@ -16,7 +16,7 @@ urlpatterns = [
     path('company<uuid:pk>/delete/',
          CompanyDeleteView.as_view(), name='delete_company'),
     path('company/<uuid:pk>/members/',
-         CompanyMembersListDetailView.as_view(), name='display_company_members'),
+         CompanyMemberListDetailView.as_view(), name='display_company_members'),
     path('company/<uuid:pk>/members/edit/',
          CompanyMemberListUpdateView.as_view(), name='edit_company_members'),
 

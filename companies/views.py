@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView
-from .models import Company, CompanyMembers
+from .models import Company, CompanyMember
 from main.models.users import User
 from .forms import CompanyForm
 from django_ratelimit.decorators import ratelimit
@@ -20,7 +20,7 @@ class CompaniesHomeView(LoginAndValidationRequiredMixin,  View):
         if request.user.is_staff:
             return redirect('companies_list')
         else:
-            member_companies = CompanyMembers.objects.filter(
+            member_companies = CompanyMember.objects.filter(
                 user_id=request.user.id)
             if member_companies and member_companies.count() > 1:
                 return redirect('companies_list')
@@ -43,7 +43,7 @@ class CompaniesListView(LoginAndValidationRequiredMixin,  ListView):
         if self.request.user.is_staff:
             companies = Company.objects.all()
         else:
-            company_ids = CompanyMembers.objects.filter(
+            company_ids = CompanyMember.objects.filter(
                 user_id=self.request.user.id).values_list('company_id', flat=True)
             company_ids_list = list(company_ids)
             companies = Company.objects.filter(
@@ -72,7 +72,7 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
 
-        members_ids = CompanyMembers.objects.filter(
+        members_ids = CompanyMember.objects.filter(
             company_id=company.id).values_list('user_id', flat=True)
         users = User.objects.filter(id__in=members_ids)
         paginator = Paginator(users.order_by('name'), 10)  # 10 users per page
@@ -84,7 +84,7 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         context['page_obj'] = page_obj
         context['primary_title'] = 'Company Info'
         context['company'] = company
-        members = CompanyMembers.objects.filter(company_id=company.id)
+        members = CompanyMember.objects.filter(company_id=company.id)
         for member in members:
             print(member)
         return context
@@ -94,7 +94,7 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
             return True
 
         company = self.get_object()
-        company_member = CompanyMembers.objects.filter(
+        company_member = CompanyMember.objects.filter(
             user_id=self.request.user.id, company_id=company.id)
 
         # if company_member is "truthy"/exists, let the member see the Company Info
@@ -123,7 +123,7 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Cr
             company.created_by = request.user
             company.row_action = 'CREATE'
             company.save()
-            CompanyMembers.objects.create(company=company, user=request.user)
+            CompanyMember.objects.create(company=company, user=request.user)
             return redirect('display_company_info', pk=company.id)
 
     # only staff can create companies
@@ -166,7 +166,7 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Upda
         return False
 
 
-class CompanyMembersListDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+class CompanyMemberListDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     model = Company
     template_name = 'display_members.html'
     context_object_name = 'company'
@@ -177,7 +177,7 @@ class CompanyMembersListDetailView(LoginAndValidationRequiredMixin, UserPassesTe
         company = self.get_object()
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
-        members_ids = CompanyMembers.objects.filter(
+        members_ids = CompanyMember.objects.filter(
             company_id=company.id).values_list('user_id', flat=True)
         users = User.objects.filter(id__in=members_ids)
         paginator = Paginator(users.order_by('name'), 10)  # 10 users per page
@@ -196,7 +196,7 @@ class CompanyMembersListDetailView(LoginAndValidationRequiredMixin, UserPassesTe
             return True
 
         company = self.get_object()
-        company_member = CompanyMembers.objects.filter(
+        company_member = CompanyMember.objects.filter(
             user_id=self.request.user.id, company_id=company.id)
 
         if company_member:
@@ -225,8 +225,8 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
             selected_ids = [UUID(value) for value in selected_values]
 
         else:
-            # Get the initial list of selected members from the CompanyMembers table
-            member_uids = CompanyMembers.objects.filter(
+            # Get the initial list of selected members from the CompanyMember table
+            member_uids = CompanyMember.objects.filter(
                 company_id=company.id).values_list('user_id', flat=True)
             member_uid_list = list(member_uids)
             selected_ids = member_uid_list
@@ -287,18 +287,18 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
             set(checked_uuid_list)) - unchecked_uuid_set)
 
         # delete every member who is in this company and NOT currently checked
-        delete_member_uids = CompanyMembers.objects.filter(
+        delete_member_uids = CompanyMember.objects.filter(
             company_id=company.id).exclude(user_id__in=selected_ids).values_list('id', flat=True)
         delete_member_uids_list = list(delete_member_uids)
 
-        CompanyMembers.objects.filter(id__in=delete_member_uids_list).delete()
+        CompanyMember.objects.filter(id__in=delete_member_uids_list).delete()
 
         # Add every checked User to the CompanyMember db table - where
         # there isn't an entry for this user in this company already.
         for value in selected_ids:
             user = get_object_or_404(User, id=value)
-            company_member = CompanyMembers.objects.get_or_create(
-                company_id=company.id, user_id=user.id)
+            company_member = CompanyMember.objects.get_or_create(
+                company_id=company.id, user_id=user.id, row_action='CREATE')
 
         # Clear away selected ids session variable.  It will be re-populated from the
         # CompanyMember table the next time the user wants to edit the Member list.
@@ -326,7 +326,7 @@ def delete_company(del_company):
         # First,  try to delete all the Company members
         # If any deletion fails down the chain,  the whole deletion
         # process should be canceled.
-        delete_member_ids = CompanyMembers.objects.filter(
+        delete_member_ids = CompanyMember.objects.filter(
             company_id=del_company.id)
         for member in delete_member_ids:
             member.delete()

@@ -16,12 +16,15 @@ class Company(models.Model):
     address1 = models.CharField(max_length=50)
     address2 = models.CharField(max_length=50, null=True, blank=True)
     date = models.DateTimeField(default=timezone.now)
-    # Warning: Cascade deletes won't save unedited Companies to Company history!
-    # They also will not delete any edited tickets FROM history.
-    # This class might need to be used with signals at some point
+    # Setting to null on delete for now.
+    # (Once could argue that if admins want to DELETE a user
+    # rather than setting them to be inactive, they are ready to
+    # erase the users from the database completely.  However,
+    # if that's the case, the DBA will have to be noticed to
+    # delete or "scrub" any records in history related to the user
+    # who created this company)
     created_by = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, related_name='companies')
-
+        User, on_delete=models.SET_NULL, related_name='companies')
     last_edited_by = models.ForeignKey(
         User, on_delete=models.SET_NULL,  null=True)
     row_action = models.CharField(max_length=10, default='ERROR')
@@ -39,6 +42,7 @@ class Company(models.Model):
             # , Also Rows will still be backed up even if 'ERROR' was assigned to the row_action.
             if save_method != "CREATE":
                 original_company = Company.objects.get(pk=self.pk)
+                # Prior change was editing of the Company
                 if original_company.last_edited_by:
                     company_backup = CompanyHistory(company_id=original_company.id,
                                                     name=original_company.name,
@@ -54,7 +58,7 @@ class Company(models.Model):
                                                     created_by=original_company.created_by.pk,
                                                     last_edited_by=original_company.last_edited_by.pk,
                                                     row_action=original_company.row_action)
-                else:
+                else:  # Prior change was Creation of the company. No last_edited_by
                     company_backup = CompanyHistory(company_id=original_company.id,
                                                     name=original_company.name,
                                                     phone=original_company.phone,
@@ -69,7 +73,7 @@ class Company(models.Model):
                                                     created_by=original_company.created_by.pk,
                                                     row_action=original_company.row_action)
 
-                    company_backup.save()
+                company_backup.save()
 
             super().save(*args, **kwargs)
 
@@ -92,12 +96,58 @@ class CompanyHistory(models.Model):
     row_action = models.CharField(max_length=10, default='ERROR')
 
 
-class CompanyMembers(models.Model):
+class CompanyMember(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE, related_name='members', null=True, blank=True)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True)  # Allow null for user
+    date = models.DateTimeField(default=timezone.now)
+    # Setting to null on delete for now....
+    # Allowing null for default in case
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL)
+    deleted_by = models.ForeignKey(User, on_delete=models.SET_NULL)
+    row_action = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):
         return str(self.user.name + ", " + self.company.name)
+
+
+class CompanyMemberHistory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    company_member_id = models.UUIDField(db_index=True)
+    company = models.UUIDField(db_index=True, null=True)
+    user = models.UUIDField(db_index=True, null=True)
+    date = models.DateTimeField(default=timezone.now)
+    added_by = models.UUIDField(db_index=True)
+    deleted_by = models.UUIDField(db_index=True, null=True)
+    row_action = models.CharField(max_length=10, default='ERROR')
+
+    def save(self, *args, **kwargs):
+        save_method = self.row_action
+        with transaction.atomic():
+            # Do backup of current values in the row first.
+            # (Note we backup before a DELETE.  Frequently,  a
+            # row will have no backup history until we enter DELETE)
+            # , Also Rows will still be backed up even if 'ERROR' was assigned to the row_action.
+            if save_method != "CREATE":
+                company_member_current = CompanyMember.objects.get(pk=self.pk)
+
+                # View's code called a save preparing for a delete, before this call.
+                if company_member_current.deleted_by:
+                    company_member_backup = CompanyMemberHistory(company_member_id=company_member_current.id,
+                                                                 company=company_member_current.company.pk,
+                                                                 user=company_member_current.user.pk,
+                                                                 date=company_member_current.date,
+                                                                 added_by=company_member_current.created_by.pk,
+                                                                 deleted_by=company_member_current.last_edited_by.pk,
+                                                                 row_action=company_member_current.row_action)
+                else:  # Prior change was Creation of the CompanyMember
+                    company_member_backup = CompanyHistory(company_member_id=company_member_current.id,
+                                                           company=company_member_current.company.pk,
+                                                           user=company_member_current.user.pk,
+                                                           date=company_member_current.date,
+                                                           added_by=company_member_current.created_by.pk,
+                                                           row_action=company_member_current.row_action)
+
+                company_member_backup.save()
