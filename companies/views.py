@@ -123,7 +123,8 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Cr
             company.created_by = request.user
             company.row_action = 'CREATE'
             company.save()
-            CompanyMember.objects.create(company=company, user=request.user)
+            CompanyMember.objects.create(
+                company=company, user=request.user, added_by=self.request.user, row_action='CREATE')
             return redirect('display_company_info', pk=company.id)
 
     # only staff can create companies
@@ -291,14 +292,18 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
             company_id=company.id).exclude(user_id__in=selected_ids).values_list('id', flat=True)
         delete_member_uids_list = list(delete_member_uids)
 
-        CompanyMember.objects.filter(id__in=delete_member_uids_list).delete()
+        members_to_delete = CompanyMember.objects.filter(
+            id__in=delete_member_uids_list)
+        with transaction.atomic():
+            for member in members_to_delete:
+                delete_member(member, self.request.user)
 
         # Add every checked User to the CompanyMember db table - where
         # there isn't an entry for this user in this company already.
         for value in selected_ids:
             user = get_object_or_404(User, id=value)
             company_member = CompanyMember.objects.get_or_create(
-                company_id=company.id, user_id=user.id, row_action='CREATE')
+                company=company, user=request.user, added_by=self.request.user, row_action='CREATE')
 
         # Clear away selected ids session variable.  It will be re-populated from the
         # CompanyMember table the next time the user wants to edit the Member list.
@@ -311,7 +316,7 @@ class CompanyDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
 
     def post(self, request, *args, **kwargs):
         del_company = self.get_object()
-        delete_company(del_company)
+        delete_company(del_company, self.request.user)
         return redirect('companies_list')
 
     def test_func(self):
@@ -319,8 +324,8 @@ class CompanyDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
 
 
 # Since this method has operations that must succeed or fail together,
-# Putting a transaction at the top of this method.
-def delete_company(del_company):
+# Putting a transaction statement at the top of this method.
+def delete_company(del_company, usr):
     with transaction.atomic():
 
         # First,  try to delete all the Company members
@@ -329,7 +334,26 @@ def delete_company(del_company):
         delete_member_ids = CompanyMember.objects.filter(
             company_id=del_company.id)
         for member in delete_member_ids:
-            member.delete()
+            delete_member(member, usr)
+
+        del_company.row_action = 'DELETE'
+        del_company.last_edited_by = usr
+        del_company.date = timezone.now()
+        del_company.save()
 
         del_company.delete()
         return "success"
+
+# Since this method will be called WITHIN a transaction, we will NOT
+# put a transaction at the top
+
+
+def delete_member(member, usr):
+
+    member.row_action = 'DELETE'
+    member.deleted_by = usr
+    member.date = timezone.now()
+
+    member.save()
+    member.delete()
+    return "success"
