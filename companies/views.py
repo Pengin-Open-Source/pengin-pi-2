@@ -257,6 +257,8 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
             'name'), 10)  # 10 users per page
         page_obj = paginator.get_page(page_number)
 
+        is_admin = self.request.user.is_staff
+        context['is_admin'] = is_admin
         context['users'] = page_obj.object_list
         context['company'] = company
         context['page_obj'] = page_obj
