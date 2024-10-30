@@ -144,12 +144,8 @@ class CompanyMember(models.Model):
             if save_method != "CREATE":
                 company_member_current = CompanyMember.objects.get(pk=self.pk)
 
-                # Check to see if the last_edited_by or created_by fields are null.
-                # That can happen when the editing or creating user has been deleted from the system
-                if company_member_current.last_edited_by:
-                    deletor = company_member_current.deleted_by.pk
-                else:
-                    deletor = None
+                # Check to see if the created_by field is null.
+                # That can happen when the user who added the Member to the Company has been deleted from the system.
                 if company_member_current.added_by:
                     member_adder = company_member_current.added_by.pk
                 else:
@@ -160,7 +156,6 @@ class CompanyMember(models.Model):
                                                              user=company_member_current.user.pk,
                                                              date=company_member_current.date,
                                                              added_by=member_adder,
-                                                             deleted_by=deletor,
                                                              row_action=company_member_current.row_action)
 
                 company_member_backup.save()
@@ -169,7 +164,7 @@ class CompanyMember(models.Model):
 
             # if this is a pre-delete save,  the CompanyMember row will have been updated to contain
             # 1) The action/method: "DELETE"
-            # 2) The User who Deleted the Member
+            # 2) The User who Deleted the Member in field deleted_by
             # 3) The time of the deletion
             # We need to make sure this information is copied into CompanyMemberHistory
             # before we delete the CompanyMember
@@ -178,16 +173,15 @@ class CompanyMember(models.Model):
             if save_method == 'DELETE':
                 archived_member = CompanyMemberHistory(company_member_id=self.id,
                                                        company=self.company.pk,
-                                                       # this value should always be here.
-                                                       # user associated with member does not get set null,  it will CASCADE DELETE the company member
-                                                       # - and CASCADE deletes don't trigger this
+                                                       # Fyi, this value should always be here.
+                                                       # user associated with member does not get set null,  it will CASCADE DELETE
+                                                       # all the company members associated with that user.
                                                        # So best practice is to delete the CompanyMembers first before deleting its User -
-                                                       # - unless of course staff intends to wipe out all history associated with the user,
-                                                       # Which they might.
+                                                       # - unless staff intends to wipe out all history associated with the user.
                                                        user=self.user.pk,
                                                        date=self.date,
                                                        added_by=member_adder,
-                                                       deleted_by=deletor,
+                                                       deleted_by=self.deleted_by.pk,
                                                        row_action=self.row_action)
                 archived_member.save()
 
