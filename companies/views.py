@@ -113,7 +113,8 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Cr
         form = CompanyForm()
         form_rendered_for_create = form.render("configure_company_form.html")
         context = {'form': form_rendered_for_create,
-                   'primary_title': 'Create New Company'}
+                   'primary_title': 'Create New Company',
+                   'is_admin': request.user.is_staff}
         return render(request, self.template_name,  context)
 
     def post(self, request):
