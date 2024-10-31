@@ -12,6 +12,7 @@ from .forms import CompanyForm
 from django_ratelimit.decorators import ratelimit
 from django.contrib.auth.mixins import UserPassesTestMixin
 from main.mixins import LoginAndValidationRequiredMixin
+from django.contrib import messages
 
 
 class CompaniesHomeView(LoginAndValidationRequiredMixin,  View):
@@ -127,6 +128,9 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Cr
             CompanyMember.objects.create(
                 company=company, user=request.user, added_by=self.request.user, row_action='CREATE')
             return redirect('display_company_info', pk=company.id)
+        messages.error(
+            request, 'Invalid Entries. Possibly you are using an existing email?')
+        return redirect('create_company')
 
     # only staff can create companies
     def test_func(self):
@@ -160,6 +164,9 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Upda
             company.date = timezone.now()
             company.save()
             return redirect('display_company_info', pk=company.id)
+        messages.error(
+            request, 'Invalid Entries. Possibly you are using an existing email?')
+        return redirect('edit_company_info_post', pk=company.id)
 
     # only staff can Edit companies
     def test_func(self):
