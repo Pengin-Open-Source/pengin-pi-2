@@ -1,10 +1,12 @@
 <a href="/profile" >Personal Info</a>
+{% if user.validated %}
 <a href="/company" >Company Info</a>
 {% if is_admin %}
     <a href="/company/create" >Create Company</a>
 {% endif %}
 <a href="/orders" >Order Info</a>
 <a href="/calendar" >Calendar</a>
+{% endif %}
 
 
 <!-- TODO: this file and folder could have better names but then everywhere that imports it needs to be changed -->
