@@ -48,11 +48,11 @@ class CompaniesListView(LoginAndValidationRequiredMixin,  ListView):
                 user_id=self.request.user.id).values_list('company_id', flat=True)
             company_ids_list = list(company_ids)
             companies = Company.objects.filter(
-                id__in=company_ids_list).order_by('name')
+                id__in=company_ids_list)
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
-        paginator = Paginator(companies, 10)
+        paginator = Paginator(companies.order_by('name'), 10)
         page_obj = paginator.get_page(page_number)
         context['companies'] = page_obj
         context['is_admin'] = self.request.user.is_staff
@@ -85,9 +85,6 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         context['page_obj'] = page_obj
         context['primary_title'] = 'Company Info'
         context['company'] = company
-        members = CompanyMember.objects.filter(company_id=company.id)
-        for member in members:
-            print(member)
         return context
 
     def test_func(self):
