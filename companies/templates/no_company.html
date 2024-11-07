@@ -2,7 +2,7 @@
 {% load static %}  {# Load static files #}
 
 {% block pageDropDowns %}
-  {% include "right_window/profile_info.html" %}
+  <a href="{% url 'profiles:profile' %}"> Personal Profile</a>
 {% endblock %}
 
 {% block pageContent %}
