@@ -310,7 +310,7 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         for value in selected_ids:
             user = get_object_or_404(User, id=value)
             company_member = CompanyMember.objects.get_or_create(
-                company=company, user=request.user, added_by=self.request.user, row_action='CREATE')
+                company=company, user=user, added_by=self.request.user, row_action='CREATE')
 
         # Clear away selected ids session variable.  It will be re-populated from the
         # CompanyMember table the next time the user wants to edit the Member list.
