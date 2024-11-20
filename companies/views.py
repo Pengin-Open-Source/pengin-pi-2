@@ -213,7 +213,7 @@ class CompanyMemberListDetailView(LoginAndValidationRequiredMixin, UserPassesTes
 
 
 @method_decorator(ratelimit(key='ip', rate='10/m', block=True), name='post')
-class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
+class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, UpdateView):
     model = Company
     template_name = 'edit_members.html'
     form_class = CompanyForm
@@ -316,6 +316,12 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin, UpdateView):
         # CompanyMember table the next time the user wants to edit the Member list.
         self.request.session['selected_ids'] = None
         return redirect('display_company_members', pk=company.id)
+
+    # only staff can Edit Company members list
+    def test_func(self):
+        if self.request.user.is_staff:
+            return True
+        return False
 
 
 class CompanyDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DeleteView):
