@@ -13,7 +13,7 @@ urlpatterns = [
          CompanyDetailView.as_view(), name='display_company_info'),
     path('company/<uuid:pk>/edit/',
          CompanyEditView.as_view(), name='edit_company_info_post'),
-    path('company<uuid:pk>/delete/',
+    path('company/<uuid:pk>/delete/',
          CompanyDeleteView.as_view(), name='delete_company'),
     path('company/<uuid:pk>/members/',
          CompanyMemberListDetailView.as_view(), name='display_company_members'),
