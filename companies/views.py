@@ -252,7 +252,7 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin,  UserPassesTe
                 self.request.GET.get('unselected_users'))
             unchecked_uuid_list = [UUID(value) for value in unchecked_values]
 
-            selected_ids = list(set(selected_ids) ^ set(unchecked_uuid_list))
+            selected_ids = list(set(selected_ids) - set(unchecked_uuid_list))
 
         # test code for session items
 
