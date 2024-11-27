@@ -156,7 +156,7 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Upda
         form = CompanyForm(request.POST, instance=company)
         if form.is_valid():
             company = form.save(commit=False)
-            company.user = request.user
+            company.last_edited_by = request.user
             company.row_action = 'EDIT'
             company.date = timezone.now()
             company.save()
