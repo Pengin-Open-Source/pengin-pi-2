@@ -309,8 +309,11 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin,  UserPassesTe
         # there isn't an entry for this user in this company already.
         for value in selected_ids:
             user = get_object_or_404(User, id=value)
-            company_member = CompanyMember.objects.get_or_create(
-                company=company, user=user, added_by=self.request.user, row_action='CREATE')
+            company_member = CompanyMember.objects.filter(
+                company=company, user=user)
+            if not company_member.exists():
+                CompanyMember.objects.create(
+                    company=company, user=user, added_by=self.request.user, row_action='CREATE')
 
         # Clear away selected ids session variable.  It will be re-populated from the
         # CompanyMember table the next time the user wants to edit the Member list.
