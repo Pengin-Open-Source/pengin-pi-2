@@ -5,7 +5,7 @@ from django.db import transaction
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.utils import timezone
-from django.views.generic import View, CreateView, UpdateView, DeleteView
+from django.views.generic import View, UpdateView, DeleteView
 from .models import Company, CompanyMember
 from main.models.users import User
 from .forms import CompanyForm
@@ -105,10 +105,8 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Vi
         return False
 
 
-class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):
+class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
-    model = Company
-    form_class = CompanyForm
     template_name = 'company_create.html'
 
     def get(self, request, *args, **kwargs):
