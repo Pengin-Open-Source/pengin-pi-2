@@ -32,15 +32,11 @@ class CompaniesHomeView(LoginAndValidationRequiredMixin,  View):
             return render(request, 'no_company.html')
 
 
-class CompaniesListView(LoginAndValidationRequiredMixin,  ListView):
+class CompaniesListView(LoginAndValidationRequiredMixin,  View):
 
-    queryset = Company.objects.all()
     template_name = 'company_info_main.html'
-    model = Company
-    context_object_name = 'companies'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_context_data(self):
         if self.request.user.is_staff:
             companies = Company.objects.all()
         else:
@@ -54,11 +50,16 @@ class CompaniesListView(LoginAndValidationRequiredMixin,  ListView):
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(companies.order_by('name'), 10)
         page_obj = paginator.get_page(page_number)
+        context = {}
         context['companies'] = page_obj
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = 'Companies'
 
         return context
+
+    def get(self, request):
+        context = self.get_context_data()
+        return render(request, self.template_name, context)
 
 
 class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
