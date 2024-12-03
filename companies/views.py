@@ -5,7 +5,7 @@ from django.db import transaction
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.utils import timezone
-from django.views.generic import View, ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import View, CreateView, UpdateView, DeleteView
 from .models import Company, CompanyMember
 from main.models.users import User
 from .forms import CompanyForm
@@ -62,15 +62,12 @@ class CompaniesListView(LoginAndValidationRequiredMixin,  View):
         return render(request, self.template_name, context)
 
 
-class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
-    model = Company
+class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = 'company_info.html'
-    context_object_name = 'company'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_context_data(self, pk):
 
-        company = self.get_object()
+        company = get_object_or_404(Company, pk=pk)
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
 
@@ -81,6 +78,7 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         page_obj = paginator.get_page(page_number)
 
         is_admin = self.request.user.is_staff
+        context = {}
         context['is_admin'] = is_admin
         context['users'] = page_obj.object_list
         context['page_obj'] = page_obj
@@ -88,11 +86,16 @@ class CompanyDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, De
         context['company'] = company
         return context
 
+    def get(self, request, pk):
+        context = self.get_context_data(pk)
+        return render(request, self.template_name, context)
+
     def test_func(self):
         if self.request.user.is_staff:
             return True
 
-        company = self.get_object()
+        pk = self.kwargs['pk']
+        company = get_object_or_404(Company, pk=pk)
         company_member = CompanyMember.objects.filter(
             user_id=self.request.user.id, company_id=company.id)
 
@@ -173,15 +176,12 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Upda
         return False
 
 
-class CompanyMemberListDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
-    model = Company
+class CompanyMemberListDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
+
     template_name = 'display_members.html'
-    context_object_name = 'company'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        company = self.get_object()
+    def get_context_data(self, pk):
+        company = get_object_or_404(Company, pk=pk)
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         members_ids = CompanyMember.objects.filter(
@@ -191,6 +191,7 @@ class CompanyMemberListDetailView(LoginAndValidationRequiredMixin, UserPassesTes
         page_obj = paginator.get_page(page_number)
 
         is_admin = self.request.user.is_staff
+        context = {}
         context['is_admin'] = is_admin
         context['users'] = page_obj.object_list
         context['page_obj'] = page_obj
@@ -198,11 +199,16 @@ class CompanyMemberListDetailView(LoginAndValidationRequiredMixin, UserPassesTes
         context['company'] = company
         return context
 
+    def get(self, request, pk):
+        context = self.get_context_data(pk)
+        return render(request, self.template_name, context)
+
     def test_func(self):
         if self.request.user.is_staff:
             return True
 
-        company = self.get_object()
+        pk = self.kwargs['pk']
+        company = get_object_or_404(Company, pk=pk)
         company_member = CompanyMember.objects.filter(
             user_id=self.request.user.id, company_id=company.id)
 
