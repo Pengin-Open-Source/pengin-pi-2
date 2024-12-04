@@ -5,7 +5,7 @@ from django.db import transaction
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.utils import timezone
-from django.views.generic import View, UpdateView
+from django.views.generic import View
 from .models import Company, CompanyMember
 from main.models.users import User
 from .forms import CompanyForm
@@ -226,14 +226,11 @@ class CompanyMemberListDetailView(LoginAndValidationRequiredMixin, UserPassesTes
 
 
 @method_decorator(ratelimit(key='ip', rate='10/m', block=True), name='post')
-class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, UpdateView):
-    model = Company
+class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
     template_name = 'edit_members.html'
-    form_class = CompanyForm
 
-    def get_context_data(self,  **kwargs):
-        context = super().get_context_data(**kwargs)
-        company = self.get_object()
+    def get_context_data(self,  pk):
+        company = get_object_or_404(Company, pk=pk)
 
         if self.request.GET.get('wipe_out'):
             self.request.session['selected_ids'] = None
@@ -276,6 +273,7 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin,  UserPassesTe
         page_obj = paginator.get_page(page_number)
 
         is_admin = self.request.user.is_staff
+        context = {}
         context['is_admin'] = is_admin
         context['users'] = page_obj.object_list
         context['company'] = company
@@ -288,8 +286,12 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin,  UserPassesTe
 
         return context
 
-    def post(self, request, *args, **kwargs):
-        company = self.get_object()
+    def get(self, request, pk):
+        context = self.get_context_data(pk)
+        return render(request, self.template_name, context)
+
+    def post(self, request, pk):
+        company = get_object_or_404(Company, pk=pk)
 
         selected_ids = self.request.session.get('selected_ids')
         selected_uuids = [UUID(value) for value in selected_ids]
