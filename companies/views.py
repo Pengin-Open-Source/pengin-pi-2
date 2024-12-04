@@ -138,23 +138,27 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Vi
         return False
 
 
-class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
+class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
-    model = Company
-    form_class = CompanyForm
     template_name = 'company_edit.html'
 
-    def get_context_data(self,  **kwargs):
-        context = super().get_context_data(**kwargs)
-        company = self.get_object()
+    def get_context_data(self,  pk):
+        company = get_object_or_404(Company, pk=pk)
         form = CompanyForm(instance=company)
         form_rendered_for_edit = form.render("configure_company_form.html")
+        context = {}
         context['form'] = form_rendered_for_edit
+        context["company"] = company
         context['primary_title'] = 'Edit Company'
+        context['pk'] = pk
         return context
 
-    def post(self, request, *args, **kwargs):
-        company = self.get_object()
+    def get(self, request, pk):
+        context = self.get_context_data(pk)
+        return render(request, self.template_name, context)
+
+    def post(self, request, pk):
+        company = get_object_or_404(Company, pk=pk)
         form = CompanyForm(request.POST, instance=company)
         if form.is_valid():
             company = form.save(commit=False)
@@ -165,7 +169,11 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Upda
             return redirect('display_company_info', pk=company.id)
         messages.error(
             request, 'Invalid Entries. Possibly you are using an existing email?')
-        return redirect('edit_company_info_post', pk=company.id)
+        context = {}
+        context['form'] = form
+        context['company'] = company
+        context['pk'] = pk
+        return render(request, self.template_name, context)
 
     # only staff can Edit companies
     def test_func(self):
