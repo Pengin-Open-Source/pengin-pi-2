@@ -5,7 +5,7 @@ from django.db import transaction
 from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.utils import timezone
-from django.views.generic import View, UpdateView, DeleteView
+from django.views.generic import View, UpdateView
 from .models import Company, CompanyMember
 from main.models.users import User
 from .forms import CompanyForm
@@ -340,11 +340,10 @@ class CompanyMemberListUpdateView(LoginAndValidationRequiredMixin,  UserPassesTe
         return False
 
 
-class CompanyDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DeleteView):
-    model = Company
+class CompanyDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
-    def post(self, request, *args, **kwargs):
-        del_company = self.get_object()
+    def post(self, request, pk):
+        del_company = get_object_or_404(Company, pk=pk)
         delete_company(del_company, self.request.user)
         return redirect('companies_list')
 
