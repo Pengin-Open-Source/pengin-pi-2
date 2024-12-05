@@ -129,7 +129,12 @@ class CompanyCreateView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Vi
             return redirect('display_company_info', pk=company.id)
         messages.error(
             request, 'Invalid Entries. Possibly you are using an existing email?')
-        return redirect('create_company')
+
+        form_rendered_for_create = form.render("configure_company_form.html")
+        context = {'form': form_rendered_for_create,
+                   'primary_title': 'Create New Company',
+                   'is_admin': request.user.is_staff}
+        return render(request, self.template_name, context)
 
     # only staff can create companies
     def test_func(self):
@@ -169,9 +174,12 @@ class CompanyEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, View
             return redirect('display_company_info', pk=company.id)
         messages.error(
             request, 'Invalid Entries. Possibly you are using an existing email?')
+
+        form_rendered_for_edit = form.render("configure_company_form.html")
         context = {}
-        context['form'] = form
+        context['form'] = form_rendered_for_edit
         context['company'] = company
+        context['primary_title'] = 'Edit Company'
         context['pk'] = pk
         return render(request, self.template_name, context)
 
