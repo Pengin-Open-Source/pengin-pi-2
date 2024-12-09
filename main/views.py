@@ -17,6 +17,7 @@ import os
 def generate_uuid():
     return str(uuid.uuid4())
 
+
 class LoginView(View):
     def get(self, request):
         form = LoginForm()
@@ -29,15 +30,17 @@ class LoginView(View):
             user = form.get_user()
             login(request, user)
             return redirect('home_view')
-        messages.error(request, 'Please check your login details and try again.')
+        messages.error(
+            request, 'Please check your login details and try again.')
         return redirect('login')
+
 
 class SignupView(View):
     def get(self, request):
         form = SignUpForm()
         return render(request, 'authentication/signup.html', {'form': form, 'primary_title': 'Sign Up', 'site_key': os.getenv("SITE_KEY")})
 
-    #@ratelimit(key='ip', rate='3/minute', block=True)
+    # @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request):
         # Access request object through self.request
         form = SignUpForm(self.request.POST)
@@ -47,20 +50,24 @@ class SignupView(View):
             user.save()
             send_mail(user.email, user.validation_id, "user_validation")
             return redirect('login')
-        messages.error(self.request, 'Email address already exists or invalid email.')
+        messages.error(
+            self.request, 'Email address already exists or invalid email.')
         return redirect('signup')
+
+
 class LogoutView(View):
     @method_decorator(login_required)
     def get(self, request):
         logout(request)
-        return redirect('home')
+        return redirect('home_view')
+
 
 class PasswordResetRequestView(View):
     def get(self, request):
         form = PasswordResetForm()
         return render(request, 'authentication/generate_prt_form.html', {'form': form, 'primary_title': 'Forgot Password', 'site_key': os.getenv("SITE_KEY")})
 
-    #@ratelimit(key='ip', rate='3/minute', block=True)
+    # @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request):
         form = PasswordResetForm(request.POST)
         if form.is_valid():
@@ -78,6 +85,7 @@ class PasswordResetRequestView(View):
                 messages.error(request, 'Email does not exist.')
         return redirect('generate_prt')
 
+
 class PasswordResetView(View):
     def get(self, request, token):
         user = User.objects.filter(prt=token).first()
@@ -86,7 +94,7 @@ class PasswordResetView(View):
             return render(request, 'authentication/reset_password_form.html', {'form': form, 'email': user.email, 'token': token, 'site_key': os.getenv("SITE_KEY"), 'primary_title': 'Reset Password'})
         return redirect('generate_prt')
 
-    #@ratelimit(key='ip', rate='3/minute', block=True)
+    # @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request, token):
         form = SetPasswordForm(request.POST)
         if form.is_valid():
