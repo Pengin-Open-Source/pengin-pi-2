@@ -1,0 +1,21 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+  {% include "profile_info.html" %}
+{% endblock %}
+
+{% block pageContent %}
+  <form class="form" method="POST" action="{% url 'profiles:edit_profile' %}">
+    {% csrf_token %}
+    <input type="hidden" name="old_email" value="{{ email }}">
+    <div class="form-section">
+        <label>Name</label>
+        <input class="form-input" type="text" name="name" value="{{ name }}" placeholder="Your new name">
+    </div>
+    <div class="form-section">
+      <label>Email</label>
+      <input class="form-input" type="email" name="email" value="{{ email }}" placeholder="Your new email">
+    </div>
+    <button class="primary-button" type="submit">Save</button>
+  </form>
+{% endblock %}

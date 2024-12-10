@@ -25,7 +25,6 @@ def save_about(request, form):
     return about
 
 
-@method_decorator(login_required, name='dispatch')
 @method_decorator(is_admin_provider, name='dispatch')
 class AboutView(View):
     def get(self, request, is_admin):

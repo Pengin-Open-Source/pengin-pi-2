@@ -103,7 +103,6 @@ class EditProduct(View):
 class ListProduct(View):
     template_name = "products.html"
 
-    @method_decorator(login_required)
     @method_decorator(is_admin_provider)
     def get(self, request, is_admin):
         products = Product.objects.all().order_by("priority")
@@ -128,7 +127,6 @@ class ListProduct(View):
 class DetailProduct(View):
     template_name = "product.html"
 
-    @method_decorator(login_required)
     @method_decorator(is_admin_provider)
     def get(self, request, product_id, is_admin):
         product = get_object_or_404(Product, id=product_id)

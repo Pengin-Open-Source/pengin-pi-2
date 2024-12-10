@@ -1,0 +1,46 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+  {% if is_admin %}
+    <a href="{% url 'customers:edit-customer' customer.id %}">Edit Customer</a>
+    <a href="{% url 'customers:delete-customer' customer.id %}">Delete Customer</a>
+  {% endif %}
+{% endblock %}
+
+{% block pageContent %}
+    <p>{{ customer.name }}</p>
+    <button class="primary-button" type="button">
+        {# Need to create views and urls to access detail pages of users and companies #}
+        {% if customer.user %}
+            {# Change "future_href" to ref and remove the "\" from the link #}
+            {# Ensure both url patterns exist in the apps #}
+            <a future_href="{\% url 'main:detail-user' customer.user.id %}">See user (link not functional, need a user view)</a>
+        {% elif customer.company %}
+            <a future_href="{\% url 'companies:detail-company' customer.company.id %}">See company (link not functional, need a company view)</a>
+        {% endif %}
+    </button>
+
+    <h3>Shipping Address</h3>
+    {% if customer.shippingaddress_set %}
+        {% for address in customer.shippingaddress_set.all %}
+            <div>
+                <span>{{ address }}</span>
+                <span><a href="{% url "customers:edit-address" customer_id=customer.id address_id=address.id %}">
+                    <button class="primary-button" type="button">Edit</button>
+                </a></span>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No shipping address on file</p>
+    {% endif %}
+    <div>
+        <a href="{% url "customers:create-address" customer_id=customer.id %}">
+            <button class="primary-button" type="button">Add Shipping Address</button>
+        </a>
+    </div>
+
+    <h3>Orders</h3>
+    {% for order in customer.order_set.all %}
+        <p><a href="{% url "orders:detail-order" order.id %}">{{ order.order_date }}</a></p>
+    {% endfor %}
+{% endblock %}

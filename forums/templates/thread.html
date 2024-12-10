@@ -1,0 +1,86 @@
+{% extends "layout/alternating_color_table.html" %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+
+{% block pageDropDowns %}
+  <a href="{% url 'create_post' thread.id %}">Create Post</a>
+  <a href="{% url 'forums' %}">Back To Forums</a>
+{% endblock %}
+
+{% block tableContent %}
+ {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
+<script>
+  function convertUTCToLocal(utcTime) {
+    const utcMillis = new Date(utcTime).getTime();
+    const localDate = new Date(utcMillis);
+    return localDate.toLocaleString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    });
+  
+  }
+</script>
+  {% for post in page_obj %}
+  <tr><td class="post-container">
+    <a class="alternating-colors-table-links" href="{% url 'post' thread.id post.id %}">{{ post.title|escape }}</a>
+    <div class="comment-title-underline">
+      <div><b> 
+        {% if  post.row_action == 'EDIT' %} 
+        Last Edited
+        {% endif %} 
+        by {{post.user.name|escape}} on  <span id="post-latest-time-{{forloop.counter}}"></span> </b> </div>
+      <script>
+        var utcTime = new Date('{{ post.date|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('post-latest-time-{{forloop.counter}}').textContent = localTime;
+      </script>
+      {% if post.row_action == 'CREATE' %} 
+         </div>
+      {% elif post.row_action == 'EDIT' %}
+        <i> (Edited) </i>  </div>
+       <div class="comment-title-underline">
+                  {% if post.is_create_missing %}
+                  <p style="color: red;" >  
+                    <i> Post Creation Date / Original Author not found!</i>
+                  </p>
+                  {% else %}
+                      <p style="color: orange;" > 
+                           Originally posted by {{post.author |escape}} on  <span id="post-creation-time-{{forloop.counter}}"></span>
+                     </p>
+                     <script>
+                      var utcTime = new Date('{{ post.create_date|date:"c" }}');
+                      var localTime = convertUTCToLocal(utcTime);
+                      document.getElementById('post-creation-time-{{forloop.counter}}').textContent = localTime;
+                    </script>
+                  {% endif %}
+        </div>
+      {% else %}
+        </div>
+         <div class="comment-title-underline">
+            <p style="color: red;" >  
+              <i> Warning: This may be the date a post was deleted,  before being restored - rather than the last edit date. Your system administrator can check on this</i>
+            </p>
+        </div>
+      {% endif %} 
+   
+    {% if is_admin or user.name == post.author %}
+    <form method="post" action="{% url 'delete_post' post.id %}">
+      {% csrf_token %}
+      <button class="primary-button" style="color: purple;" type="submit" onclick="return confirm('Are you sure you want to delete this post?')">Delete</button>
+    </form>
+    {% endif %}
+  </td></tr>
+  {% endfor %}
+  {% use_macro render_pagination page_obj %}
+
+
+
+
+{% endblock %}
+
+

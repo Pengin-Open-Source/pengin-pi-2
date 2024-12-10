@@ -1,0 +1,17 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+  {% include "profile_info.html" %}
+  <a href="{% url 'profiles:edit_profile' %}">Edit Profile</a>
+  <a href="{% url 'profiles:edit_password' %}">Edit Password</a>
+  {% if can_do %}
+    <a href="{% url 'profiles:send_email' %}">Re-send Validation Email</a>
+  {% endif %}
+{% endblock %}
+
+{% block pageContent %}
+    <div class="profile-info-container">
+      <p>Name: {{ name }}</p>
+      <p>Email: {{ email }}</p>
+    </div>
+{% endblock %}

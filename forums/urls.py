@@ -1,16 +1,20 @@
 # forums/urls.py
 from django.urls import path
-from . import views
+from .views import (
+    ForumsListView, ThreadCreateView, ThreadDetailView, 
+    PostCreateView, PostDetailView, PostEditView, 
+    ThreadDeleteView, PostDeleteView, CommentEditView, CommentDeleteView
+)
 
 urlpatterns = [
-    path('', views.forums, name='forums'),
-    path('create/', views.create_thread, name='create_thread'),
-    path('<uuid:thread_id>/', views.thread, name='thread'),
-    path('<uuid:thread_id>/create/', views.create_post, name='create_post'),
-    path('<uuid:thread_id>/<uuid:post_id>/', views.post, name='post'),
-    path('<uuid:thread_id>/<uuid:post_id>/edit/', views.edit_post, name='edit_post'),
-    path('<uuid:thread_id>/<uuid:post_id>/<uuid:comment_id>/edit/', views.edit_comment, name='edit_comment'),
-    path('delete/thread/<uuid:id>/', views.delete_thread, name='delete_thread'),
-    path('delete/post/<uuid:id>/', views.delete_post, name='delete_post'),
-    path('delete/comment/<uuid:id>/', views.delete_comment, name='delete_comment'),
+    path('', ForumsListView.as_view(), name='forums'),
+    path('create/', ThreadCreateView.as_view(), name='create_thread'),
+    path('<uuid:pk>/', ThreadDetailView.as_view(), name='thread'),
+    path('<uuid:thread_id>/create/', PostCreateView.as_view(), name='create_post'),
+    path('<uuid:thread_id>/<uuid:pk>/', PostDetailView.as_view(), name='post'),
+    path('<uuid:thread_id>/<uuid:pk>/edit/', PostEditView.as_view(), name='edit_post'),
+    path('<uuid:thread_id>/<uuid:post_id>/<uuid:pk>/edit/', CommentEditView.as_view(), name='edit_comment'),
+    path('delete/thread/<uuid:pk>/', ThreadDeleteView.as_view(), name='delete_thread'),
+    path('delete/post/<uuid:pk>/', PostDeleteView.as_view(), name='delete_post'),
+    path('delete/comment/<uuid:pk>/', CommentDeleteView.as_view(), name='delete_comment'),
 ]

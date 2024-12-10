@@ -1,0 +1,36 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+  <form class="form" method="POST">
+    <p>To create a new customer, please select either a user or a company.</p>
+    {% csrf_token %}
+
+  {% if form.non_field_errors %}
+        <div class="error">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+    <div class="customer-edit-container">
+      <div class="form-section">
+        {{ form.user.label_tag }}
+        {{ form.user }}
+      </div>
+      <div class="form-section">
+        {{ form.company.label_tag }}
+        {{ form.company }}
+      </div>
+    </div>
+
+      {% if action == "update" %}
+        <a href="{% url "customers:detail-customer" customer.id %}">
+          <button class="primary-button" type="button">Cancel</button>
+        </a>
+        <button class="primary-button" type="submit">Save changes</button>
+      {% else %}
+        <a href="{% url "customers:list-customers" %}">
+          <button class="primary-button" type="button">Cancel</button>
+        </a>
+        <button class="primary-button" type="submit">Add Customer</button>
+      {% endif %}
+  </form>
+{% endblock %}

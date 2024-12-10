@@ -1,0 +1,37 @@
+{% extends "layout/alternating_color_table.html" %}
+
+{% block pageDropDowns %}
+    <a href="{%  url "customers:create-customer" %}">New Customer</a>
+{% endblock %}
+
+
+{% if page_customers|length > 0 %}
+    {% block tableContent %}
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type of customer</th>
+            <th>Number of orders</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for customer in page_customers %}
+        <tr>
+            <td><a href="{% url 'customers:detail-customer' customer.id %}">{{ customer.name }}</a></td>
+            {% if customer.company %}
+                <td>Company</td>
+            {% else %}
+                <td>User</td>
+            {% endif %}
+            <td>{{ customer.order_set.count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% endblock %}
+{% else %}
+    <p>No customers found</p>
+{% endif %}
+
+{# Add pagination here using the macro/pagination.html render_pagination #}
+
+{#{% endblock %}#}
