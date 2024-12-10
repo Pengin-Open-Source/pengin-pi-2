@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'markdownit',
     'macros',
     # Add your apps here
-    #'global_admin',
+    # 'global_admin',
     'main',
     'home',
     'about',
@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'applications',
     'profiles',
     'contracts',
-    # 'relationships',
+    'events',
 ]
 
 load_dotenv()

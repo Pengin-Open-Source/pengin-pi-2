@@ -1,8 +1,7 @@
-from django.db import models
 import uuid
-
+from django.db import models
+from django.contrib.auth.models import Group
 from main.models import User
-from forums.models import Role  # Role should be in the main app, not in forums
 
 
 class Event(models.Model):
@@ -13,10 +12,13 @@ class Event(models.Model):
     title = models.CharField(max_length=50)
     description = models.TextField()
     location = models.CharField(max_length=100)
-    author = models.ForeignKey(User, on_delete=models.PROTECT, related_name="authored_events")
-    organizer = models.ForeignKey(User, on_delete=models.PROTECT, related_name="organized_events")
-    participants = models.ManyToManyField(User, related_name="events", blank=True)
-    roles = models.ManyToManyField(Role, related_name="events", blank=True)
+    author = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name="authored_events")
+    organizer = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name="organized_events")
+    participants = models.ManyToManyField(
+        User, related_name="events", blank=True)
+    roles = models.ManyToManyField(Group, related_name='events', blank=True)
 
     def __str__(self):
         return self.title + " at " + self.location
