@@ -37,3 +37,10 @@ class EventForm(forms.ModelForm):
             "start_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"}),
             "end_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"})
         }
+
+
+class CalendarSettingsForm(forms.Form):
+    first_day_of_week = forms.ChoiceField(
+        label='First Day of the Calendar Week',
+        choices=[(6, "Sunday"), (0, "Monday"),]
+    )

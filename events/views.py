@@ -7,7 +7,7 @@ from django.views import View
 from .models import Event
 
 from .calendar import EventCalendar
-from .forms import EventForm
+from .forms import EventForm, CalendarSettingsForm
 from .permissions import can_create_or_see_event, can_change_event
 from datetime import datetime
 
@@ -200,3 +200,29 @@ class DeleteEvent(UserPassesTestMixin, View):
         event = get_object_or_404(Event, id=event_id)
         event.delete()
         return redirect('calendar:calendar')
+
+
+class CalendarSettings(View):
+    template_name = "calendar/calendar_settings.html"
+
+    @method_decorator(login_required)
+    def get(self, request):
+        context = {}
+        form = CalendarSettingsForm()
+        context["form"] = form
+        context["primary_title"] = "Calendar Settings"
+        return render(request, self.template_name, context)
+
+    @method_decorator(login_required)
+    def post(self, request):
+        form = CalendarSettingsForm(request.POST)
+        if form.is_valid():
+            first_day_cal = int(form.cleaned_data['first_day_of_week'])
+            print("Calendar Set")
+            print(first_day_cal)
+            myCal.setfirstweekday(first_day_cal)
+            return redirect('calendar:calendar')
+
+        context = {}
+        context["form"] = form
+        return render(request, self.template_name, context)

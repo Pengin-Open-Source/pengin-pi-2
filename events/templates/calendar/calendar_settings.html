@@ -1,0 +1,14 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+    <a href="{% url "calendar:calendar" %}">Cancel</a>
+{% endblock %}
+
+{% block pageContent %}
+    <form class="form" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="primary-button" type="submit">Set Calendar Week</button>
+    </form>
+{% endblock %}
+    
