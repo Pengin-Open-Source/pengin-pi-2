@@ -18,7 +18,8 @@ class EventCalendar(calendar.HTMLCalendar):
         if events:
             events_html = "<div class='calendar-day-events'><ul class='events-list'>"
             for event in events:
-                event_url = reverse("calendar:detail-event", kwargs={"event_id": event.id})
+                event_url = reverse("calendar:detail-event",
+                                    kwargs={"event_id": event.id})
                 events_html += (
                     f"<li class='calendar-day-event'>"
                     f"<a href='{event_url}' class='event-link'>"
