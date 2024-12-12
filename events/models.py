@@ -30,7 +30,7 @@ class Event(models.Model):
         return self.end_datetime.date()
 
     def start_time(self):
-        return self.start_datetime.time().strftime("%H:%M")
+        return self.start_datetime.time().strftime("%I:%M %p")
 
     def end_time(self):
-        return self.end_datetime.time().strftime("%H:%M")
+        return self.end_datetime.time().strftime("%I:%M %p")

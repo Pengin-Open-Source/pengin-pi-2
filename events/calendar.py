@@ -24,7 +24,8 @@ class EventCalendar(calendar.HTMLCalendar):
                 events_html += (
                     f"<li class='calendar-day-event'>"
                     f"<a href='{event_url}' class='event-link'>"
-                    f"<span class='event-start-time'>{event.start_time}</span>"
+                    f"<span class='event-start-time'>{
+                        event.start_time()}</span>"
                     f" - "
                     f"<span class='event-title'>{event.title}</span>"
                     f"</a></li>"
