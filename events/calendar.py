@@ -11,6 +11,7 @@ class EventCalendar(calendar.HTMLCalendar):
         self.month_events = {}
         self.year = None
         self.month = None
+        self.user_settings = False
         super(EventCalendar, self).__init__()
 
     def get_event_html(self, events):

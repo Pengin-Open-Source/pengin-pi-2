@@ -27,7 +27,9 @@ class CalendarMonth(View):
             year = present_year
             month = present_month
 
-        myCal.setfirstweekday(6)
+        if not myCal.user_settings:
+            myCal.setfirstweekday(6)
+
         calendar_html = myCal.formatmonth(int(year), int(
             month), withyear=True, current_user=request.user)
 
@@ -208,7 +210,10 @@ class CalendarSettings(View):
     @method_decorator(login_required)
     def get(self, request):
         context = {}
-        form = CalendarSettingsForm()
+
+        selected_weekday = myCal.firstweekday
+        form = CalendarSettingsForm(
+            initial={'first_day_of_week': selected_weekday})
         context["form"] = form
         context["primary_title"] = "Calendar Settings"
         return render(request, self.template_name, context)
@@ -218,9 +223,8 @@ class CalendarSettings(View):
         form = CalendarSettingsForm(request.POST)
         if form.is_valid():
             first_day_cal = int(form.cleaned_data['first_day_of_week'])
-            print("Calendar Set")
-            print(first_day_cal)
             myCal.setfirstweekday(first_day_cal)
+            myCal.user_settings = True
             return redirect('calendar:calendar')
 
         context = {}
