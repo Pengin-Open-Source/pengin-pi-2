@@ -20,6 +20,7 @@
             </div>
         {% endif %}
         {% csrf_token %}
+        {{ form.media }} 
         {{ form.as_p }}
 
         {% if action == "update" %}

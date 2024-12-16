@@ -1,3 +1,4 @@
+from django_flatpickr.widgets import DateTimePickerInput
 from django import forms
 from main.models import User
 from .models import Event
@@ -34,8 +35,8 @@ class EventForm(forms.ModelForm):
         ]
 
         widgets = {
-            "start_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"}),
-            "end_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"})
+            "start_datetime": DateTimePickerInput(),
+            "end_datetime": DateTimePickerInput(),
         }
 
 
