@@ -103,36 +103,24 @@ class DetailEvent(UserPassesTestMixin, View):
 
 
 class CreateEvent(UserPassesTestMixin, View):
+    model = Event
+    form_class = EventForm
     template_name = "calendar/event_form.html"
 
     def test_func(self):
         return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
 
-    def get_context_data(self, **kwargs):
-        return {
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        form = EventForm()
+        form_rendered_for_create = form.render(
+            "configure_event_form.html")
+        context = {
             "primary_title": "Create Event",
             "action": "create",
-            "form": EventForm(initial=self.get_initial()),
+            "form": form_rendered_for_create,
+
         }
-
-    def get_initial(self):
-        if "event_id" in self.kwargs:
-            event = get_object_or_404(Event, id=self.kwargs["event_id"])
-            return {
-                "title": event.title,
-                "description": event.description,
-                "location": event.location,
-                "organizer": event.organizer,
-                "participants": event.participants.all,
-                "roles": event.roles.all,
-                "start_datetime": event.start_datetime,
-                "end_datetime": event.end_datetime,
-            }
-        return {}
-
-    @method_decorator(login_required)
-    def get(self, request, **kwargs):
-        context = self.get_context_data()
         return render(request, self.template_name, context)
 
     @method_decorator(login_required)
@@ -142,10 +130,16 @@ class CreateEvent(UserPassesTestMixin, View):
             event = form.save(commit=False)
             event.author = request.user
             event.save()
+
             return redirect("calendar:calendar")
 
-        context = self.get_context_data()
-        context["form"] = form
+        form_rendered_for_create = form.render("configure_event_form.html")
+        context = {
+            "primary_title": "Create Event",
+            "action": "create",
+            "form": form_rendered_for_create,
+
+        }
         return render(request, self.template_name, context)
 
 
@@ -157,10 +151,14 @@ class EditEvent(UserPassesTestMixin, View):
 
     def get_context_data(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
+
+        form = EventForm(instance=event)
+        form_rendered_for_edit = form.render(
+            "configure_event_form.html")
         return {
             "primary_title": "Edit Event",
             "action": "update",
-            "form": EventForm(instance=event),
+            "form": form_rendered_for_edit,
             "event": event,
         }
 

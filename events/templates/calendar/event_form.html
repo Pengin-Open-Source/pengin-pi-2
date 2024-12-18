@@ -21,7 +21,7 @@
         {% endif %}
         {% csrf_token %}
         {{ form.media }} 
-        {{ form.as_p }}
+        {{ form }}
 
         {% if action == "update" %}
             <a href="{% url "calendar:detail-event" event.id %}">
