@@ -713,7 +713,7 @@ th {
 }
 
 .content-section-div-2.hide {
-    display: none;
+  display: none;
 }
 
 .message-container {
@@ -759,11 +759,13 @@ th {
   background-color: #dddddd;
 }
 
-.btn-select-user, .btn-select-chat {
+.btn-select-user,
+.btn-select-chat {
   cursor: pointer;
 }
 
-.btn-select-user:hover, .btn-select-chat:hover {
+.btn-select-user:hover,
+.btn-select-chat:hover {
   background-color: var(--hover-blue);
 }
 
@@ -835,13 +837,13 @@ th {
   min-width: 50%;
 }
 
-.sender > .message-content {
+.sender>.message-content {
   background-color: black;
   margin-left: auto;
   text-align: end;
 }
 
-.receiver > .message-content {
+.receiver>.message-content {
   background-color: var(--main-blue);
   margin-right: auto;
 }
@@ -885,14 +887,17 @@ th {
 }
 
 .top-bar-title.collapsible:after {
-  content: "\2212"; /* Unicode character for "minus" sign (-) */
+  content: "\2212";
+  /* Unicode character for "minus" sign (-) */
   font-size: 15px;
   color: white;
   float: right;
   margin-left: 5px;
 }
+
 .top-bar-title.collapsible.active:after {
-  content: '\002B'; /* Unicode character for "plus" sign (+) */
+  content: '\002B';
+  /* Unicode character for "plus" sign (+) */
 }
 
 .chat-header {
@@ -913,4 +918,20 @@ th {
   color: var(--main-blue);
   font-size: 1.5rem;
   cursor: pointer;
+}
+
+
+/* Adjust Google Gemini's suggestion for re-organizing the form */
+.event-form-class {
+  text-align: left;
+  /* Keep the overall form centered */
+}
+
+.event-form-class label,
+.event-form-class input,
+.event-form-class select {
+  text-align: left;
+  /* Align labels and inputs to the left */
+  margin: 5px;
+  /* Adjust spacing as needed */
 }
