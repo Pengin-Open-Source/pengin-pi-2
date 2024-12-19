@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block pageContent %}
-    <form class="form" method="POST">
+    <form class="event-form-class" method="POST">
         {% if form.errors %}
             <div class="alert alert-danger">
                 {% for error in form.errors %}
@@ -20,7 +20,8 @@
             </div>
         {% endif %}
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ form.media }} 
+        {{ form }}
 
         {% if action == "update" %}
             <a href="{% url "calendar:detail-event" event.id %}">
