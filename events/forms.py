@@ -1,5 +1,4 @@
 from django import forms
-from bootstrap_datepicker_plus.widgets import DateTimePickerInput
 from main.models import User
 from .models import Event
 
@@ -7,8 +6,6 @@ from .models import Event
 # Credit to https://stackoverflow.com/questions/49114304/to-field-name-argument-on-a-modelchoicefield-doesnt-seem-to-be-working
 # -> Alasdair's answer, Plus help from Google Gemini on how to get the selection box to display User names instead of emails without
 # changing the User __str__ method.
-
-
 class UserModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, obj):
         return obj.name
@@ -22,9 +19,6 @@ class UserModelChoiceField(forms.ModelChoiceField):
 class EventForm(forms.ModelForm):
     participants = UserModelMultipleChoiceField(queryset=User.objects.all())
     organizer = UserModelChoiceField(queryset=User.objects.all())
-    start_datetime = forms.DateTimeField(
-        widget=DateTimePickerInput(format='%Y-%m-%d %H:%i')
-    )
 
     class Meta:
         model = Event
@@ -40,6 +34,7 @@ class EventForm(forms.ModelForm):
         ]
 
         widgets = {
+            "start_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"}),
             "end_datetime": forms.DateTimeInput(attrs={"type": "datetime-local"})
         }
 

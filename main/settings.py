@@ -42,8 +42,6 @@ INSTALLED_APPS = [
     'django_redis',
     'markdownit',
     'macros',
-    'bootstrap4',
-    'bootstrap_datepicker_plus',
     # Add your apps here
     # 'global_admin',
     'main',
