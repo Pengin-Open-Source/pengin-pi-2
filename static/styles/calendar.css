@@ -20,6 +20,8 @@ li {
   position: relative;
   background-color: var(--grey-200);
   border: solid 1px var(--grey-200);
+  width: 100%;
+  table-layout: fixed;
 }
 
 .calendar-month-header {
@@ -72,10 +74,7 @@ li {
   border-top: solid 1px var(--grey-200);
 }
 
-.calendar-month {
-  width: 100%;
-  table-layout: fixed;
-}
+
 
 /*.calendar-week {*/
 /*  !*display: flex;*!*/
