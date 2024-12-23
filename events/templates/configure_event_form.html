@@ -4,5 +4,10 @@
         <p>{{ field.errors }}</p>
         <p>{{ field.label_tag }}</p>
         <p>{{ field }}</p>
-    </div>
+    </div>s
+    {% comment %} Tweaked Google Gemini's suggestion for clearing all the check boxes -  button needed
+     since the user cannot seem to manually deselect ALL participants once some are selected {% endcomment %}
+    {% if forloop.revcounter0 == 1 %} 
+        <button type="button" id="clear-participants">Clear All</button>
+    {% endif %} 
 {% endfor %}

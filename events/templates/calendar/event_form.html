@@ -1,5 +1,5 @@
 {% extends "layout/fullPageScroll.html" %}
-
+{% load static %}  
 {% block pageDropDowns %}
     {%  if action == "update" %}
         <a href="{% url "calendar:detail-event" event.id %}">Cancel</a>
@@ -23,15 +23,6 @@
         {{ form.media }} 
         {{ form }}
 
-        <button type="button" id="clear-participants">Clear All</button>
-
-<script>
-$(document).ready(function() {
-    $('#clear-participants').click(function() {
-        $('#id_participants').val([]).trigger('change'); 
-    });
-});
-</script>
 
         {% if action == "update" %}
             <a href="{% url "calendar:detail-event" event.id %}">
@@ -46,6 +37,20 @@ $(document).ready(function() {
         {% endif %}
 
     </form>
+
+
+   <script src="{% static 'javascript/jquery/1.12.4/jquery.min.js' %}"></script>
+   <script src="{% static 'javascript/scripts.js' %}"></script>
+   {% comment %}  Google Gemini's suggestion for clearing all the check boxes -  button needed
+   since the user cannot seem to manually deselect ALL participants once some are selected {% endcomment %}
+   <script>
+    $(document).ready(function() {
+        $('#clear-participants').click(function() {
+            $('#id_participants').val([]).trigger('change'); 
+        });
+    });
+    </script>
+    
 {% endblock %}
 
 
