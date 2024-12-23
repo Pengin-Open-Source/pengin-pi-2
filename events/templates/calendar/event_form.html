@@ -23,6 +23,16 @@
         {{ form.media }} 
         {{ form }}
 
+        <button type="button" id="clear-participants">Clear All</button>
+
+<script>
+$(document).ready(function() {
+    $('#clear-participants').click(function() {
+        $('#id_participants').val([]).trigger('change'); 
+    });
+});
+</script>
+
         {% if action == "update" %}
             <a href="{% url "calendar:detail-event" event.id %}">
                 <button class="primary-button" type="button">Cancel</button>

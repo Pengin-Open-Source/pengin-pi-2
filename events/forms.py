@@ -18,7 +18,8 @@ class UserModelChoiceField(forms.ModelChoiceField):
 
 
 class EventForm(forms.ModelForm):
-    participants = UserModelMultipleChoiceField(queryset=User.objects.all())
+    participants = UserModelMultipleChoiceField(
+        queryset=User.objects.all(), required=False)
     organizer = UserModelChoiceField(queryset=User.objects.all())
 
     class Meta:
