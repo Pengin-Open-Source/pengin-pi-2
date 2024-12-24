@@ -127,9 +127,8 @@ class CreateEvent(UserPassesTestMixin, View):
     def post(self, request, **kwargs):
         form = EventForm(request.POST)
         if form.is_valid():
-            event = form.save(commit=False)
-            event.author = request.user
-            event.save()
+            form.instance.author = request.user
+            event = form.save()
 
             return redirect("calendar:calendar")
 

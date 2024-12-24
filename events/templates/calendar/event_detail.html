@@ -24,7 +24,7 @@
     {% if event.location %}
         <p class="post-info">Location: {{ event.location }}</p>
     {% endif %}
-    {% if event.participants.all|length > 0 %}
+    {% if event.roles.all|length > 0 %}
         <p>Roles:</p>
         {% for role in event.roles.all %}
             <p class="post-info">{{ role.name }}</p>
