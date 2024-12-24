@@ -49,6 +49,13 @@
             $('#id_participants').val([]).trigger('change'); 
         });
     });
+
+    {% comment %} Similar function for clearing roles {% endcomment %}
+    $(document).ready(function() {
+        $('#clear-roles').click(function() {
+            $('#id_roles').val([]).trigger('change'); 
+        });
+    });
     </script>
     
 {% endblock %}
