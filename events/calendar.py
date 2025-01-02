@@ -69,15 +69,22 @@ class EventCalendar(calendar.HTMLCalendar):
         self.month_events = {}
         current_user = kwargs.pop("current_user")
 
-        events_in_month = Event.objects.filter(
-            # Filter events that are happening during the month
-            Q(start_datetime__year=year, start_datetime__month=month)
-            | Q(end_datetime__year=year, end_datetime__month=month),
-            # Filter events that current user is involved in
-            Q(author=current_user)
-            | Q(organizer=current_user)
-            | Q(participants=current_user)
-        ).order_by("start_datetime")
+        if current_user.is_staff:
+            events_in_month = Event.objects.filter(
+                # Filter events that are happening during the month
+                Q(start_datetime__year=year, start_datetime__month=month)
+                | Q(end_datetime__year=year, end_datetime__month=month)
+            ).order_by("start_datetime")
+        else:
+            events_in_month = Event.objects.filter(
+                # Filter events that are happening during the month
+                Q(start_datetime__year=year, start_datetime__month=month)
+                | Q(end_datetime__year=year, end_datetime__month=month),
+                # Filter events that current user is involved in
+                Q(author=current_user)
+                | Q(organizer=current_user)
+                | Q(participants=current_user)
+            ).order_by("start_datetime")
 
         for day in self.itermonthdays(year, month):
             if day > 0:

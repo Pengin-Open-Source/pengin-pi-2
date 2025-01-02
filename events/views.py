@@ -1,9 +1,8 @@
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import render, reverse, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views import View
-
+from main.mixins import LoginAndValidationRequiredMixin
 from .models import Event
 
 from .calendar import EventCalendar
@@ -11,13 +10,13 @@ from .forms import EventForm, CalendarSettingsForm
 from .permissions import can_create_or_see_event, can_change_event
 from datetime import datetime
 
+
 myCal = EventCalendar()
 
 
-class CalendarMonth(View):
+class CalendarMonth(LoginAndValidationRequiredMixin, View):
     template_name = "calendar/calendar_month.html"
 
-    @method_decorator(login_required)
     def get(self, request, year=None, month=None):
         present_datetime = datetime.now()
         present_year = present_datetime.year
@@ -82,13 +81,12 @@ class CalendarMonth(View):
         )
 
 
-class DetailEvent(UserPassesTestMixin, View):
+class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_detail.html"
 
     def test_func(self):
         return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
 
-    @method_decorator(login_required)
     def get(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
         return render(
@@ -102,7 +100,7 @@ class DetailEvent(UserPassesTestMixin, View):
         )
 
 
-class CreateEvent(UserPassesTestMixin, View):
+class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     model = Event
     form_class = EventForm
     template_name = "calendar/event_form.html"
@@ -110,7 +108,6 @@ class CreateEvent(UserPassesTestMixin, View):
     def test_func(self):
         return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
 
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         form = EventForm()
         form_rendered_for_create = form.render(
@@ -123,7 +120,6 @@ class CreateEvent(UserPassesTestMixin, View):
         }
         return render(request, self.template_name, context)
 
-    @method_decorator(login_required)
     def post(self, request, **kwargs):
         form = EventForm(request.POST)
         if form.is_valid():
@@ -142,7 +138,7 @@ class CreateEvent(UserPassesTestMixin, View):
         return render(request, self.template_name, context)
 
 
-class EditEvent(UserPassesTestMixin, View):
+class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
 
     def test_func(self):
@@ -161,12 +157,10 @@ class EditEvent(UserPassesTestMixin, View):
             "event": event,
         }
 
-    @method_decorator(login_required)
     def get(self, request, event_id):
         context = self.get_context_data()
         return render(request, self.template_name, context)
 
-    @method_decorator(login_required)
     def post(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
         form = EventForm(request.POST, instance=event)
@@ -179,13 +173,12 @@ class EditEvent(UserPassesTestMixin, View):
         return render(request, self.template_name, context)
 
 
-class DeleteEvent(UserPassesTestMixin, View):
+class DeleteEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_confirm_delete.html"
 
     def test_func(self):
         return can_change_event(self.request, self.kwargs.get("event_id"))
 
-    @method_decorator(login_required)
     def get(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
         context = {
@@ -194,17 +187,15 @@ class DeleteEvent(UserPassesTestMixin, View):
         }
         return render(request, self.template_name, context)
 
-    @method_decorator(login_required)
     def post(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
         event.delete()
         return redirect('calendar:calendar')
 
 
-class CalendarSettings(View):
+class CalendarSettings(LoginAndValidationRequiredMixin, View):
     template_name = "calendar/calendar_settings.html"
 
-    @method_decorator(login_required)
     def get(self, request):
         context = {}
 
@@ -215,7 +206,6 @@ class CalendarSettings(View):
         context["primary_title"] = "Calendar Settings"
         return render(request, self.template_name, context)
 
-    @method_decorator(login_required)
     def post(self, request):
         form = CalendarSettingsForm(request.POST)
         if form.is_valid():

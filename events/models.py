@@ -16,6 +16,8 @@ class Event(models.Model):
         User, on_delete=models.PROTECT, related_name="authored_events")
     organizer = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name="organized_events")
+    last_edited_by = models.ForeignKey(
+        User,  on_delete=models.SET_NULL,  null=True)
     participants = models.ManyToManyField(
         User, related_name="events", blank=True)
     roles = models.ManyToManyField(Group, related_name='events', blank=True)
