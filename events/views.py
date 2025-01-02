@@ -165,7 +165,9 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         event = get_object_or_404(Event, id=event_id)
         form = EventForm(request.POST, instance=event)
         if form.is_valid():
-            event = form.save()
+            event = form.save(commit=False)
+            event.last_edited_by = request.user
+            event.save()
             return redirect("calendar:detail-event", event_id=event.id)
 
         context = self.get_context_data()
