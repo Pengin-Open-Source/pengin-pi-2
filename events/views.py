@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import render, reverse, get_object_or_404, redirect
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from main.mixins import LoginAndValidationRequiredMixin
@@ -124,6 +125,7 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         form = EventForm(request.POST)
         if form.is_valid():
             form.instance.author = request.user
+            form.instance.row_action = 'CREATE'
             event = form.save()
 
             return redirect("calendar:calendar")
@@ -167,6 +169,8 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         if form.is_valid():
             event = form.save(commit=False)
             event.last_edited_by = request.user
+            event.date = timezone.now()
+            event.row_action = 'EDIT'
             event.save()
             return redirect("calendar:detail-event", event_id=event.id)
 

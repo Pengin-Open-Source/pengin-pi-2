@@ -6,7 +6,7 @@ from main.models import User
 
 class Event(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
-    date_created = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(auto_now_add=True)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
     title = models.CharField(max_length=50)
@@ -21,6 +21,7 @@ class Event(models.Model):
     participants = models.ManyToManyField(
         User, related_name="events", blank=True)
     roles = models.ManyToManyField(Group, related_name='events', blank=True)
+    row_action = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):
         return self.title + " at " + self.location
