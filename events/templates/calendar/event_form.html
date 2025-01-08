@@ -23,7 +23,12 @@
         {{ form.media }} 
         {{ form }}
 
-
+        <input type="hidden" id="user_timezone" name="user_timezone"  >
+        <script>
+            const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('user_timezone').value = userTimezone;
+        </script>
+           
         {% if action == "update" %}
             <a href="{% url "calendar:detail-event" event.id %}">
                 <button class="primary-button" type="button">Cancel</button>

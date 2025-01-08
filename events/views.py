@@ -1,7 +1,7 @@
+from datetime import datetime, timezone as dt_timezone
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import render, reverse, get_object_or_404, redirect
-from django.utils import timezone
-from django.utils.decorators import method_decorator
+from django.utils import timezone as django_timezone
 from django.views import View
 from main.mixins import LoginAndValidationRequiredMixin
 from .models import Event
@@ -9,7 +9,6 @@ from .models import Event
 from .calendar import EventCalendar
 from .forms import EventForm, CalendarSettingsForm
 from .permissions import can_create_or_see_event, can_change_event
-from datetime import datetime
 
 
 myCal = EventCalendar()
@@ -143,6 +142,21 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
 
+    def convert_to_utc(self, event_datetime):
+        """Converts a local datetime object to UTC."""
+
+        # Ensure the datetime is timezone-aware
+        # Have to specify package b/c I'm importing two differant timezones
+        print("Timezone:", django_timezone.get_current_timezone())
+        if not django_timezone.is_aware(event_datetime):
+            local_datetime = django_timezone.make_aware(
+                event_datetime,  django_timezone.get_current_timezone())
+        else:
+
+            local_datetime = event_datetime
+
+        return local_datetime.astimezone(dt_timezone.utc)
+
     def test_func(self):
         return can_change_event(self.request, self.kwargs.get("event_id"))
 
@@ -169,8 +183,15 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         if form.is_valid():
             event = form.save(commit=False)
             event.last_edited_by = request.user
-            event.date = timezone.now()
+            event.date = django_timezone.now()
             event.row_action = 'EDIT'
+            utc_timezone = request.POST.get('user_timezone')
+            print("time zone ", utc_timezone)
+
+            # utc_time = self.convert_to_utc(event.start_datetime)
+
+            print("Local time:", event.start_datetime)
+            # print("UTC time:", utc_time)
             event.save()
             return redirect("calendar:detail-event", event_id=event.id)
 

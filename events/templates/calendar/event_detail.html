@@ -1,8 +1,6 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  
 
-
-
 {% block pageDropDowns %}
     <a href="{% url "calendar:create-event" %}">Create Event</a>
     <a href="{% url "calendar:copy-event" event.id %}">Duplicate Event</a>
@@ -13,6 +11,7 @@
 {% endblock %}
 
 {% block pageContent %}
+{% comment %} Similiar to forums - use this to get the datetime in local time zone format {% endcomment %}
 <script>
     function convertUTCToLocal(utcTime) {
       const utcMillis = new Date(utcTime).getTime();
