@@ -1,7 +1,9 @@
+from zoneinfo import ZoneInfo
+# Have to specify package for "timezone" b/c I'm importing two differant timezones
 from datetime import datetime, timezone as dt_timezone
+from django.utils import timezone as django_timezone
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import render, reverse, get_object_or_404, redirect
-from django.utils import timezone as django_timezone
 from django.views import View
 from main.mixins import LoginAndValidationRequiredMixin
 from .models import Event
@@ -123,9 +125,16 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     def post(self, request, **kwargs):
         form = EventForm(request.POST)
         if form.is_valid():
-            form.instance.author = request.user
-            form.instance.row_action = 'CREATE'
-            event = form.save()
+            event = form.save(commit=False)
+            event.author = request.user
+            event.row_action = 'CREATE'
+
+            # See EditEvent's post method for details
+            user_time_zone_str = request.COOKIES.get('time_zone')
+            event.start_datetime = convert_to_utc(
+                event.start_datetime, user_time_zone_str)
+            event.end_datetime = convert_to_utc(
+                event.end_datetime, user_time_zone_str)
 
             return redirect("calendar:calendar")
 
@@ -142,26 +151,18 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
 
-    def convert_to_utc(self, event_datetime):
-        """Converts a local datetime object to UTC."""
-
-        # Ensure the datetime is timezone-aware
-        # Have to specify package b/c I'm importing two differant timezones
-        print("Timezone:", django_timezone.get_current_timezone())
-        if not django_timezone.is_aware(event_datetime):
-            local_datetime = django_timezone.make_aware(
-                event_datetime,  django_timezone.get_current_timezone())
-        else:
-
-            local_datetime = event_datetime
-
-        return local_datetime.astimezone(dt_timezone.utc)
-
     def test_func(self):
         return can_change_event(self.request, self.kwargs.get("event_id"))
 
     def get_context_data(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        # reverse of what we do in post method
+        # - turn the event's utc datetime into a local datetime
+        user_time_zone_str = self.request.COOKIES.get('time_zone')
+        event.start_datetime = convert_to_local(
+            event.start_datetime, user_time_zone_str)
+        event.end_datetime = convert_to_local(
+            event.end_datetime, user_time_zone_str)
 
         form = EventForm(instance=event)
         form_rendered_for_edit = form.render(
@@ -185,13 +186,19 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event.last_edited_by = request.user
             event.date = django_timezone.now()
             event.row_action = 'EDIT'
-            utc_timezone = request.POST.get('user_timezone')
-            print("time zone ", utc_timezone)
 
-            # utc_time = self.convert_to_utc(event.start_datetime)
+            # () Working with Google's AI and also referring to Flask version for this)
+            # - Grab the timezone that was stored as a cookie in layout.html,  convert
+            # the time into the correct UTC time.
+            # The reason we are converting a date that is already utc into utc,
+            # is because the user THINKS they entered the date time in their own timezone.
+            # We need to do some tweaks to get the transformation right.
+            user_time_zone_str = request.COOKIES.get('time_zone')
+            event.start_datetime = convert_to_utc(
+                event.start_datetime, user_time_zone_str)
+            event.end_datetime = convert_to_utc(
+                event.end_datetime, user_time_zone_str)
 
-            print("Local time:", event.start_datetime)
-            # print("UTC time:", utc_time)
             event.save()
             return redirect("calendar:detail-event", event_id=event.id)
 
@@ -244,3 +251,29 @@ class CalendarSettings(LoginAndValidationRequiredMixin, View):
         context = {}
         context["form"] = form
         return render(request, self.template_name, context)
+
+
+################### UTILITY METHODS #########################
+
+def convert_to_utc(event_datetime,  time_zone_str):
+    """Converts a local datetime object to UTC."""
+    # IMPORTANT - the User THINKS the date is in their time zone, but it's actually UTC
+    # Therefore,  we must replace (not convert) the date's timezone to be whatever timezone
+    # the user is in.  Then we can convert to the real Universal Time equivalent
+    # So, if the user selects a start date of 10:00 AM,  they may THINK
+    # that the chose 10:00 AM EST or EDT - but it's actually UTC.  In order to put the real UTC time
+    # that would actually equate to 10:00 AM EST or EDT in the database,  we need to first
+    # change the time to 10:00 AM America/New York, and then convert that time to UTC
+
+    user_time_zone = ZoneInfo(time_zone_str)
+    local_time = event_datetime.replace(tzinfo=user_time_zone)
+
+    return local_time.astimezone(dt_timezone.utc)
+
+
+def convert_to_local(event_datetime, time_zone_str):
+    """ Convert utc datetime to local datetime """
+
+    user_time_zone = ZoneInfo(time_zone_str)
+
+    return event_datetime.astimezone(user_time_zone)
