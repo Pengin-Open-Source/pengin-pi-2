@@ -29,6 +29,8 @@ class CalendarMonth(LoginAndValidationRequiredMixin, View):
             month = present_month
 
         if not myCal.user_settings:
+            user_time_zone_str = self.request.COOKIES.get('time_zone')
+            myCal.set_time_zone(user_time_zone_str)
             myCal.setfirstweekday(6)
 
         calendar_html = myCal.formatmonth(int(year), int(
@@ -91,6 +93,12 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
     def get(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
+        # - turn the event's utc datetime into a local datetime
+        user_time_zone_str = self.request.COOKIES.get('time_zone')
+        event.start_datetime = convert_to_masquerade_local(
+            event.start_datetime, user_time_zone_str)
+        event.end_datetime = convert_to_masquerade_local(
+            event.end_datetime, user_time_zone_str)
         return render(
             request,
             self.template_name,
@@ -159,18 +167,21 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         # reverse of what we do in post method
         # - turn the event's utc datetime into a local datetime
         user_time_zone_str = self.request.COOKIES.get('time_zone')
-        event.start_datetime = convert_to_local(
+        event.start_datetime = convert_to_masquerade_local(
             event.start_datetime, user_time_zone_str)
-        event.end_datetime = convert_to_local(
+        event.end_datetime = convert_to_masquerade_local(
             event.end_datetime, user_time_zone_str)
 
         form = EventForm(instance=event)
-        form_rendered_for_edit = form.render(
-            "configure_event_form.html")
+        print("Form Instance Start: ", form.instance.start_datetime)
+
+       # form_rendered_for_edit = form.render(
+        #   "configure_event_form.html")
+
         return {
             "primary_title": "Edit Event",
             "action": "update",
-            "form": form_rendered_for_edit,
+            "form": form,
             "event": event,
         }
 
@@ -271,9 +282,15 @@ def convert_to_utc(event_datetime,  time_zone_str):
     return local_time.astimezone(dt_timezone.utc)
 
 
-def convert_to_local(event_datetime, time_zone_str):
+def convert_to_masquerade_local(event_datetime, time_zone_str):
     """ Convert utc datetime to local datetime """
 
     user_time_zone = ZoneInfo(time_zone_str)
+    # convert utc to local.
+    local_time = event_datetime.astimezone(user_time_zone)
 
-    return event_datetime.astimezone(user_time_zone)
+    # Convert "10:00 AM EST" to "10:00 AM UTC."  (Assuming local is EST.  User
+    # Will interpret displayed UTC date as EST.
+    utc_masquerade_local_time = local_time.replace(tzinfo=dt_timezone.utc)
+
+    return utc_masquerade_local_time

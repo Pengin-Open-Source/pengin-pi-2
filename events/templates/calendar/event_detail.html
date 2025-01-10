@@ -15,13 +15,7 @@
 <div class="post-container">
     <div class="title-underline">
         <h2 class="post-title">{{ event.title }}</h2>
-        <p class="post-info">Created by {{ event.author.name }} @ <span id="event_date"></span> </p>
-        
-        <script>
-            var utcTime = new Date('{{ event.date|date:"c" }}');
-            var localTime = convertUTCToLocal(utcTime);
-            document.getElementById("event_date").textContent = localTime;
-          </script>
+         <p class="post-info">Created by {{ event.author.name }} @ {{ event.date }}</p>
     </div>
     <p class="post-info">Organizer: {{ event.organizer.name }}</p>
     <p class="post-info">Start time: {{ event.start_date }} @ {{ event.start_time }}</p>

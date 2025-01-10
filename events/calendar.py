@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
 from django.db.models import Q
 from django.shortcuts import reverse
 import calendar
@@ -11,6 +12,7 @@ class EventCalendar(calendar.HTMLCalendar):
         self.month_events = {}
         self.year = None
         self.month = None
+        self.user_time_zone = None
         self.user_settings = False
         super(EventCalendar, self).__init__()
 
@@ -19,6 +21,8 @@ class EventCalendar(calendar.HTMLCalendar):
         if events:
             events_html = "<div class='calendar-day-events'><ul class='events-list'>"
             for event in events:
+                event.start_datetime = event.start_datetime.astimezone(
+                    self.user_time_zone)
                 event_url = reverse("calendar:detail-event",
                                     kwargs={"event_id": event.id})
                 events_html += (
@@ -39,6 +43,10 @@ class EventCalendar(calendar.HTMLCalendar):
     #     """
     #     s = "".join(self.formatday(d, wd) for (d, wd) in theweek)
     #     return '<tr class="calendar-week">%s</tr>' % s
+
+    def set_time_zone(self, time_zone_str):
+        user_time_zone = ZoneInfo(time_zone_str)
+        return None
 
     def formatday(self, day, weekday):
         try:
