@@ -144,6 +144,7 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event.end_datetime = convert_to_utc(
                 event.end_datetime, user_time_zone_str)
 
+            event.save()
             return redirect("calendar:calendar")
 
         form_rendered_for_create = form.render("configure_event_form.html")
