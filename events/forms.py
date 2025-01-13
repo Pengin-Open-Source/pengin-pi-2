@@ -1,7 +1,7 @@
 from django_flatpickr.widgets import DateTimePickerInput
 from django import forms
 from main.models import User
-from .models import Event
+from .models import Event, EventParticipant
 
 
 # Credit to https://stackoverflow.com/questions/49114304/to-field-name-argument-on-a-modelchoicefield-doesnt-seem-to-be-working
