@@ -21,8 +21,6 @@ class EventCalendar(calendar.HTMLCalendar):
         if events:
             events_html = "<div class='calendar-day-events'><ul class='events-list'>"
             for event in events:
-                event.start_datetime = event.start_datetime.astimezone(
-                    self.user_time_zone)
                 event_url = reverse("calendar:detail-event",
                                     kwargs={"event_id": event.id})
                 events_html += (
@@ -45,7 +43,7 @@ class EventCalendar(calendar.HTMLCalendar):
     #     return '<tr class="calendar-week">%s</tr>' % s
 
     def set_time_zone(self, time_zone_str):
-        user_time_zone = ZoneInfo(time_zone_str)
+        self.user_time_zone = ZoneInfo(time_zone_str)
         return None
 
     def formatday(self, day, weekday):
@@ -77,22 +75,48 @@ class EventCalendar(calendar.HTMLCalendar):
         self.month_events = {}
         current_user = kwargs.pop("current_user")
 
-        if current_user.is_staff:
-            events_in_month = Event.objects.filter(
-                # Filter events that are happening during the month
-                Q(start_datetime__year=year, start_datetime__month=month)
-                | Q(end_datetime__year=year, end_datetime__month=month)
-            ).order_by("start_datetime")
-        else:
-            events_in_month = Event.objects.filter(
-                # Filter events that are happening during the month
-                Q(start_datetime__year=year, start_datetime__month=month)
-                | Q(end_datetime__year=year, end_datetime__month=month),
-                # Filter events that current user is involved in
-                Q(author=current_user)
-                | Q(organizer=current_user)
-                | Q(participants=current_user)
-            ).order_by("start_datetime")
+        # Get a copy of all events in the user's local timezone before
+        # displaying the calendar. Events at 8 PM Dec 31, 2025 should
+        # show up in December's calendar for New York users,  and in
+        # January's calendar month for London users
+        events_local_time_zone = Event.objects.all()
+        for event in events_local_time_zone:
+            event.start_datetime = event.start_datetime.astimezone(
+                self.user_time_zone)
+            event.end_datetime = event.end_datetime.astimezone(
+                self.user_time_zone)
+        # CANNOT USE ANYMORE.  I am changing in-memory objects (to use local time),
+        # and filter apparently filters on the original (UTC) values in the database
+        # if current_user.is_staff:
+        #     events_in_month = events_local_time_zone.filter(
+        #         # Filter events that are happening during the month
+        #         Q(start_datetime__year=year, start_datetime__month=month)
+        #         | Q(end_datetime__year=year, end_datetime__month=month)
+        #     ).order_by("start_datetime")
+        # else:
+        #     events_in_month = events_local_time_zone.filter(
+        #         # Filter events that are happening during the month
+        #         Q(start_datetime__year=year, start_datetime__month=month)
+        #         | Q(end_datetime__year=year, end_datetime__month=month),
+        #         # Filter events that current user is involved in
+        #         Q(author=current_user)
+        #         | Q(organizer=current_user)
+        #         | Q(participants=current_user)
+        #     ).order_by("start_datetime")
+
+        # GEMINI's suggestion to replace the filter with Q
+        # conditions = [
+        #     lambda obj: obj.field1 > 10,
+        #     lambda obj: obj.other_field == 'some_value'
+        # ]
+        # filtered_objects = filter_objects(objects, conditions)
+
+        conditions = [
+            lambda event: event.start_datetime.year == year,
+            lambda event: event.end_datetime.year == year,
+            lambda event: event.end_datetime.month == month
+        ]
+        events_in_month = filter_events(events_local_time_zone, conditions)
 
         for day in self.itermonthdays(year, month):
             if day > 0:
@@ -111,3 +135,20 @@ class EventCalendar(calendar.HTMLCalendar):
                         day_events.append(event)
 
         return super(EventCalendar, self).formatmonth(year, month, *args, **kwargs)
+
+################ UTILITY METHODS #############################
+## Gemini's suggestion for replacing filter(Q....)#########
+# def filter_objects(objects, conditions):
+#     filtered_objects = []
+#     for obj in objects:
+#         if all(condition(obj) for condition in conditions):
+#             filtered_objects.append(obj)
+#     return filtered_objects
+
+
+def filter_events(events, conditions):
+    filtered_events = []
+    for event in events:
+        if all(condition(event) for condition in conditions):
+            filtered_events.append(event)
+    return filtered_events

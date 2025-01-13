@@ -20,17 +20,24 @@ class CalendarMonth(LoginAndValidationRequiredMixin, View):
     template_name = "calendar/calendar_month.html"
 
     def get(self, request, year=None, month=None):
+        user_time_zone_str = request.COOKIES.get('time_zone')
+        myCal.set_time_zone(user_time_zone_str)
+
         present_datetime = datetime.now()
-        present_year = present_datetime.year
-        present_month = present_datetime.month
+        # Using local present time for the calendar month
+        # becomes relevant on the first and last days of months
+        # and years
+        present_local_time = convert_to_local(
+            # - * actual local time, not another masquerade for flatpickr
+            present_datetime, user_time_zone_str)
+        present_year = present_local_time.year
+        present_month = present_local_time.month
 
         if year is None or month is None:
             year = present_year
             month = present_month
 
         if not myCal.user_settings:
-            user_time_zone_str = self.request.COOKIES.get('time_zone')
-            myCal.set_time_zone(user_time_zone_str)
             myCal.setfirstweekday(6)
 
         calendar_html = myCal.formatmonth(int(year), int(
@@ -174,15 +181,13 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event.end_datetime, user_time_zone_str)
 
         form = EventForm(instance=event)
-        print("Form Instance Start: ", form.instance.start_datetime)
 
-       # form_rendered_for_edit = form.render(
-        #   "configure_event_form.html")
+        form_rendered_for_edit = form.render("configure_event_form.html")
 
         return {
             "primary_title": "Edit Event",
             "action": "update",
-            "form": form,
+            "form": form_rendered_for_edit,
             "event": event,
         }
 
@@ -283,15 +288,25 @@ def convert_to_utc(event_datetime,  time_zone_str):
     return local_time.astimezone(dt_timezone.utc)
 
 
-def convert_to_masquerade_local(event_datetime, time_zone_str):
+def convert_to_local(event_datetime, time_zone_str):
     """ Convert utc datetime to local datetime """
 
     user_time_zone = ZoneInfo(time_zone_str)
     # convert utc to local.
     local_time = event_datetime.astimezone(user_time_zone)
+    return local_time
 
-    # Convert "10:00 AM EST" to "10:00 AM UTC."  (Assuming local is EST.  User
-    # Will interpret displayed UTC date as EST.
+
+def convert_to_masquerade_local(event_datetime, time_zone_str):
+    """ Make a fake UTC time masquerade as local time - it will have the correct numeric time,  but needs 
+     to have tzinfo UTC for flatpickr datetimes.  The user will interpret the datetime- correctly- as a datetime
+     in their own time zone """
+
+    local_time = convert_to_local(event_datetime, time_zone_str)
+    # (Assuming local is EST, for example)  - Convert a "10:00 AM EST" time to "10:00 AM UTC."
+    # The date in the form will technically be a false UTC.
+    # (10:00 AM EST would really be 3 PM UTC the database)
+    #  but the User will interpret the datetime as 10 AM EST
     utc_masquerade_local_time = local_time.replace(tzinfo=dt_timezone.utc)
 
     return utc_masquerade_local_time
