@@ -20,7 +20,11 @@ class CalendarMonth(LoginAndValidationRequiredMixin, View):
     template_name = "calendar/calendar_month.html"
 
     def get(self, request, year=None, month=None):
+        another_time_zone_str = request.session.get('time_zone_string')
         user_time_zone_str = request.COOKIES.get('time_zone')
+        # if the cookie is not available yet,  try the session variable...
+        if not user_time_zone_str:
+            user_time_zone_str = another_time_zone_str
         myCal.set_time_zone(user_time_zone_str)
 
         present_datetime = datetime.now()

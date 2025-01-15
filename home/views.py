@@ -27,10 +27,15 @@ def save_home(request, form):
 
 # @method_decorator(login_required, name='dispatch')
 
+
 @method_decorator(is_admin_provider, name='dispatch')
 class HomeView(View):
     def get(self, request, is_admin):
         home = Home.objects.first() or default.Home()
+        session_time_zone = self.request.GET.get('user_zone')
+        if session_time_zone:
+            request.session['time_zone_string'] = session_time_zone
+
         try:
             image = conn.get_URL(home.image)
         except ParamValidationError:
