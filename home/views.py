@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -32,9 +33,11 @@ def save_home(request, form):
 class HomeView(View):
     def get(self, request, is_admin):
         home = Home.objects.first() or default.Home()
+        #  Grabs the user timezone sent over from a fetch command
         session_time_zone = self.request.GET.get('user_zone')
         if session_time_zone:
             request.session['time_zone_string'] = session_time_zone
+            return JsonResponse({'result': 'Local Time Zone Stored in Session'})
 
         try:
             image = conn.get_URL(home.image)
