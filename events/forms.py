@@ -18,8 +18,6 @@ class UserModelChoiceField(forms.ModelChoiceField):
 
 
 class EventForm(forms.ModelForm):
-    participants = UserModelMultipleChoiceField(
-        queryset=User.objects.all(), required=False)
     organizer = UserModelChoiceField(queryset=User.objects.all())
 
     class Meta:
@@ -31,7 +29,6 @@ class EventForm(forms.ModelForm):
             "start_datetime",
             "end_datetime",
             "organizer",
-            "participants",
             "roles",
         ]
 
@@ -39,6 +36,17 @@ class EventForm(forms.ModelForm):
             "start_datetime": DateTimePickerInput(),
             "end_datetime": DateTimePickerInput(),
         }
+
+
+class EventParticipantForm(forms.ModelForm):
+    participants = UserModelMultipleChoiceField(
+        queryset=User.objects.all(), required=False)
+
+    class Meta:
+        model = EventParticipant
+        fields = [
+            "participants",
+        ]
 
 
 class CalendarSettingsForm(forms.Form):

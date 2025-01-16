@@ -176,6 +176,7 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
     def get_context_data(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
+
         # reverse of what we do in post method
         # - turn the event's utc datetime into a local datetime
         user_time_zone_str = self.request.COOKIES.get('time_zone')
