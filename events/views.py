@@ -6,7 +6,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import render, reverse, get_object_or_404, redirect
 from django.views import View
 from main.mixins import LoginAndValidationRequiredMixin
-from .models import Event
+from .models import Event, EventParticipant
 
 from .calendar import EventCalendar
 from .forms import EventForm, CalendarSettingsForm
@@ -156,6 +156,11 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
                 event.end_datetime, user_time_zone_str)
 
             event.save()
+
+            for attendee in form.participants_to_add:
+                EventParticipant.objects.create(
+                    event=event, participant=attendee,  row_action='CREATE')
+
             return redirect("calendar:calendar")
 
         form_rendered_for_create = form.render("configure_event_form.html")

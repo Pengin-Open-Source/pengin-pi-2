@@ -40,6 +40,30 @@ class EventForm(forms.ModelForm):
             "end_datetime": DateTimePickerInput(),
         }
 
+    def clean(self):
+        cleaned_up_data = super().clean()
+        selected_participants = cleaned_up_data.get('participants')
+        print("End User Selected these Participants just now")
+        print(selected_participants)
+
+        # I want compare the selected_participants to the ones
+        # currently in the database - if any for this event - and create and delete participants as needed.
+        if self.instance:
+            current_participants_ids = EventParticipant.objects.filter(
+                event_id=self.instance.id).values_list('participant_id', flat=True)
+            # get the User Objects for the Event Participants
+
+            current_participants = User.objects.filter(
+                id__in=current_participants_ids)
+            self.participants_to_add = selected_participants.exclude(
+                id__in=current_participants)
+            self.delete_participants = current_participants.exclude(
+                id__in=selected_participants)
+        else:
+            self.participants = selected_participants
+
+        return cleaned_up_data
+
 
 class CalendarSettingsForm(forms.Form):
     first_day_of_week = forms.ChoiceField(
