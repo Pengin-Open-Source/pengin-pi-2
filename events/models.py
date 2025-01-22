@@ -44,6 +44,39 @@ class EventParticipant(models.Model):
         Event, on_delete=models.CASCADE, related_name='participants')
     participant = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='events')
+    # Leaving this as set null for now.  In a perfect world,  delete would trigger
+    # an edit action which would create a backup BEFORE setting null,  but that's
+    # not going to be coded now.
+    added_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, related_name='event_participants_added',  null=True)
+    # setting on-delete to DO NOTHING. In theory DELETED rows should immediately go
+    # into the archives (and deleted from this table). Thus deleted EventParticipant
+    # objects should not available for the delete action on as User to trigger
+    # any action on.
+    deleted_by = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING,  null=True)
+    row_action = models.CharField(max_length=10, default='ERROR')
+
+    def __str__(self):
+        return str(self.participant.name)
+
+
+class EventParticipantHistory(models.Model):
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
+    event_participant_id = models.UUIDField(db_index=True)
+    date = models.DateTimeField(auto_now_add=True)
+    event = models.UUIDField(db_index=True)
+    participant = models.UUIDField(db_index=True)
+    # Leaving this as set null for now.  In a perfect world,  delete would trigger
+    # an edit action which would create a backup BEFORE setting null,  but that's
+    # not going to be coded now.
+    added_by = models.UUIDField(db_index=True)
+    # setting on-delete to DO NOTHING. In theory DELETED rows should immediately go
+    # into the archives (and deleted from this table). Thus deleted EventParticipant
+    # objects should not available for the delete action on as User to trigger
+    # any action on.
+    deleted_by = models.UUIDField(db_index=True)
     row_action = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):

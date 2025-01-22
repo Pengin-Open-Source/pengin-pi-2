@@ -5,6 +5,7 @@ from django.utils import timezone as django_timezone
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import render, reverse, get_object_or_404, redirect
 from django.views import View
+from django.db import transaction
 from main.mixins import LoginAndValidationRequiredMixin
 from .models import Event, EventParticipant
 
@@ -225,16 +226,18 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event.end_datetime = convert_to_utc(
                 event.end_datetime, user_time_zone_str)
 
-            event.save()
-            for attendee in form.participants_to_add:
-                EventParticipant.objects.create(
-                    event=event, participant=attendee,  row_action='EDIT')
+            attendees_to_delete = EventParticipant.objects.filter(
+                participant_id__in=form.delete_participants, event_id=event.id)
+            # If we're supposed to add or delete participants but we can't,
+            # roll back the whole event edit.
+            with transaction.atomic():
+                event.save()
+                for attendee in form.participants_to_add:
+                    EventParticipant.objects.create(
+                        event=event, participant=attendee,  row_action='CREATE')
 
-            for not_attending in form.delete_participants:
-               # deleteMe =  EventParticipant.objects.get(event=event, participant=not_attending)
-                deleteMe = get_object_or_404(
-                    EventParticipant, event=event, participant=not_attending)
-                deleteMe.delete()
+                for not_attending in attendees_to_delete.all():
+                    not_attending.delete()
 
             return redirect("calendar:detail-event", event_id=event.id)
 
@@ -317,7 +320,7 @@ def convert_to_local(event_datetime, time_zone_str):
 
 
 def convert_to_masquerade_local(event_datetime, time_zone_str):
-    """ Make a fake UTC time masquerade as local time - it will have the correct numeric time,  but needs 
+    """ Make a fake UTC time masquerade as local time - it will have the correct numeric time,  but needs
      to have tzinfo UTC for flatpickr datetimes.  The user will interpret the datetime- correctly- as a datetime
      in their own time zone """
 
