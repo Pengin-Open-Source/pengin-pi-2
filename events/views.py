@@ -226,6 +226,16 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
                 event.end_datetime, user_time_zone_str)
 
             event.save()
+            for attendee in form.participants_to_add:
+                EventParticipant.objects.create(
+                    event=event, participant=attendee,  row_action='EDIT')
+
+            for not_attending in form.delete_participants:
+               # deleteMe =  EventParticipant.objects.get(event=event, participant=not_attending)
+                deleteMe = get_object_or_404(
+                    EventParticipant, event=event, participant=not_attending)
+                deleteMe.delete()
+
             return redirect("calendar:detail-event", event_id=event.id)
 
         context = self.get_context_data()

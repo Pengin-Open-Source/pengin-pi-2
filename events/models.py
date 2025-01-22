@@ -45,3 +45,6 @@ class EventParticipant(models.Model):
     participant = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='events')
     row_action = models.CharField(max_length=10, default='ERROR')
+
+    def __str__(self):
+        return str(self.participant.name)
