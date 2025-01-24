@@ -111,6 +111,8 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event.start_datetime, user_time_zone_str)
         event.end_datetime = convert_to_masquerade_local(
             event.end_datetime, user_time_zone_str)
+        print("Event Participants In Detail View")
+        print(event.participants)
         return render(
             request,
             self.template_name,
@@ -211,7 +213,6 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         if form.is_valid():
             event = form.save(commit=False)
             event.last_edited_by = request.user
-            event.date = django_timezone.now()
             event.row_action = 'EDIT'
 
             # () Working with Google's AI and also referring to Flask version for this)
@@ -236,8 +237,8 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
                     EventParticipant.objects.create(
                         event=event, participant=attendee,  row_action='CREATE')
 
-                for not_attending in attendees_to_delete.all():
-                    not_attending.delete()
+                for not_attending in attendees_to_delete:
+                    delete_participant(not_attending, request.user)
 
             return redirect("calendar:detail-event", event_id=event.id)
 
@@ -332,3 +333,15 @@ def convert_to_masquerade_local(event_datetime, time_zone_str):
     utc_masquerade_local_time = local_time.replace(tzinfo=dt_timezone.utc)
 
     return utc_masquerade_local_time
+
+# Since this method will be called WITHIN a transaction, we will NOT
+# put a transaction at the top
+
+
+def delete_participant(event_participant, usr):
+
+    event_participant.row_action = 'DELETE'
+    event_participant.deleted_by = usr
+    event_participant.save()
+    event_participant.delete()
+    return "success"
