@@ -58,7 +58,6 @@ class EventParticipant(models.Model):
     deleted_by = models.ForeignKey(
         User, on_delete=models.DO_NOTHING,  null=True)
     row_action = models.CharField(max_length=10, default='ERROR')
-    fake_field = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):
         return str(self.participant.name)
@@ -89,10 +88,9 @@ class EventParticipant(models.Model):
                                                                    date=event_participant_current.date,
                                                                    added_by=participant_adder,
                                                                    row_action=event_participant_current.row_action)
+                event_participant_backup.save()
 
             super().save(*args, **kwargs)
-            print("Self Saved Date")
-            print(self.date)
 
             # Pre-delete save,  the EventParticipant row will have been updated to contain
             # 1) The action/method: "DELETE"
@@ -141,7 +139,6 @@ class EventParticipantHistory(models.Model):
     # any action on.
     deleted_by = models.UUIDField(db_index=True, null=True)
     row_action = models.CharField(max_length=10, default='ERROR')
-    fake_field = models.CharField(max_length=10, default='ERROR')
 
     def __str__(self):
         return str(self.participant.name)

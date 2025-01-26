@@ -1,7 +1,7 @@
 from zoneinfo import ZoneInfo
 # Have to specify package for "timezone" b/c I'm importing two differant timezones
 from datetime import datetime, timezone as dt_timezone
-from django.utils import timezone as django_timezone
+from django.utils import timezone as dj_util_timezone
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import render, reverse, get_object_or_404, redirect
 from django.views import View
@@ -214,6 +214,7 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event = form.save(commit=False)
             event.last_edited_by = request.user
             event.row_action = 'EDIT'
+            event.date = dj_util_timezone.now()
 
             # () Working with Google's AI and also referring to Flask version for this)
             # - Grab the timezone that was stored as a cookie in layout.html,  convert
@@ -235,7 +236,7 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
                 event.save()
                 for attendee in form.participants_to_add:
                     EventParticipant.objects.create(
-                        event=event, participant=attendee,  row_action='CREATE')
+                        event=event, added_by=request.user, participant=attendee,  row_action='CREATE')
 
                 for not_attending in attendees_to_delete:
                     delete_participant(not_attending, request.user)
@@ -342,6 +343,7 @@ def delete_participant(event_participant, usr):
 
     event_participant.row_action = 'DELETE'
     event_participant.deleted_by = usr
+    event_participant.date = dj_util_timezone.now()
     event_participant.save()
     event_participant.delete()
     return "success"
