@@ -111,15 +111,24 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event.start_datetime, user_time_zone_str)
         event.end_datetime = convert_to_masquerade_local(
             event.end_datetime, user_time_zone_str)
-        print("Event Participants In Detail View")
-        print(event.participants)
+
+        # Get date the event was originally created, if that is available,
+        # along with the flag that tells you if it is available
+        if event.row_action == 'CREATE':
+            event.is_create_missing = False
+            event.create_date = event.date
+        else:
+            event_creation_info = get_event_create_info(event)
+            event.create_date, event.is_create_missing = event_creation_info
+            event.last_edit_date = event.date
+
         return render(
             request,
             self.template_name,
             {
                 "primary_title": event.title,
                 "event": event,
-                "can_change": can_change_event(request, event_id)
+                "can_change": can_change_event(request, event_id),
             },
         )
 
@@ -194,14 +203,6 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
         form = EventForm(instance=event)
 
-        # Get date ticket originally created, if available
-        # and flag that tells you if it is not available
-        if event.row_action == 'CREATE':
-            event.is_create_missing = False
-        else:
-            event_creation_info = get_event_create_info(event)
-            event.create_date, event.is_create_missing = event_creation_info
-
         form_rendered_for_edit = form.render("configure_event_form.html")
 
         return {
@@ -224,7 +225,7 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event.row_action = 'EDIT'
             event.date = dj_util_timezone.now()
 
-            # () Working with Google's AI and also referring to Flask version for this)
+            # Working with Google's AI and also referring to Flask version for this)
             # - Grab the timezone that was stored as a cookie in layout.html,  convert
             # the time into the correct UTC time.
             # The reason we are converting a date that is already utc into utc,
@@ -333,8 +334,13 @@ def convert_to_local(event_datetime, time_zone_str):
 
 def convert_to_masquerade_local(event_datetime, time_zone_str):
     """ Make a fake UTC time masquerade as local time - it will have the correct numeric time,  but needs
-     to have tzinfo UTC for flatpickr datetimes.  The user will interpret the datetime- correctly- as a datetime
+     to have tzinfo UTC for flatpickr datetimes.  The user will mentally interpret the datetime- correctly- as a datetime
      in their own time zone """
+
+    # TODO - For visually impaired customers,  find out if screen readers will state the timezone to the user-
+    # - or if they will simply say the datetime.  If the latter,  then a blind user will likely interpret
+    # the datetime the same as a sighted user would. If the former,  we will either need to scrap this workaround
+    # or add in some kind of screen reader tags to notify the blind user of the real timezone
 
     local_time = convert_to_local(event_datetime, time_zone_str)
     # (Assuming local is EST, for example)  - Convert a "10:00 AM EST" time to "10:00 AM UTC."

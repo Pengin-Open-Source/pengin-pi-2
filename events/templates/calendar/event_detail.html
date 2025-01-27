@@ -12,11 +12,63 @@
 
 {% block pageContent %}
 
+ {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
+ <script>
+    function convertUTCToLocal(utcTime) {
+      const utcMillis = new Date(utcTime).getTime();
+      const localDate = new Date(utcMillis);
+      return localDate.toLocaleString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+    
+    }
+  </script>
+
 <div class="post-container">
     <div class="title-underline">
         <h2 class="post-title">{{ event.title }}</h2>
-         <p class="post-info">Created by {{ event.author.name }} @ {{ event.date }}</p>
+        <p class="post-info">Created by {{ event.author.name }} @  
+            {% if ticket.is_create_missing %}
+                <p style="color: red;" >  
+                <i> Warning! Event Creation Date not found!</i> </p>
+            {% else %}
+                   on <span id="event-creation-time"></span>
+                  <script>
+                    var utcTime = new Date('{{ event.create_date|date:"c" }}');
+                    var localTime = convertUTCToLocal(utcTime);
+                    document.getElementById('event-creation-time').textContent = localTime;
+                  </script>
+                  
+            {% endif %}
+        </p>
+    {% if event.row_action == 'CREATE' %} 
     </div>
+    {% elif event.row_action == 'EDIT' %}
+        <div><b> {% if event.last_edited_by %} Last Edited By: {{event.last_edited_by.name|escape}} {% else %} Last Edited By: <i> Unknown User </i>  {% endif %} 
+                  on  <span id="event-latest-time"></span> </b> </div>
+        <script>
+          var utcTime = new Date('{{ event.last_edit_date|date:"c" }}');
+          var localTime = convertUTCToLocal(utcTime);
+          document.getElementById('event-latest-time').textContent = localTime;
+        </script>
+     </div>
+     {% else %}
+    </div> 
+    <div class="title-underline">
+        <p style="color: red;" >  
+          <i> Warning: The latest data we have on this Event may be from the date/time this Event was deleted,  before being restored. (Rather than the last time it was edited. Your system administrator can check on this</i>
+        </p>
+    </div>
+     {% endif %}
+     
+        
+         
+    
     <p class="post-info">Organizer: {{ event.organizer.name }}</p>
     <p class="post-info">Start time: {{ event.start_date }} @ {{ event.start_time }}</p>
     <p class="post-info">End time: {{ event.end_date }} @ {{ event.end_time }}</p>

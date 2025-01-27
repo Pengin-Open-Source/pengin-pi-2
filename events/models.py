@@ -56,7 +56,7 @@ class Event(models.Model):
                 # it is theorectically possible for the NAME of group to change since the time it was
                 # Linked to this Event (hence we save both in history)
                 # NOTE THAT I equivocate between roles and groups and this time.
-                event_roles = original_event.groups.all()
+                event_roles = original_event.roles.all()
                 groups_snapshot = list(event_roles.values('pk', 'name'))
                 if original_event.last_edited_by:
                     event_editor = original_event.last_edited_by.pk
