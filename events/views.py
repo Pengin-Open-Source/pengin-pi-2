@@ -142,16 +142,41 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
 
     def get(self, request, *args, **kwargs):
-        form = EventForm()
+        initial = self.get_initial()
+        form = EventForm(initial)
+        if not initial:
+            primary_title = "Create Event"
+        else:
+            user_time_zone_str = self.request.COOKIES.get('time_zone')
+            initial["start_datetime"] = convert_to_masquerade_local(
+                initial.get("start_datetime"), user_time_zone_str)
+            initial["end_datetime"] = convert_to_masquerade_local(
+                initial.get("end_datetime"), user_time_zone_str)
+            primary_title = "Duplicate Event: " + initial.get("title")
         form_rendered_for_create = form.render(
             "configure_event_form.html")
         context = {
-            "primary_title": "Create Event",
+            "primary_title": primary_title,
             "action": "create",
             "form": form_rendered_for_create,
 
         }
         return render(request, self.template_name, context)
+
+    def get_initial(self):
+        if "event_id" in self.kwargs:
+            event = get_object_or_404(Event, id=self.kwargs["event_id"])
+            return {
+                "title": event.title,
+                "description": event.description,
+                "location": event.location,
+                "organizer": event.organizer,
+                "participants": event.participants.all,
+                "roles": event.roles.all,
+                "start_datetime": event.start_datetime,
+                "end_datetime": event.end_datetime,
+            }
+        return {}
 
     def post(self, request, **kwargs):
         form = EventForm(request.POST)

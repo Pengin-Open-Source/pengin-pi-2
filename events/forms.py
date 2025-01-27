@@ -43,8 +43,6 @@ class EventForm(forms.ModelForm):
     def clean(self):
         cleaned_up_data = super().clean()
         selected_participants = cleaned_up_data.get('participants')
-        print("End User Selected these Participants just now")
-        print(selected_participants)
 
         # Compare the selected participants to the ones
         # currently in the database -and add/delete participants as needed.
