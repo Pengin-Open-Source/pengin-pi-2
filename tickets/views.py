@@ -306,7 +306,7 @@ class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMix
 ##                   ##
 
 
-# Used to get original date/author of an edited ticket
+# Used to get original date of an edited ticket
 def get_ticket_create_info(ticket):
     oldest_date = ''
     is_create_missing = False
