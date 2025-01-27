@@ -65,7 +65,7 @@ class Event(models.Model):
                 event_backup = EventHistory(event_id=original_event.pk, title=original_event.title, description=original_event.description,
                                             location=original_event.location, date=original_event.date,
                                             start_datetime=original_event.start_datetime, end_datetime=original_event.end_datetime,
-                                            author=original_event.author.pk, organizer=original_event.author.pk, last_edited_by=event_editor,
+                                            author=original_event.author.pk, organizer=original_event.organizer.pk, last_edited_by=event_editor,
                                             roles=groups_snapshot, row_action=original_event.row_action)
                 event_backup.save()
 
@@ -87,7 +87,7 @@ class Event(models.Model):
                 archived_event = EventHistory(event_id=self.pk, title=self.title, description=self.description,
                                               location=self.location, date=self.date,
                                               start_datetime=self.start_datetime, end_datetime=self.end_datetime,
-                                              author=self.author.pk, organizer=self.author.pk, last_edited_by=event_editor,
+                                              author=self.author.pk, organizer=self.organizer.pk, last_edited_by=event_editor,
                                               roles=groups_snapshot, row_action=self.row_action)
                 archived_event.save()
 

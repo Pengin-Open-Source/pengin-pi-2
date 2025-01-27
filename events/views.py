@@ -7,7 +7,7 @@ from django.shortcuts import render, reverse, get_object_or_404, redirect
 from django.views import View
 from django.db import transaction
 from main.mixins import LoginAndValidationRequiredMixin
-from .models import Event, EventParticipant
+from .models import Event, EventParticipant, EventHistory
 
 from .calendar import EventCalendar
 from .forms import EventForm, CalendarSettingsForm
@@ -194,6 +194,14 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
         form = EventForm(instance=event)
 
+        # Get date ticket originally created, if available
+        # and flag that tells you if it is not available
+        if event.row_action == 'CREATE':
+            event.is_create_missing = False
+        else:
+            event_creation_info = get_event_create_info(event)
+            event.create_date, event.is_create_missing = event_creation_info
+
         form_rendered_for_edit = form.render("configure_event_form.html")
 
         return {
@@ -296,6 +304,8 @@ class CalendarSettings(LoginAndValidationRequiredMixin, View):
 
 ################### UTILITY METHODS #########################
 
+    ###########  DATETIME CONVERSION METHODS ########
+
 def convert_to_utc(event_datetime,  time_zone_str):
     """Converts a local datetime object to UTC."""
     # IMPORTANT - the User THINKS the date is in their time zone, but it's actually UTC
@@ -335,10 +345,59 @@ def convert_to_masquerade_local(event_datetime, time_zone_str):
 
     return utc_masquerade_local_time
 
+    ###########  Deletion and Record Creation Information Methods ########
+
+
+# Used to get original date of an edited event
+def get_event_create_info(event):
+    oldest_date = ''
+    is_create_missing = False
+
+    event_history = EventHistory.objects.filter(
+        event_id=event.id,  row_action="CREATE")
+
+    # there should be only one value.
+    # we will set a flag if there is no row with method 'CREATE'  in TicketHistory
+    oldest_event_record = event_history.first()
+
+    if oldest_event_record:
+        oldest_date = oldest_event_record.date
+    else:
+        # DBAs TAKE NOTE: If a DBA deletes some older Event History Records
+        # then the row with the Event's initial creation date could have
+        # been deleted and unavailable now!
+        is_create_missing = True
+        oldest_date = 'DATE NOT FOUND'
+    return (oldest_date, is_create_missing)
+
+
+# Since this method can have multiple operations that must succeed or fail together,
+# I'm putting a transaction at the top of this method.
+def delete_event(usr, archive_event):
+    with transaction.atomic():
+        archive_event.row_action = 'DELETE'
+        archive_event.last_edited_by = usr
+        archive_event.date = dj_util_timezone.now()
+
+        # First, try to delete all the Event Participants.
+        # If any deletion fails down the chain,  the whole deletion
+        # process should be canceled.
+        # FYI, I think this reverse date ordering is important for deleting in a for-loop
+        event_participants = archive_event.participants.all().order_by('-date')
+        for event_particpant in event_participants:
+            delete_participant(usr, event_particpant)
+
+        # specify this is an deleted record
+        # both save and delete must execute or fail together,
+        # this keeps track of the time of deletion and
+        # the user who deleted the record
+        archive_event.save()
+        archive_event.delete()
+        return "success"
+
+
 # Since this method will be called WITHIN a transaction, we will NOT
 # put a transaction at the top
-
-
 def delete_participant(event_participant, usr):
 
     event_participant.row_action = 'DELETE'
