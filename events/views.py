@@ -282,7 +282,7 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
                         event=event, added_by=request.user, participant=attendee,  row_action='CREATE')
 
                 for not_attending in attendees_to_delete:
-                    delete_participant(not_attending, request.user)
+                    delete_participant(request.user, not_attending)
 
             return redirect("calendar:detail-event", event_id=event.id)
 
@@ -307,7 +307,7 @@ class DeleteEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
     def post(self, request, event_id):
         event = get_object_or_404(Event, id=event_id)
-        event.delete()
+        delete_event(request.user, event)
         return redirect('calendar:calendar')
 
 
@@ -438,7 +438,7 @@ def delete_event(usr, archive_event):
 
 # Since this method will be called WITHIN a transaction, we will NOT
 # put a transaction at the top
-def delete_participant(event_participant, usr):
+def delete_participant(usr, event_participant):
 
     event_participant.row_action = 'DELETE'
     event_participant.deleted_by = usr
