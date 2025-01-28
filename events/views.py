@@ -142,17 +142,19 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
 
     def get(self, request, *args, **kwargs):
-        initial = self.get_initial()
-        form = EventForm(initial)
-        if not initial:
-            primary_title = "Create Event"
-        else:
+        if "event_id" in self.kwargs:
+            initial = self.get_initial()
+            form = EventForm(initial)
             user_time_zone_str = self.request.COOKIES.get('time_zone')
             initial["start_datetime"] = convert_to_masquerade_local(
                 initial.get("start_datetime"), user_time_zone_str)
             initial["end_datetime"] = convert_to_masquerade_local(
                 initial.get("end_datetime"), user_time_zone_str)
             primary_title = "Duplicate Event: " + initial.get("title")
+        else:
+            form = EventForm()
+            primary_title = "Create Event"
+
         form_rendered_for_create = form.render(
             "configure_event_form.html")
         context = {
@@ -164,35 +166,36 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         return render(request, self.template_name, context)
 
     def get_initial(self):
-        if "event_id" in self.kwargs:
-            event = get_object_or_404(Event, id=self.kwargs["event_id"])
-            return {
-                "title": event.title,
-                "description": event.description,
-                "location": event.location,
-                "organizer": event.organizer,
-                "participants": event.participants.all,
-                "roles": event.roles.all,
-                "start_datetime": event.start_datetime,
-                "end_datetime": event.end_datetime,
-            }
-        return {}
+        event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        return {
+            "title": event.title,
+            "description": event.description,
+            "location": event.location,
+            "organizer": event.organizer,
+            "participants": event.participants.all,
+            "roles": event.roles.all,
+            "start_datetime": event.start_datetime,
+            "end_datetime": event.end_datetime,
+        }
 
     def post(self, request, **kwargs):
         form = EventForm(request.POST)
         if form.is_valid():
-            event = form.save(commit=False)
-            event.author = request.user
-            event.row_action = 'CREATE'
+            event_to_be_saved = form.instance
+            # event = form.save(commit=False)
+            event_to_be_saved.author = request.user
+            event_to_be_saved.row_action = 'CREATE'
 
             # See EditEvent's post method for details
             user_time_zone_str = request.COOKIES.get('time_zone')
-            event.start_datetime = convert_to_utc(
-                event.start_datetime, user_time_zone_str)
-            event.end_datetime = convert_to_utc(
-                event.end_datetime, user_time_zone_str)
+            event_to_be_saved.start_datetime = convert_to_utc(
+                event_to_be_saved.start_datetime, user_time_zone_str)
+            event_to_be_saved.end_datetime = convert_to_utc(
+                event_to_be_saved.end_datetime, user_time_zone_str)
 
-            event.save()
+            # event.save()
+            form.instance = event_to_be_saved
+            event = form.save()
 
             for attendee in form.participants_to_add:
                 EventParticipant.objects.create(
@@ -245,10 +248,15 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         event = get_object_or_404(Event, id=event_id)
         form = EventForm(request.POST, instance=event)
         if form.is_valid():
-            event = form.save(commit=False)
-            event.last_edited_by = request.user
-            event.row_action = 'EDIT'
-            event.date = dj_util_timezone.now()
+            # for some reason,  editing the event after a form.save doesn't allow me
+            # to save event roles, so now I assign an event placeholder to the form instance
+            # make changes,  then set form.instance = the event placeholder, then do
+            # form.save().  Now it lets roles be updated.
+            # event = form.save(commit=False)
+            event_to_be_edited = form.instance
+            event_to_be_edited.last_edited_by = request.user
+            event_to_be_edited.row_action = 'EDIT'
+            event_to_be_edited.date = dj_util_timezone.now()
 
             # Working with Google's AI and also referring to Flask version for this)
             # - Grab the timezone that was stored as a cookie in layout.html,  convert
@@ -257,17 +265,18 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             # is because the user THINKS they entered the date time in their own timezone.
             # We need to do some tweaks to get the transformation right.
             user_time_zone_str = request.COOKIES.get('time_zone')
-            event.start_datetime = convert_to_utc(
-                event.start_datetime, user_time_zone_str)
-            event.end_datetime = convert_to_utc(
-                event.end_datetime, user_time_zone_str)
+            event_to_be_edited.start_datetime = convert_to_utc(
+                event_to_be_edited.start_datetime, user_time_zone_str)
+            event_to_be_edited.end_datetime = convert_to_utc(
+                event_to_be_edited.end_datetime, user_time_zone_str)
+            form.instance = event_to_be_edited
 
             attendees_to_delete = EventParticipant.objects.filter(
                 participant_id__in=form.delete_participants, event_id=event.id)
             # If we're supposed to add or delete participants but we can't,
             # roll back the whole event edit.
             with transaction.atomic():
-                event.save()
+                event = form.save()
                 for attendee in form.participants_to_add:
                     EventParticipant.objects.create(
                         event=event, added_by=request.user, participant=attendee,  row_action='CREATE')
