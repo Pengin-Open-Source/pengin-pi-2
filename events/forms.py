@@ -37,20 +37,20 @@ class EventForm(forms.ModelForm):
             "participants",
             "roles",
         ]
+        widgets = {
+            "start_datetime": DateTimePickerInput(),
+            "end_datetime": DateTimePickerInput(),
+        }
 
     # I was having trouble getting the currently selected participants to load in the Edit view
     # Gemini suggested setting the initial participants field within the init function.
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and not self.instance._state.adding:  #
             current_participants_ids = EventParticipant.objects.filter(
                 event_id=self.instance.id).values_list('participant_id', flat=True)
             self.fields['participants'].initial = current_participants_ids
-
-    widgets = {
-        "start_datetime": DateTimePickerInput(),
-        "end_datetime": DateTimePickerInput(),
-    }
 
     def clean(self):
         cleaned_up_data = super().clean()
