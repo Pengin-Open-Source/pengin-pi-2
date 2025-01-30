@@ -2,17 +2,16 @@ from django_flatpickr.widgets import DateTimePickerInput
 from django import forms
 from main.models import User
 from .models import Event, EventParticipant
-
+# Credit to Google Gemini for assistence in coding this file.
 
 # Credit to https://stackoverflow.com/questions/49114304/to-field-name-argument-on-a-modelchoicefield-doesnt-seem-to-be-working
 # -> Alasdair's answer, Plus help from Google Gemini on how to get the selection box to display User names instead of emails without
 # changing the User __str__ method.
+
+
 class UserModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, obj):
         return obj.name
-
-    def __init__(self, queryset, **kwargs):
-        super().__init__(queryset, **kwargs)
 
 
 class UserModelChoiceField(forms.ModelChoiceField):
@@ -42,8 +41,7 @@ class EventForm(forms.ModelForm):
             "end_datetime": DateTimePickerInput(),
         }
 
-    # I was having trouble getting the currently selected participants to load in the Edit view
-    # Gemini suggested setting the initial participants field within the init function.
+    # Handles getting the currently selected participants to load in the Edit view
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,6 +73,13 @@ class EventForm(forms.ModelForm):
 
         else:  # This event is new.  Just add all the selected participants
             self.participants_to_add = selected_participants
+
+        end_datetime = self.cleaned_data["end_datetime"]
+        start_datetime = self.cleaned_data["start_datetime"]
+
+        if end_datetime < start_datetime:
+            raise forms.ValidationError(
+                "Start DateTime must be before End DateTime!")
 
         return cleaned_up_data
 
