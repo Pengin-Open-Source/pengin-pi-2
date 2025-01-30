@@ -167,13 +167,17 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
     def get_initial(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
+        current_participants_ids = EventParticipant.objects.filter(
+            event_id=event.id).values_list('participant_id', flat=True)
+        event_roles = event.roles.all().values_list('id', flat=True)
+
         return {
             "title": event.title,
             "description": event.description,
             "location": event.location,
             "organizer": event.organizer,
-            "participants": event.participants.all,
-            "roles": event.roles.all,
+            "participants": current_participants_ids,
+            "roles":  event_roles,
             "start_datetime": event.start_datetime,
             "end_datetime": event.end_datetime,
         }
