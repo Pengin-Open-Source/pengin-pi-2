@@ -10,9 +10,9 @@
 
 {% block pageContent %}
     <form class="event-form-class" method="POST">
-        {% if form.errors %}
+        {% if form_errors %}
             <div class="alert alert-danger">
-                {% for error in form.errors %}
+                {% for error in form_errors %}
                     <ul>
                         <li>{{ error }}</li>
                     </ul>

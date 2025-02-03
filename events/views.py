@@ -291,7 +291,13 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             return redirect("calendar:detail-event", event_id=event.id)
 
         context = self.get_context_data()
-        context["form"] = form
+        form_rendered_for_edit = form.render("configure_event_form.html")
+        context["form"] = form_rendered_for_edit
+        print(form.errors)
+        context["form_errors"] = form.errors
+        context["action"] = "update"
+        context["event"] = event
+        context["primary_title"] = "Edit Event"
         return render(request, self.template_name, context)
 
 
