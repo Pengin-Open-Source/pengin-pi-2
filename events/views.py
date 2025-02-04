@@ -13,6 +13,7 @@ from .calendar import EventCalendar
 from .forms import EventForm, CalendarSettingsForm
 from .permissions import can_create_or_see_event, can_change_event
 
+# Credit to Google Gemini for some coding assistence in this file.
 
 myCal = EventCalendar()
 
@@ -293,11 +294,16 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         context = self.get_context_data()
         form_rendered_for_edit = form.render("configure_event_form.html")
         context["form"] = form_rendered_for_edit
-        print(form.errors)
-        context["form_errors"] = form.errors
-        context["action"] = "update"
-        context["event"] = event
-        context["primary_title"] = "Edit Event"
+
+        error_list = []
+        for field, errors in form.errors.items():
+            if field == '__all__':
+                error_list.append("Warning! Errors were found:")
+            else:
+                error_list.append(f"Errors for field '{field}':")
+            for error in errors:
+                error_list.append(f"- {error}")
+        context["form_errors"] = error_list
         return render(request, self.template_name, context)
 
 
