@@ -213,8 +213,17 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             "primary_title": "Create Event",
             "action": "create",
             "form": form_rendered_for_create,
-
         }
+
+        error_list = []
+        for field, errors in form.errors.items():
+            if field == '__all__':
+                error_list.append("Warning! Errors were found:")
+            else:
+                error_list.append(f"Errors for field '{field}':")
+            for error in errors:
+                error_list.append(f"- {error}")
+        context["form_errors"] = error_list
         return render(request, self.template_name, context)
 
 
