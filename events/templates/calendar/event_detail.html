@@ -2,7 +2,7 @@
 {% load static %}  
 
 {% block pageDropDowns %}
-    <a href="{% url "calendar:create-event" %}">Create Event</a>
+    <a href="{% url "calendar:calendar" %}">Back To Calendar</a>
     <a href="{% url "calendar:copy-event" event.id %}">Duplicate Event</a>
     {% if can_change %}
         <a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
