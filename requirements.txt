@@ -1,5 +1,5 @@
 Django~=5.0.6
-django-markdown-it
+django-markdownit
 mysqlclient
 python-dotenv~=1.0.1
 django-macros
@@ -11,4 +11,5 @@ hiredis
 django-redis
 pillow
 botocore~=1.34.122
-django-flatpickr==2.0.3
+django-flatpickr~=2.0.3
+python-decouple            
