@@ -73,7 +73,7 @@ class EventCalendar(calendar.HTMLCalendar):
         self.month = month
         self.cssclass_month += " calendar-month"
         self.month_events = {}
-        current_user = kwargs.pop("current_user")
+        # current_user = kwargs.pop("current_user")
 
         # Get a copy of all events in the user's local timezone before
         # displaying the calendar. Events at 8 PM Dec 31, 2025 should
@@ -112,9 +112,21 @@ class EventCalendar(calendar.HTMLCalendar):
         # filtered_objects = filter_objects(objects, conditions)
 
         conditions = [
-            lambda event: event.start_datetime.year == year,
-            lambda event: event.end_datetime.year == year,
-            lambda event: event.end_datetime.month == month
+            # Event Starts during this month
+            lambda event: event.start_datetime.year == year and event.start_datetime.month == month,
+            # Event Ends during this month
+            lambda event: event.end_datetime.year == year and event.end_datetime.month == month,
+
+            lambda event: ((event.start_datetime.year == year and event.start_datetime.month < month)
+                           or
+                           # event started before this month
+                           (event.start_datetime.year < year))
+            and
+                          ((event.end_datetime.year == year and event.end_datetime.month > month)
+                              or
+                              # event ends after this month
+                              (event.end_datetime.year > year)
+                           )
         ]
         events_in_month = filter_events(events_local_time_zone, conditions)
 
@@ -149,6 +161,6 @@ class EventCalendar(calendar.HTMLCalendar):
 def filter_events(events, conditions):
     filtered_events = []
     for event in events:
-        if all(condition(event) for condition in conditions):
+        if any(condition(event) for condition in conditions):
             filtered_events.append(event)
     return filtered_events
