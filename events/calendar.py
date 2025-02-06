@@ -73,7 +73,7 @@ class EventCalendar(calendar.HTMLCalendar):
         self.month = month
         self.cssclass_month += " calendar-month"
         self.month_events = {}
-        # current_user = kwargs.pop("current_user")
+        current_user = kwargs.pop("current_user")
 
         # Get a copy of all events in the user's local timezone before
         # displaying the calendar. Events at 8 PM Dec 31, 2025 should
