@@ -132,14 +132,18 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         users = User.objects.filter(id__in=participant_ids)
         paginator = Paginator(users.order_by(
             'name'), 10)  # 10 users per page
-        page_obj = paginator.get_page(page_number)
+        user_page_obj = paginator.get_page(page_number)
+
+        # role_paginator = Paginator(event.roles.order_by('name'), 10)  # 10 users per page
+
+        # role_page_obj = paginator.get_page(page_number)
 
         context = {}
         context["primary_title"] = event.title
         context["event"] = event
         context["can_change"] = can_change_event(request, event_id)
-        context["event_participants"] = page_obj.object_list
-        context["page_obj"] = page_obj
+        context["event_participants"] = user_page_obj.object_list
+        context["user_page_obj"] = user_page_obj
         context["primary_title"] = event.title
 
         return render(

@@ -77,21 +77,31 @@
     {% if event.location %}
         <p class="post-info">Location: {{ event.location }}</p>
     {% endif %}
-    {% if roles.all|length > 0 %}
-        <p>Roles:</p>
+    <div>
+    {% if event.roles.all|length > 0 %}
+      <hr>
+        <p> <b> Roles: </b> </p>
+      <hr>
         {% for role in event.roles.all %}
             <p class="post-info">{{ role.name }}</p>
         {% endfor %}
     {% endif %}
-    {% if event_participants.all|length > 0 %}
-        <p>Participants: </p>
-        {% for participant in event_participants.all %}
-            <p class="post-info"><li>{{ participant.name }} - {{ participant.email }}</li></p>
-            
-        {% endfor %}
-    {% endif %}
+            <!-- Pagination -->
+            {% comment %} {% use_macro render_pagination role_page_obj %} {% endcomment %}
+    </div>
+    <div>
+        {% if event_participants.all|length > 0 %}
+           <hr>
+            <p> <b> Participants: </b> </p>
+           <hr>
+            {% for participant in event_participants.all %}
+                <p class="post-info"><li>{{ participant.name }} - {{ participant.email }}</li></p>
+            {% endfor %}
+        {% endif %}
+        <!-- Pagination -->
+        {% use_macro render_pagination user_page_obj %}
+    </div>
 
-    <!-- Pagination -->
-    {% use_macro render_pagination page_obj %}
+
 </div>
 {% endblock %}
