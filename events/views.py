@@ -2,13 +2,14 @@ from zoneinfo import ZoneInfo
 # Have to specify package for "timezone" b/c I'm importing two differant timezones
 from datetime import datetime, timezone as dt_timezone
 from django.utils import timezone as dj_util_timezone
+from django.core.paginator import Paginator
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import render, reverse, get_object_or_404, redirect
 from django.views import View
 from django.db import transaction
 from main.mixins import LoginAndValidationRequiredMixin
 from .models import Event, EventParticipant, EventHistory
-
+from main.models.users import User
 from .calendar import EventCalendar
 from .forms import EventForm, CalendarSettingsForm
 from .permissions import can_create_or_see_event, can_change_event
@@ -105,7 +106,11 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
 
     def get(self, request, event_id):
+
         event = get_object_or_404(Event, id=event_id)
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+
         # - turn the event's utc datetime into a local datetime
         user_time_zone_str = self.request.COOKIES.get('time_zone')
         event.start_datetime = convert_to_masquerade_local(
@@ -122,15 +127,25 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event_creation_info = get_event_create_info(event)
             event.create_date, event.is_create_missing = event_creation_info
             event.last_edit_date = event.date
+        participant_ids = event.participants.values_list(
+            'participant_id', flat=True)
+        users = User.objects.filter(id__in=participant_ids)
+        paginator = Paginator(users.order_by(
+            'name'), 10)  # 10 users per page
+        page_obj = paginator.get_page(page_number)
+
+        context = {}
+        context["primary_title"] = event.title
+        context["event"] = event
+        context["can_change"] = can_change_event(request, event_id)
+        context["event_participants"] = page_obj.object_list
+        context["page_obj"] = page_obj
+        context["primary_title"] = event.title
 
         return render(
             request,
             self.template_name,
-            {
-                "primary_title": event.title,
-                "event": event,
-                "can_change": can_change_event(request, event_id),
-            },
+            context,
         )
 
 

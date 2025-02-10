@@ -1,5 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  
+{% load macros %}
+{% loadmacros "macros/pagination.html"%}
 
 {% block pageDropDowns %}
     <a href="{% url "calendar:calendar" %}">Back To Calendar</a>
@@ -65,10 +67,7 @@
         </p>
     </div>
      {% endif %}
-     
-        
-         
-    
+
     <p class="post-info">Organizer: {{ event.organizer.name }}</p>
     <p class="post-info">Start time: {{ event.start_date }} @ {{ event.start_time }}</p>
     <p class="post-info">End time: {{ event.end_date }} @ {{ event.end_time }}</p>
@@ -78,17 +77,21 @@
     {% if event.location %}
         <p class="post-info">Location: {{ event.location }}</p>
     {% endif %}
-    {% if event.roles.all|length > 0 %}
+    {% if roles.all|length > 0 %}
         <p>Roles:</p>
         {% for role in event.roles.all %}
             <p class="post-info">{{ role.name }}</p>
         {% endfor %}
     {% endif %}
-    {% if event.participants.all|length > 0 %}
+    {% if event_participants.all|length > 0 %}
         <p>Participants: </p>
-        {% for participant in event.participants.all %}
-            <p class="post-info">{{ participant }}</p>
+        {% for participant in event_participants.all %}
+            <p class="post-info"><li>{{ participant.name }} - {{ participant.email }}</li></p>
+            
         {% endfor %}
     {% endif %}
+
+    <!-- Pagination -->
+    {% use_macro render_pagination page_obj %}
 </div>
 {% endblock %}
