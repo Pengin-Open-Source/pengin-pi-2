@@ -99,9 +99,23 @@
             {% endfor %}
         {% endif %}
         <!-- Pagination -->
-        {% use_macro render_pagination user_page_obj %}
+        {% macro_block render_pagination user_page_obj %}
+
+          {% macro_kwarg change_page_function %}
+            {{ change_page_function }}
+          {% endmacro_kwarg %}
+
+          {% comment %} {% macro_kwarg added_info %}
+            {{ change_page_function }}
+          {% endmacro_kwarg %} {% endcomment %}
+
+        {% endmacro_block %}
+
+        
     </div>
-
-
 </div>
+<script src="{% static 'javascript/jquery/1.12.4/jquery.min.js' %}"></script>
+<script src="{% static 'javascript/scripts.js' %}"></script>
+<script src="{% static 'javascript/calendarEvents.js' %}"></script> 
+
 {% endblock %}

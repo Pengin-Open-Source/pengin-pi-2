@@ -1,3 +1,7 @@
+// const companyMemberEditLink = document.getElementById('company-member-edit-link')
+// const editLinkString = companyMemberEditLink.value;
+
+
 /* Google Gemini's suggestion for clearing all the check boxes -  button needed
 since the user cannot seem to manually deselect ALL participants once some are selected  */
 
@@ -57,3 +61,7 @@ function extractLocalTimeZone() {
 
 window.addEventListener("load", extractLocalTimeZone);
 
+
+function navigateToPage(page_number) {
+    alert("Hello World")
+}
