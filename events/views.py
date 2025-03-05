@@ -126,15 +126,9 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event_creation_info = get_event_create_info(event)
             event.create_date, event.is_create_missing = event_creation_info
             event.last_edit_date = event.date
-        participant_ids = event.participants.values_list(
-            'participant_id', flat=True)
-        users = User.objects.filter(id__in=participant_ids)
-        paginator = Paginator(users.order_by(
-            'name'), 10)  # 10 users per page
-        user_page_obj = paginator.get_page(page_number)
 
         role_paginator = Paginator(
-            event.roles.order_by('name'), 5)  # 10 users per page
+            event.roles.order_by('name'), 10)
 
         role_page_obj = role_paginator.get_page(page_number)
 
@@ -142,11 +136,42 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         context["primary_title"] = event.title
         context["event"] = event
         context["can_change"] = can_change_event(request, event_id)
-        context["event_participants"] = user_page_obj.object_list
-        context["user_page_obj"] = user_page_obj
         context["role_page_obj"] = role_page_obj
+        context["event_roles"] = role_page_obj.object_list
         context["primary_title"] = event.title
 
+        return render(
+            request,
+            self.template_name,
+            context,
+        )
+
+
+class EventParticipantsDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
+    template_name = "calendar/event_participants.html"
+
+    def test_func(self):
+        return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
+
+    def get(self, request, event_id):
+
+        event = get_object_or_404(Event, id=event_id)
+        page_number = self.request.GET.get('page', 1)
+
+        participant_ids = event.participants.values_list(
+            'participant_id', flat=True)
+        users = User.objects.filter(id__in=participant_ids)
+        paginator = Paginator(users.order_by(
+            'name'), 10)  # 10 users per page
+        page_obj = paginator.get_page(page_number)
+
+        context = {}
+        context["primary_title"] = event.title
+        context["event"] = event
+        context["can_change"] = can_change_event(request, event_id)
+        context["event_participants"] = page_obj.object_list
+        context["page_obj"] = page_obj
+        context["primary_title"] = "Participants in " + event.title
         return render(
             request,
             self.template_name,

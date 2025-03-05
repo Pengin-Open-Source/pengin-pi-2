@@ -1,9 +1,16 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+{% block pageDropDowns %}
+<a href="{% url "calendar:detail-event" event.id %}">Event Details </a>
+<a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
+{% endblock %}
+
+{% block pageContent %}
 <div>
     {% if event_participants.all|length > 0 %}
-    <hr>
-    <p> <b> Participants: </b> </p>
-    <hr>
-    <a href="{% url "calendar:display_event_participants" pk=event.id %}">View Event Participants</a>
        <hr>
         <p> <b> Participants: </b> </p>
        <hr>
@@ -12,4 +19,8 @@
         {% endfor %}
     {% endif %}
     <!-- Pagination -->
-    {% use_macro render_pagination user_page_obj %}
+    {% use_macro render_pagination page_obj %}
+<div>
+{% endblock %}
+
+
