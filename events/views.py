@@ -108,8 +108,7 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     def get(self, request, event_id):
 
         event = get_object_or_404(Event, id=event_id)
-        page_number = self.request.POST.get(
-            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        page_number = self.request.GET.get('page', 1)
 
         # - turn the event's utc datetime into a local datetime
         user_time_zone_str = self.request.COOKIES.get('time_zone')
@@ -134,9 +133,10 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             'name'), 10)  # 10 users per page
         user_page_obj = paginator.get_page(page_number)
 
-        # role_paginator = Paginator(event.roles.order_by('name'), 10)  # 10 users per page
+        role_paginator = Paginator(
+            event.roles.order_by('name'), 5)  # 10 users per page
 
-        # role_page_obj = paginator.get_page(page_number)
+        role_page_obj = role_paginator.get_page(page_number)
 
         context = {}
         context["primary_title"] = event.title
@@ -144,6 +144,7 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         context["can_change"] = can_change_event(request, event_id)
         context["event_participants"] = user_page_obj.object_list
         context["user_page_obj"] = user_page_obj
+        context["role_page_obj"] = role_page_obj
         context["primary_title"] = event.title
 
         return render(

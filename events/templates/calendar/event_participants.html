@@ -1,0 +1,15 @@
+<div>
+    {% if event_participants.all|length > 0 %}
+    <hr>
+    <p> <b> Participants: </b> </p>
+    <hr>
+    <a href="{% url "calendar:display_event_participants" pk=event.id %}">View Event Participants</a>
+       <hr>
+        <p> <b> Participants: </b> </p>
+       <hr>
+        {% for participant in event_participants.all %}
+            <p class="post-info"><li>{{ participant.name }} - {{ participant.email }}</li></p>
+        {% endfor %}
+    {% endif %}
+    <!-- Pagination -->
+    {% use_macro render_pagination user_page_obj %}

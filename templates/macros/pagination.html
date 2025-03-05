@@ -16,7 +16,8 @@
  -->
 
  {% load macros %}
- {% macro render_pagination page change_page_function="None" added_info= "None" %}
+ {% macro render_pagination page change_page_function="None" %}
+ {% comment %} {% macro render_pagination page change_page_function="None" added_info= "None" %} {% endcomment %}
  
  <!-- Pagination links -->
  {% if page.has_other_pages %}
@@ -49,6 +50,52 @@
                  <div><a href="#" onclick="event.preventDefault(); {{ change_page_function }}({{ page.next_page_number }});">Next</a></div>
              {% else %}
                  <div><a href="?page={{ page.next_page_number }}">Next</a></div>    
+                 {% comment %} <div><a href="?page={{ page.next_page_number }}&added_info={{ added_info }}">Next</a></div>  {% endcomment %}
+             {% endif  %}
+         {% endif %}
+     
+     </div>
+ {% endif %}
+ 
+ 
+ 
+ {% endmacro %}
+
+
+ {% macro render_pagination2 page2 change_page_function="None" %}
+ {% comment %} {% macro render_pagination page change_page_function="None" added_info= "None" %} {% endcomment %}
+ 
+ <!-- Pagination links -->
+ {% if page2.has_other_pages %}
+     <div class="page-items">
+       {{ page2.start_index }} - {{ page2.end_index }} of {{ page2.paginator.count }}
+     </div>
+     <div class="pagination-list">
+         {% if page2.has_previous %}
+             {% if  change_page_function != "None"  %} 
+                 <div><a href="#" onclick="event.preventDefault(); {{ change_page_function }}({{ page2.previous_page_number  }});"> Previous</a></div>
+             {% else %}
+                 <div><a href="?page2={{ page2.previous_page_number }}">Previous</a></div>
+             {% endif %}
+         {% endif %}
+         <br/>
+         {% for num2 in page2.paginator.page_range %}
+             {% if num2 == page2.number %}
+                 <div class="current">{{ num2 }}</div>
+             {% else %}
+                 {% if  change_page_function != "None"  %} 
+                     <div><a href="#" onclick="event.preventDefault(); {{ change_page_function }}({{ num2 }});"> {{ num2 }}</a></div>
+                 {% else %}
+                     <div><a href="?page2={{ num2 }}">{{ num2 }}</a></div> 
+                 {% endif %}
+             {% endif %}
+         {% endfor %}
+ 
+         {% if page2.has_next %}
+             {% if  change_page_function != "None"  %} 
+                 <div><a href="#" onclick="event.preventDefault(); {{ change_page_function }}({{ page2.next_page_number }});">Next</a></div>
+             {% else %}
+                 <div><a href="?page2={{ page2.next_page_number }}">Next</a></div>    
                  {% comment %} <div><a href="?page={{ page.next_page_number }}&added_info={{ added_info }}">Next</a></div>  {% endcomment %}
              {% endif  %}
          {% endif %}
