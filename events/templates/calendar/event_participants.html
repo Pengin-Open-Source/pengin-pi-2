@@ -5,7 +5,9 @@
 
 {% block pageDropDowns %}
 <a href="{% url "calendar:detail-event" event.id %}">Event Details </a>
-<a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
+{% if can_change %}
+    <a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
+{% endif %}
 {% endblock %}
 
 {% block pageContent %}
