@@ -103,7 +103,7 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_detail.html"
 
     def test_func(self):
-        return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
+        return can_create_or_see_event(self.request.user, self.kwargs.get("event_id"))
 
     def get(self, request, event_id):
 
@@ -151,7 +151,7 @@ class EventParticipantsDetailView(LoginAndValidationRequiredMixin, UserPassesTes
     template_name = "calendar/event_participants.html"
 
     def test_func(self):
-        return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
+        return can_create_or_see_event(self.request.user, self.kwargs.get("event_id"))
 
     def get(self, request, event_id):
 
@@ -185,7 +185,7 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
 
     def test_func(self):
-        return can_create_or_see_event(self.request, self.kwargs.get("event_id"))
+        return can_create_or_see_event(self.request.user, self.kwargs.get("event_id"))
 
     def get(self, request, *args, **kwargs):
         if "event_id" in self.kwargs:

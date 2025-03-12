@@ -1,8 +1,9 @@
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
-from django.db.models import Q
+# from django.db.models import Q
 from django.shortcuts import reverse
 import calendar
+from .permissions import can_create_or_see_event
 
 from events.models import Event
 
@@ -112,6 +113,8 @@ class EventCalendar(calendar.HTMLCalendar):
         # filtered_objects = filter_objects(objects, conditions)
 
         conditions = [
+
+            lambda event: event.start_datetime.year == year and event.start_datetime.month == month,
             # Event Starts during this month
             lambda event: event.start_datetime.year == year and event.start_datetime.month == month,
             # Event Ends during this month
@@ -128,7 +131,8 @@ class EventCalendar(calendar.HTMLCalendar):
                               (event.end_datetime.year > year)
                            )
         ]
-        events_in_month = filter_events(events_local_time_zone, conditions)
+        events_in_month = filter_events(
+            events_local_time_zone, conditions, current_user)
 
         for day in self.itermonthdays(year, month):
             if day > 0:
@@ -158,9 +162,10 @@ class EventCalendar(calendar.HTMLCalendar):
 #     return filtered_objects
 
 
-def filter_events(events, conditions):
+def filter_events(events, conditions, current_user):
     filtered_events = []
     for event in events:
-        if any(condition(event) for condition in conditions):
+        if any(condition(event) for condition in conditions) and can_create_or_see_event(current_user, event.id):
             filtered_events.append(event)
+
     return filtered_events
