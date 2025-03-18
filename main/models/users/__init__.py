@@ -68,3 +68,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return str(self.email)
+
+
+# GEMINI suggested a closure table for dealing with subgroup inheritance
+
+class GroupHierarchy(models.Model):
+    ancestor = models.ForeignKey(
+        Group, related_name='descendants_of', on_delete=models.CASCADE)
+    descendant = models.ForeignKey(
+        Group, related_name='descendant_relations', on_delete=models.CASCADE)
+    depth = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ('ancestor', 'descendant')
