@@ -68,3 +68,33 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return str(self.email)
+# GEMINI suggested a closure table for dealing with subgroup inheritance
+# and also another link table for special access from one group to another across
+# the hierarchy
+
+
+class SubGroup(models.Model):
+    ancestor = models.ForeignKey(
+        Group, related_name='descendant_links', on_delete=models.CASCADE)
+    descendant = models.ForeignKey(
+        Group, related_name='ancestor_links', on_delete=models.CASCADE)
+    depth = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = ('ancestor', 'descendant')
+
+    def __str__(self):
+        return f"{self.descendant.name}, subgroup of {self.ancestor.name}"
+
+
+class GroupSpecialAccess(models.Model):
+    accessed_group = models.ForeignKey(
+        Group, related_name='groups_with_access_to_me', on_delete=models.CASCADE)
+    group_with_access = models.ForeignKey(
+        Group, related_name='has_access_to_group', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('accessed_group', 'group_with_access')
+
+    def __str__(self):
+        return f"{self.accessed_group.name} can be accessed by members of {self.group_with_access.name}"
