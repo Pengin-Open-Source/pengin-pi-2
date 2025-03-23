@@ -306,7 +306,7 @@ class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMix
 ##                   ##
 
 
-# Used to get original date/author of an edited ticket
+# Used to get original date of an edited ticket
 def get_ticket_create_info(ticket):
     oldest_date = ''
     is_create_missing = False
@@ -321,7 +321,7 @@ def get_ticket_create_info(ticket):
     if oldest_ticket_record:
         oldest_date = oldest_ticket_record.date
     else:
-        # DBAs TAKE NOTE: If a DBA deletes some older Forum Post History Records
+        # DBAs TAKE NOTE: If a DBA deletes some older Ticket History Records
         # then the row with the Ticket's initial creation date could have
         # been deleted and unavailable now!
         is_create_missing = True
@@ -337,9 +337,7 @@ def delete_ticket(usr, archive_ticket):
         archive_ticket.last_edited_by = usr
         archive_ticket.date = timezone.now()
 
-        # First,  try to delete all the posts
-        # which will in turn invoke deletion of all their
-        # comments
+        # First,  try to delete all the comments
         # If any deletion fails down the chain,  the whole deletion
         # process should be canceled.
         comments = archive_ticket.comments.all().order_by('-date')
@@ -364,7 +362,7 @@ def get_comment_create_info(comment):
         comment_id=comment.id,  row_action="CREATE")
 
     # there should be only one value.
-    # we will set a flag if there is no row with method 'CREATE'  in ForumCommentHistory
+    # we will set a flag if there is no row with method 'CREATE'  in Comment History
     oldest_comment_record = comment_history.first()
     if oldest_comment_record:
         oldest_date = oldest_comment_record.date
