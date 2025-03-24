@@ -8,20 +8,14 @@ SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
 
 def can_create_or_see_event(current_user, event_id=None):
-    print("HERE i am CHECKING THE PERMISSION")
-    # If no event, user has all permissions.
+
     if event_id is None:
         return True
     # If the event exists, user has permission to see and duplicate it
     # if they are the event author, organizer, participant, or have a role associated with the event.
     # - or if they are staff.
-    print("Current User")
-    print(current_user)
-
     event = get_object_or_404(Event, id=event_id)
     user_groups = current_user.groups.all()
-    print("All the User's groups")
-    print(user_groups)
 
     # Retreive all the ancestor groups that the user's group is
     # a descendant of, using Subgroup closure table.
