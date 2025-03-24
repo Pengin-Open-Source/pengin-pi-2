@@ -5,7 +5,7 @@ from tickets.models import Ticket, TicketComment
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['summary', 'content', 'tags']
+        fields = ['summary',  'roles', 'content', 'tags']
 
 
 class TicketEditStatusForm(forms.ModelForm):

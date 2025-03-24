@@ -23,6 +23,7 @@ class Ticket(models.Model):
     row_action = models.CharField(max_length=10, default='ERROR')
     resolution_status = models.CharField(max_length=100)
     resolution_date = models.CharField(max_length=100)
+    roles = models.ManyToManyField(Group, related_name='tickets', blank=True)
 
     def __str__(self):
         return str(self.summary)
@@ -38,13 +39,15 @@ class Ticket(models.Model):
             # Rows will still be backed up even if 'ERROR' was assigned to the row_action.
             if save_method != "CREATE":
                 original_ticket = Ticket.objects.get(pk=self.pk)
+                ticket_roles = original_ticket.roles.all()
+                groups_snapshot = list(ticket_roles.values('pk', 'name'))
                 if original_ticket.last_edited_by:
                     ticket_backup = TicketHistory(ticket_id=original_ticket.id, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
                                                   author=original_ticket.author.pk, last_edited_by=original_ticket.last_edited_by.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status,
-                                                  resolution_date=original_ticket.resolution_date)
+                                                  resolution_date=original_ticket.resolution_date, roles=groups_snapshot)
                 else:
                     ticket_backup = TicketHistory(ticket_id=original_ticket.id, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
-                                                  author=original_ticket.author.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status, resolution_date=original_ticket.resolution_date)
+                                                  author=original_ticket.author.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status, resolution_date=original_ticket.resolution_date, roles=groups_snapshot)
 
                 ticket_backup.save()
 
@@ -65,7 +68,7 @@ class Ticket(models.Model):
         if save_method == 'DELETE':
             archived_ticket = TicketHistory(ticket_id=self.pk, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
                                             author=self.author.pk, last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
-                                            resolution_date=self.resolution_date)
+                                            resolution_date=self.resolution_date, roles=groups_snapshot)
 
             archived_ticket.save()
 
@@ -82,6 +85,7 @@ class TicketHistory(models.Model):
     row_action = models.CharField(max_length=10, default='ERROR')
     resolution_status = models.CharField(max_length=100)
     resolution_date = models.CharField(max_length=100)
+    roles = models.JSONField()
 
     def __str__(self):
         return str(self.summary)
