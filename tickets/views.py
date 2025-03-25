@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from main.mixins import LoginAndValidationRequiredMixin
+from .permissions import can_see_ticket
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):
@@ -139,10 +140,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
-        if self.request.user.is_staff:
-            return True
-        ticket = self.get_object()
-        return self.request.user == ticket.author
+        return can_see_ticket(self.request.user, self.get_object())
 
 
 class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
