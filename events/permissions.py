@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from .models import Event
 from django.db.models import OuterRef
 from main.models.users import SubGroup, GroupSpecialAccess
-
+from util.security.group_access import get_cross_group_access, get_subgroups
 SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
 
@@ -19,16 +19,14 @@ def can_create_or_see_event(current_user, event_id=None):
 
     # Retreive all the ancestor groups that the user's group is
     # a descendant of, using Subgroup closure table.
-    user_super_groups = SubGroup.objects.filter(
-        descendant__in=user_groups).values('ancestor')
+    user_super_groups = get_subgroups(user_groups)
 
     # Retrieve all the groups that the user's groups has special access to,
     # using the GroupSpecialAccess table
     # IMPORTANT. This has a KEY difference from being an actual member of a group/role
     # If the user merely has special access to a role,  they do NOT also
     # inherit the permissions from this group's ancestor roles
-    user_accessed_groups = GroupSpecialAccess.objects.filter(
-        group_with_access__in=user_groups).values('accessed_group')
+    user_accessed_groups = get_cross_group_access(user_groups)
 
     # A matching role is a group/role assigned to this event where:
     # The user has this role
