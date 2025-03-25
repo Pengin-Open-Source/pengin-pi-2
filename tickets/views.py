@@ -171,11 +171,13 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             Ticket, id=ticket_id)
         ticket_form = TicketForm(request.POST, instance=ticket)
         if ticket_form.is_valid():
-            ticket = ticket_form.save(commit=False)
-            ticket.last_edited_by = request.user
-            ticket.row_action = 'EDIT'
-            ticket.date = timezone.now()
-            ticket.save()
+            # ticket = ticket_form.save(commit=False)
+            ticket_to_be_edited = ticket_form.instance
+            ticket_to_be_edited.last_edited_by = request.user
+            ticket_to_be_edited.row_action = 'EDIT'
+            ticket_to_be_edited.date = timezone.now()
+            ticket_form.instance = ticket_to_be_edited
+            ticket = ticket_form.save()
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
