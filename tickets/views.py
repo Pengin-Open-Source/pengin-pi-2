@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from main.mixins import LoginAndValidationRequiredMixin
-from .permissions import can_see_ticket
+from tickets.permissions import can_see_ticket
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):

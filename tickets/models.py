@@ -16,14 +16,23 @@ class Ticket(models.Model):
     # Warning: Cascade deletes won't save unedited tickets to history!
     # They also will not delete any edited tickets FROM history.
     # This class might need to be used with signals at some point
+    # If the person who made the ticket is deleted from the system,
+    # Cascade delete the ticket
+    # If it's the person who edited it last, set the value to null.
+    # If the person who OWNS the ticket the ticket is set to be deleted, block him!
+    # The ticket must be owned,  and someone must recieve ownership of the issue
+    # before the ticket can be deleted
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='tickets')
+        User, on_delete=models.CASCADE, related_name='tickets_authored')
+    owner = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name='tickets_owned')
     last_edited_by = models.ForeignKey(
         User, on_delete=models.SET_NULL,  null=True)
     row_action = models.CharField(max_length=10, default='ERROR')
     resolution_status = models.CharField(max_length=100)
     resolution_date = models.CharField(max_length=100)
-    roles = models.ManyToManyField(Group, related_name='tickets', blank=True)
+    role = models.ForeignKey(
+        Group, on_delete=models.RESTRICT, related_name='tickets')
 
     def __str__(self):
         return str(self.summary)
@@ -39,15 +48,18 @@ class Ticket(models.Model):
             # Rows will still be backed up even if 'ERROR' was assigned to the row_action.
             if save_method != "CREATE":
                 original_ticket = Ticket.objects.get(pk=self.pk)
-                ticket_roles = original_ticket.roles.all()
-                groups_snapshot = list(ticket_roles.values('pk', 'name'))
+                # ticket_roles = original_ticket.roles.all()
+                # group_snapshot = list(
+                #    original_ticket.role.values('pk', 'name'))
+                group_snapshot = [
+                    {'pk': original_ticket.role.pk, 'name': original_ticket.role.name}]
                 if original_ticket.last_edited_by:
                     ticket_backup = TicketHistory(ticket_id=original_ticket.id, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
-                                                  author=original_ticket.author.pk, last_edited_by=original_ticket.last_edited_by.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status,
-                                                  resolution_date=original_ticket.resolution_date, roles=groups_snapshot)
+                                                  author=original_ticket.author.pk, owner=original_ticket.owner.pk, last_edited_by=original_ticket.last_edited_by.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status,
+                                                  resolution_date=original_ticket.resolution_date, role=group_snapshot)
                 else:
                     ticket_backup = TicketHistory(ticket_id=original_ticket.id, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
-                                                  author=original_ticket.author.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status, resolution_date=original_ticket.resolution_date, roles=groups_snapshot)
+                                                  author=original_ticket.author.pk,  owner=original_ticket.owner.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status, resolution_date=original_ticket.resolution_date, role=group_snapshot)
 
                 ticket_backup.save()
 
@@ -67,8 +79,8 @@ class Ticket(models.Model):
         # by a DBA)
         if save_method == 'DELETE':
             archived_ticket = TicketHistory(ticket_id=self.pk, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
-                                            author=self.author.pk, last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
-                                            resolution_date=self.resolution_date, roles=groups_snapshot)
+                                            author=self.author.pk, owner=self.owner.pk,  last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
+                                            resolution_date=self.resolution_date, role=group_snapshot)
 
             archived_ticket.save()
 
@@ -81,11 +93,12 @@ class TicketHistory(models.Model):
     tags = models.CharField(max_length=150)
     date = models.DateTimeField(default=timezone.now)
     author = models.UUIDField(db_index=True)
+    owner = models.UUIDField(db_index=True)
     last_edited_by = models.UUIDField(db_index=True, null=True)
     row_action = models.CharField(max_length=10, default='ERROR')
     resolution_status = models.CharField(max_length=100)
     resolution_date = models.CharField(max_length=100)
-    roles = models.JSONField()
+    role = models.JSONField()
 
     def __str__(self):
         return str(self.summary)
