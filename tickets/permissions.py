@@ -1,6 +1,6 @@
 from django.db.models import OuterRef
-from main.models.users import SubGroup, GroupSpecialAccess
-from util.security.group_access import get_cross_group_access, get_subgroups
+from main.models.users import SubGroup, GroupToGroupAccess
+from util.security.group_access import get_cross_group_access, get_super_groups, is_manager_of_this_role
 
 
 def can_see_ticket(current_user, ticket):
@@ -9,7 +9,7 @@ def can_see_ticket(current_user, ticket):
 
     # Retreive all the ancestor groups that the user's group is
     # a descendant of, using Subgroup closure table.
-    user_super_groups = get_subgroups(user_groups)
+    user_super_groups = get_super_groups(user_groups)
 
     # Retrieve all the groups that the user's groups has special access to,
     # using the GroupSpecialAccess table
@@ -25,3 +25,8 @@ def can_see_ticket(current_user, ticket):
     matching_role = (
         ticket.role in [user_groups, user_super_groups,  user_accessed_groups])
     return (current_user.is_staff or matching_role or current_user == ticket.author)
+
+
+def is_ticket_manager(current_user, ticket):
+
+    is_manager_of_this_role(current_user, ticket.role)

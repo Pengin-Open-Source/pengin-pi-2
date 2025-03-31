@@ -87,7 +87,7 @@ class SubGroup(models.Model):
         return f"{self.descendant.name}, subgroup of {self.ancestor.name}"
 
 
-class GroupSpecialAccess(models.Model):
+class GroupToGroupAccess(models.Model):
     accessed_group = models.ForeignKey(
         Group, related_name='groups_with_access_to_me', on_delete=models.CASCADE)
     group_with_access = models.ForeignKey(
@@ -98,3 +98,16 @@ class GroupSpecialAccess(models.Model):
 
     def __str__(self):
         return f"{self.accessed_group.name} can be accessed by members of {self.group_with_access.name}"
+
+
+class GroupManagers(models.Model):
+    managed_group = models.ForeignKey(
+        Group, related_name='group_managers', on_delete=models.CASCADE)
+    manager = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='groups_managed')
+
+    class Meta:
+        unique_together = ('managed_group', 'manager')
+
+    def __str__(self):
+        return f"{self.manager.name} manages Group/Role {self.managed_group.name}"
