@@ -23,8 +23,8 @@ def get_sub_groups(groups):
 def get_group_managers(groups):
     super_groups = get_super_groups(groups)
     group_managers = GroupManager.objects.filter(
-        Q(managed_group__in__in=groups) | Q(
-            managed_group__in__in=super_groups)).values('manager')
+        Q(managed_group__in=groups) | Q(
+            managed_group__in=super_groups)).values('manager')
     return group_managers
 
 
@@ -41,5 +41,7 @@ def get_cross_group_access(groups):
 
 
 def is_manager_of_this_role(current_user, role):
-    role_managers = get_group_managers(list(role))
-    return current_user in role_managers
+    role_managers = get_group_managers({role})
+    manager_uuids = [uuid['manager'] for uuid in role_managers]
+
+    return current_user.id in manager_uuids

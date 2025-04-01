@@ -298,6 +298,9 @@ class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMix
 
         comment = self.get_object()
 
+        # TODO  Perhaps customer-level users shouldn'te  be allowed to delete STAFF comments
+        # Also,  should managers be allowed to delete comments?
+
         return self.request.user == comment.author
 
 
