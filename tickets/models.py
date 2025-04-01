@@ -25,7 +25,7 @@ class Ticket(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='tickets_authored')
     owner = models.ForeignKey(
-        User, on_delete=models.RESTRICT, related_name='tickets_owned')
+        User, on_delete=models.RESTRICT, related_name='tickets_owned', null=True,  blank=True)
     last_edited_by = models.ForeignKey(
         User, on_delete=models.SET_NULL,  null=True)
     row_action = models.CharField(max_length=10, default='ERROR')
@@ -93,7 +93,7 @@ class TicketHistory(models.Model):
     tags = models.CharField(max_length=150)
     date = models.DateTimeField(default=timezone.now)
     author = models.UUIDField(db_index=True)
-    owner = models.UUIDField(db_index=True)
+    owner = models.UUIDField(db_index=True, null=True)
     last_edited_by = models.UUIDField(db_index=True, null=True)
     row_action = models.CharField(max_length=10, default='ERROR')
     resolution_status = models.CharField(max_length=100)
