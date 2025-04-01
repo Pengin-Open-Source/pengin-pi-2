@@ -100,7 +100,7 @@ class GroupToGroupAccess(models.Model):
         return f"{self.accessed_group.name} can be accessed by members of {self.group_with_access.name}"
 
 
-class GroupManagers(models.Model):
+class GroupManager(models.Model):
     managed_group = models.ForeignKey(
         Group, related_name='group_managers', on_delete=models.CASCADE)
     manager = models.ForeignKey(

@@ -24,7 +24,7 @@ def can_see_ticket(current_user, ticket):
     # The user has a role that can access this role
     matching_role = (
         ticket.role in [user_groups, user_super_groups,  user_accessed_groups])
-    return (current_user.is_staff or matching_role or current_user == ticket.author)
+    return (current_user.is_staff or matching_role or current_user == ticket.author or is_ticket_manager(current_user, ticket))
 
 
 def is_ticket_manager(current_user, ticket):

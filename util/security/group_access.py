@@ -1,5 +1,5 @@
 from django.db.models import OuterRef
-from main.models.users import SubGroup, GroupToGroupAccess, GroupManagers
+from main.models.users import SubGroup, GroupToGroupAccess, GroupManager
 from django.db.models import Q
 # Credit to Google Gemini and Search AI for some suggestiosn for this file
 
@@ -22,7 +22,7 @@ def get_sub_groups(groups):
 
 def get_group_managers(groups):
     super_groups = get_super_groups(groups)
-    group_managers = GroupManagers.objects.filter(
+    group_managers = GroupManager.objects.filter(
         Q(managed_group__in__in=groups) | Q(
             managed_group__in__in=super_groups)).values('manager')
     return group_managers
