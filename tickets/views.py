@@ -37,14 +37,15 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
                 tickets = self.queryset.filter(
                     resolution_status=status).order_by('-date')
             else:
-                tickets = self.queryset.filter(
-                    author=self.request.user, resolution_status=status).order_by('-date')
+                tickets = Ticket.objects.filter(
+                    resolution_status=status).filter_by_can_see_ticket(
+                    self.request.user)
         else:
             if is_admin:
                 tickets = self.queryset.order_by('-date')
             else:
-                tickets = self.queryset.filter(
-                    author=self.request.user).order_by('-date')
+                tickets = Ticket.objects.filter_by_can_see_ticket(
+                    self.request.user)
 
         for ticket in tickets:
             if ticket.row_action == 'CREATE':

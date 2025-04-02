@@ -1,10 +1,35 @@
 from django.db import models
 from django.db import models, transaction
-from django.conf import settings
 from django.contrib.auth.models import Group
 from main.models.users import User
 from django.utils import timezone
 import uuid
+from tickets.permissions import can_see_ticket
+
+
+class TicketQuerySet(models.QuerySet):
+    # Custom QuerySet for the Ticket Model
+    # - as per recommended approach from Google Gemini
+    # when you need to filter using a custom function
+
+    def filter_by_can_see_ticket(self, user):
+        result = []
+        for ticket in self:
+            if can_see_ticket(user, ticket):
+                result.append(ticket)
+        return result
+
+
+class TicketManager(models.Manager):
+    # Custom Manager for the Custom Ticket QuerySet
+    # - as per recommended approach from Google Gemini
+    # when you need to filter using a custom function
+
+    def get_queryset(self):
+        return TicketQuerySet(self.model, using=self._db)
+
+    def filter_by_can_see_ticket(self, user):
+        return self.get_queryset().filter_by_can_see_ticket(user)
 
 
 class Ticket(models.Model):
@@ -33,6 +58,8 @@ class Ticket(models.Model):
     resolution_date = models.CharField(max_length=100)
     role = models.ForeignKey(
         Group, on_delete=models.RESTRICT, related_name='tickets')
+
+    objects = TicketManager.from_queryset(TicketQuerySet)()
 
     def __str__(self):
         return str(self.summary)
