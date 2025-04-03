@@ -7,7 +7,7 @@ def can_see_ticket(current_user, ticket):
 
     user_groups = current_user.groups.all()
 
-    # Retreive all the ancestor groups that the user's group is
+    # Retrieve all the ancestor groups that the user's group is
     # a descendant of, using Subgroup closure table.
     user_super_groups = get_super_groups(user_groups)
 
