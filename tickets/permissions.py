@@ -23,7 +23,11 @@ def can_see_ticket(current_user, ticket):
     # The user has a role that is a descendant role of this role.
     # The user has a role that can access this role
     matching_role = (
-        ticket.role in [user_groups, user_super_groups,  user_accessed_groups])
+        ticket.role.id in [group.id for group in user_groups] or
+        ticket.role.id in [id['ancestor'] for id in user_super_groups] or
+        ticket.role.id in [id['accessed_group'] for id in user_accessed_groups]
+
+    )
 
     return (current_user.is_staff or matching_role or current_user == ticket.author or is_ticket_manager(current_user, ticket))
 
