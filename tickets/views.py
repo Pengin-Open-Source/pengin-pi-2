@@ -8,7 +8,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_see_ticket
+from tickets.permissions import can_see_ticket, can_edit_ticket
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):
@@ -126,6 +126,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         context['comment_form'] = comment_form
         is_admin = self.request.user.is_staff
         context['is_admin'] = is_admin
+        context['can_edit_ticket'] = can_edit_ticket(self.request.user, ticket)
         context['primary_title'] = self.object.summary + \
             " | Status: " + self.object.resolution_status.upper()
         return context
@@ -180,12 +181,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
-        # Any user can that can see the ticket can now edit it....
-        # ..but not all users can edit in the same way.
-        # See forms class for more.
 
         ticket = self.get_object()
-        return can_see_ticket(self.request.user, ticket)
+        return can_edit_ticket(self.request.user, ticket)
 
 
 class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):

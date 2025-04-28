@@ -1,5 +1,9 @@
 {% extends "layout/fullPageScroll.html" %}
 
+{% block pageDropDowns %}
+   <a href="{% url 'ticket'  ticket.id %}">Cancel</a>
+{% endblock %}
+
 {% block pageContent %}
   <form class="form" method="POST" action="{% url 'edit_ticket' ticket_id %}">
     {% csrf_token %}
