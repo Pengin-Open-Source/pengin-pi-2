@@ -180,12 +180,12 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
-        if self.request.user.is_staff:
-            return True
+        # Any user can that can see the ticket can now edit it....
+        # ..but not all users can edit in the same way.
+        # See forms class for more.
 
         ticket = self.get_object()
-
-        return self.request.user == ticket.author
+        return can_see_ticket(self.request.user, ticket)
 
 
 class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):

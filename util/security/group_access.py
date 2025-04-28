@@ -40,6 +40,34 @@ def get_cross_group_access(groups):
     return accessed_groups
 
 
+def can_access_group(current_user, group_id):
+    user_groups = current_user.groups.all()
+
+    # Retrieve all the ancestor groups that the user's group is
+    # a descendant of, using Subgroup closure table.
+    user_super_groups = get_super_groups(user_groups)
+
+    # Retrieve all the groups that the user's groups has special access to,
+    # using the GroupSpecialAccess table
+    # IMPORTANT. This has a KEY difference from being an actual member of a group/role
+    # If the user merely has special access to a role,  they do NOT also
+    # inherit the permissions from this group's ancestor roles
+    user_accessed_groups = get_cross_group_access(user_groups)
+
+    # A matching role is a group/role assigned to this event where:
+    # The user has this role
+    # The user has a role that is a descendant role of this role.
+    # The user has a role that can access this role
+    matching_group = (
+        group_id in [group.id for group in user_groups] or
+        group_id in [id['ancestor'] for id in user_super_groups] or
+        group_id in [id['accessed_group'] for id in user_accessed_groups]
+
+    )
+
+    return matching_group
+
+
 def is_manager_of_this_role(current_user, role):
     role_managers = get_group_managers({role})
     manager_uuids = [uuid['manager'] for uuid in role_managers]
