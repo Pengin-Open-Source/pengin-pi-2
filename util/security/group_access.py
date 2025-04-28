@@ -1,5 +1,5 @@
 from django.db.models import OuterRef
-from main.models.users import SubGroup, GroupToGroupAccess, GroupManager
+from main.models.users import SubGroup, GroupToGroupAccess, GroupManager, User
 from django.db.models import Q
 # Credit to Google Gemini and Search AI for some suggestiosn for this file
 
@@ -66,6 +66,22 @@ def can_access_group(current_user, group_id):
     )
 
     return matching_group
+
+
+def get_validated_user_ids_with_access_to_group(group):
+    # All users who are members of this role/group,
+    # or a role with access to this group
+    # BESIDES THE GROUP MANAGER OR STAFF.
+    # Ideally,  the "validated" part of this should
+    # be redundant - A user who is not validated
+    # shouldn't have a role.
+    validated_users = User.objects.filter(validated=True)
+    who_can_access_role = []
+    for user in validated_users:
+        if can_access_group(user, group):
+            who_can_access_role.append(user.id)
+
+    return who_can_access_role
 
 
 def is_manager_of_this_role(current_user, role):
