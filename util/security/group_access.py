@@ -71,14 +71,15 @@ def can_access_group(current_user, group_id):
 def get_validated_user_ids_with_access_to_group(group):
     # All users who are members of this role/group,
     # or a role with access to this group
-    # BESIDES THE GROUP MANAGER OR STAFF.
+    # (DOES NOT return THE GROUP MANAGER OR STAFF if they don't
+    # have a related role)
     # Ideally,  the "validated" part of this should
     # be redundant - A user who is not validated
     # shouldn't have a role.
     validated_users = User.objects.filter(validated=True)
     who_can_access_role = []
     for user in validated_users:
-        if can_access_group(user, group):
+        if can_access_group(user, group.id):
             who_can_access_role.append(user.id)
 
     return who_can_access_role
