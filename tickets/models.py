@@ -81,13 +81,17 @@ class Ticket(models.Model):
                 group_snapshot = [
                     {'pk': original_ticket.role.pk, 'name': original_ticket.role.name}]
                 if original_ticket.last_edited_by:
-                    ticket_backup = TicketHistory(ticket_id=original_ticket.id, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
-                                                  author=original_ticket.author.pk, owner=original_ticket.owner.pk, last_edited_by=original_ticket.last_edited_by.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status,
-                                                  resolution_date=original_ticket.resolution_date, role=group_snapshot)
+                    last_editor = original_ticket.last_edited_by.pk
                 else:
-                    ticket_backup = TicketHistory(ticket_id=original_ticket.id, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
-                                                  author=original_ticket.author.pk,  owner=original_ticket.owner.pk, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status, resolution_date=original_ticket.resolution_date, role=group_snapshot)
+                    last_editor = None
+                if original_ticket.owner:
+                    ticket_owner = original_ticket.owner.pk
+                else:
+                    ticket_owner = None
 
+                ticket_backup = TicketHistory(ticket_id=original_ticket.id, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
+                                              author=original_ticket.author.pk, owner=ticket_owner, last_edited_by=last_editor, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status,
+                                              resolution_date=original_ticket.resolution_date, role=group_snapshot)
                 ticket_backup.save()
 
             # else: this is a newly created Ticket don't save it to backup table yet
@@ -98,15 +102,25 @@ class Ticket(models.Model):
 
         # if this is a pre-delete save,  the ticket row will have been updated to contain
         # 1) The action/method: "DELETE"
-        # 2) The User who did the Delete (saved in last_edited_by)
+        # 2) The User who did the Delete
+        #    (saved in last_edited_by.  So I am not checking
+        #    since it SHOULD always be here)
         # 3) The time of the deletion
         # We need to make sure this information is copied into Ticket history
         # before we delete the Ticket.
         # (If Ticket history needs to be totally deleted, that should be done
         # by a DBA)
+
+        # Make sure we handle the case where
+        # where the ticket was never assigned to anyone
+        if self.owner:
+            deleted_ticket_owner = self.owner.pk
+        else:
+            deleted_ticket_owner = None
+
         if save_method == 'DELETE':
             archived_ticket = TicketHistory(ticket_id=self.pk, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
-                                            author=self.author.pk, owner=self.owner.pk,  last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
+                                            author=self.author.pk, owner=deleted_ticket_owner,  last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
                                             resolution_date=self.resolution_date, role=group_snapshot)
 
             archived_ticket.save()
