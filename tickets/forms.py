@@ -36,7 +36,7 @@ class TicketForm(forms.ModelForm):
             print(owner_picklist_ids)
             # print("Here are the fields")
             # print(self.fields)
-            self.fields['owner'].initial = owner_picklist_ids
+            self.fields['owner'].queryset = owner_picklist_ids
 
 
 class TicketEditStatusForm(forms.ModelForm):
