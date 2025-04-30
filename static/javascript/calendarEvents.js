@@ -62,6 +62,3 @@ function extractLocalTimeZone() {
 window.addEventListener("load", extractLocalTimeZone);
 
 
-function navigateToPage(page_number) {
-    alert("Hello World")
-}
