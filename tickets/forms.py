@@ -25,14 +25,23 @@ class TicketForm(forms.ModelForm):
         # print(kwargs.get('instance').role)
         # print(self.instance.role)
 
-        if self.instance and not self.instance._state.adding:
+        if self.instance:
+            if self.instance._state.adding:
+                self.populate_owner_field()
+            else:
+                self.populate_owner_field(self.instance.role)
+
+    def populate_owner_field(self, role=None):
+        if role is None:
+            self.fields['owner'].queryset = User.objects.none()
+        else:
             allowed_user_ids = get_validated_user_ids_with_access_to_group(
                 self.instance.role)
 
             # get these ids in queryset form so I can use them
             # in a picklist
             owner_picklist_ids = User.objects.filter(
-                id__in=allowed_user_ids).values_list('id', flat=True)
+                id__in=allowed_user_ids)
             print(owner_picklist_ids)
             # print("Here are the fields")
             # print(self.fields)
