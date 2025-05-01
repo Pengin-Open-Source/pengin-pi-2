@@ -156,6 +156,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        the_role_chosen = self.request.GET.get('selected_role')
+        print("Look,  I chose a new role")
+        print(the_role_chosen)
         # perhaps should be refactored to use self.object?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
         form = TicketForm(instance=ticket)

@@ -1,4 +1,5 @@
 {% extends "layout/fullPageScroll.html" %}
+{% load static %} 
 
 {% block pageDropDowns %}
    <a href="{% url 'ticket'  ticket.id %}">Cancel</a>
@@ -9,5 +10,42 @@
     {% csrf_token %}
     {{ form.as_p }}
     <button class="primary-button" type="submit">Confirm Ticket Edit</button>
+
+  {% comment %}  If the selected Role changes, re-populate the owner field accordingly
+    (tweaking code from Google Gemini + what I have in calendarEvents.js)
+  {% endcomment %}
+
+  <script src="{% static 'javascript/jquery/1.12.4/jquery.min.js' %}"></script>
+  <script src="{% static 'javascript/scripts.js'                  %}"></script>
+  <script>
+      const rolePicklist = document.getElementById('id_role')
+      const ownerPicklist = document.getElementById('id_owner');
+
+      if (rolePicklist)  {
+          rolePicklist.addEventListener('change',  function() {
+            const selectedRole = this.value;
+            alert(this.value)
+            
+            // AJAX call to the Edit Ticket view
+            fetch(`/ticket/${ticket.id}/edit/?selected_role=${selectedRole}`)
+            .then(response => {
+              if (!response.ok) {
+                  throw new Error('Network response was not ok');
+              }
+              return response.json();
+          })
+          .then(data => {
+            console.log('Received from server:', data);
+            // Handle the response from the server here
+          })
+          .catch(error => {
+            console.error('There has been a problem with your fetch operation:', error);
+          });
+                 
+          })
+      }
+      
+  </script>
+
   </form>
 {% endblock %}

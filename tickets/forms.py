@@ -40,12 +40,10 @@ class TicketForm(forms.ModelForm):
 
             # get these ids in queryset form so I can use them
             # in a picklist
-            owner_picklist_ids = User.objects.filter(
+            owner_picklist_options = User.objects.filter(
                 id__in=allowed_user_ids)
-            print(owner_picklist_ids)
-            # print("Here are the fields")
-            # print(self.fields)
-            self.fields['owner'].queryset = owner_picklist_ids
+
+            self.fields['owner'].queryset = owner_picklist_options
 
 
 class TicketEditStatusForm(forms.ModelForm):
