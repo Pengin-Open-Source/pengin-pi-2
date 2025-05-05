@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block pageContent %}
+  <input type="hidden" id="ticket-edit-link" value='{% url 'edit_ticket' ticket_id %}'>
   <form class="form" method="POST" action="{% url 'edit_ticket' ticket_id %}">
     {% csrf_token %}
     {{ form.as_p }}
@@ -20,14 +21,18 @@
   <script>
       const rolePicklist = document.getElementById('id_role')
       const ownerPicklist = document.getElementById('id_owner');
+      const ticketEditLink= document.getElementById('ticket-edit-link')
+      const ticketEditLinkString = ticketEditLink.value;
 
       if (rolePicklist)  {
           rolePicklist.addEventListener('change',  function() {
             const selectedRole = this.value;
-            alert(this.value)
+            alert(this.value);
             
             // AJAX call to the Edit Ticket view
-            fetch(`/ticket/${ticket.id}/edit/?selected_role=${selectedRole}`)
+            fetch(ticketEditLinkString + '?selected_role=' + encodeURIComponent(selectedRole),  {
+              method: 'GET'
+            } )
             .then(response => {
               if (!response.ok) {
                   throw new Error('Network response was not ok');
