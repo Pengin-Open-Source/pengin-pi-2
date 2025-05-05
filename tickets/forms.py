@@ -27,23 +27,29 @@ class TicketForm(forms.ModelForm):
 
         if self.instance:
             if self.instance._state.adding:
-                self.populate_owner_field()
+                self.fields['owner'].queryset = self.populate_owner_field()
             else:
-                self.populate_owner_field(self.instance.role)
+                self.fields['owner'].queryset = self.populate_owner_field(
+                    self.instance.role)
 
     def populate_owner_field(self, role=None):
         if role is None:
-            self.fields['owner'].queryset = User.objects.none()
+            owner_picklist_options = self.fields['owner'].queryset = User.objects.none(
+            )
         else:
+            # print("Here's what I call the role: ",  role)
             allowed_user_ids = get_validated_user_ids_with_access_to_group(
-                self.instance.role)
+                role)
 
             # get these ids in queryset form so I can use them
             # in a picklist
             owner_picklist_options = User.objects.filter(
                 id__in=allowed_user_ids)
 
-            self.fields['owner'].queryset = owner_picklist_options
+            print("Hey so what are my options")
+            print(owner_picklist_options)
+
+        return owner_picklist_options
 
 
 class TicketEditStatusForm(forms.ModelForm):

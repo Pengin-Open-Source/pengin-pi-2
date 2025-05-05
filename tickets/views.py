@@ -5,6 +5,7 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.models import Group
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from main.mixins import LoginAndValidationRequiredMixin
@@ -157,16 +158,27 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         the_role_chosen = self.request.GET.get('selected_role')
+
         print("Look,  I chose a new role")
         print(the_role_chosen)
         # perhaps should be refactored to use self.object?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
         form = TicketForm(instance=ticket)
+        if the_role_chosen:
+            print("Role Chosen")
+            the_role_object = get_object_or_404(Group, id=the_role_chosen)
+            print(the_role_object)
+            form.instance.owner = form.populate_owner_field(the_role_object)
+
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.summary
         context['ticket_id'] = self.object.id
         return context
+
+    # def get(self, request, **kwargs):
+    #     context = self.get_context_data(**kwargs)
+    #     return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         ticket_id = self.kwargs.get('pk')
