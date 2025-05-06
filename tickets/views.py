@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
@@ -10,6 +10,7 @@ from tickets.models import Ticket, TicketComment, transaction, TicketHistory, Ti
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_see_ticket, can_edit_ticket
+from util.security.group_access import get_valid_users_with_rbac
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):
@@ -152,23 +153,36 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     template_name = 'ticket_edit.html'
     context_object_name = 'ticket'
 
+    # Google Gemini suggested using dispatch to check for AJAX call to give back a JSONResponse
+    def dispatch(self, request, *args, **kwargs):
+        selected_role = request.GET.get('selected_role')
+        if selected_role:
+            # It's an Ajax request, handle it differently
+            the_role_object = get_object_or_404(Group, id=selected_role)
+            print(the_role_object)
+            potential_owners_for_the_role = get_valid_users_with_rbac(
+                the_role_object)
+            print("potential owners for this role")
+            print(potential_owners_for_the_role)
+            owner_options = []
+            for user in potential_owners_for_the_role:
+                owner_options.append(
+                    {'value': user.pk,  'label': str(user.name)})
+
+            data = {'message': f'Newly Selected Role: {selected_role}',
+                    'status': 'success',  'options': owner_options}
+            return JsonResponse(data)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         return reverse_lazy('ticket', kwargs={'pk': self.object.id})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        the_role_chosen = self.request.GET.get('selected_role')
 
-        print("Look,  I chose a new role")
-        print(the_role_chosen)
         # perhaps should be refactored to use self.object?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
         form = TicketForm(instance=ticket)
-        if the_role_chosen:
-            print("Role Chosen")
-            the_role_object = get_object_or_404(Group, id=the_role_chosen)
-            print(the_role_object)
-            form.instance.owner = form.populate_owner_field(the_role_object)
 
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
@@ -324,6 +338,8 @@ class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMix
 
 
 # Used to get original date of an edited ticket
+
+
 def get_ticket_create_info(ticket):
     oldest_date = ''
     is_create_missing = False

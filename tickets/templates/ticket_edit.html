@@ -21,34 +21,45 @@
   <script>
       const rolePicklist = document.getElementById('id_role')
       const ownerPicklist = document.getElementById('id_owner');
-      const ticketEditLink= document.getElementById('ticket-edit-link')
-      const ticketEditLinkString = ticketEditLink.value;
+      const ticketEditLink= document.getElementById('ticket-edit-link')   
+    
 
-      if (rolePicklist)  {
-          rolePicklist.addEventListener('change',  function() {
-            const selectedRole = this.value;
-            alert(this.value);
-            
-            // AJAX call to the Edit Ticket view
-            fetch(ticketEditLinkString + '?selected_role=' + encodeURIComponent(selectedRole),  {
-              method: 'GET'
-            } )
-            .then(response => {
-              if (!response.ok) {
-                  throw new Error('Network response was not ok');
-              }
-              return response.json();
+     
+      const ticketEditLinkString = ticketEditLink.value;
+      if (rolePicklist) {
+        rolePicklist.addEventListener('change', function() {
+          const selectedRole = this.value;
+      
+          // AJAX call to the Edit Ticket view
+          fetch(ticketEditLinkString + '?selected_role=' + encodeURIComponent(selectedRole), {
+            method: 'GET'
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
           })
           .then(data => {
             console.log('Received from server:', data);
-            // Handle the response from the server here
+      
+            if (data.options) {
+              ownerPicklist.innerHTML = '';
+              data.options.forEach(optionData => {
+                const option = document.createElement('option');
+                option.value = optionData.value;
+                option.textContent = optionData.label;
+                ownerPicklist.appendChild(option);
+              });
+              console.log("Owner picklist should be updated now");
+            }
           })
           .catch(error => {
             console.error('There has been a problem with your fetch operation:', error);
           });
-                 
-          })
+        });
       }
+    
       
   </script>
 

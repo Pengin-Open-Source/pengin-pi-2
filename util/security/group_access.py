@@ -85,6 +85,23 @@ def get_validated_user_ids_with_access_to_group(group):
     return who_can_access_role
 
 
+def get_valid_users_with_rbac(role=None):
+    # Like get_validated_user_ids_with_access_to_group,
+    # but here we use the ids to run a filter on the objects
+    # This resulting queryset can be assigned direcly to
+    # queryset of a picklist,  for example
+    if role is None:
+        users_with_rbac = User.objects.none()
+    else:
+        allowed_user_ids = get_validated_user_ids_with_access_to_group(
+            role)
+
+        users_with_rbac = User.objects.filter(
+            id__in=allowed_user_ids)
+
+    return users_with_rbac
+
+
 def is_manager_of_this_role(current_user, role):
     role_managers = get_group_managers({role})
     manager_uuids = [uuid['manager'] for uuid in role_managers]
