@@ -20,23 +20,41 @@
   <script src="{% static 'javascript/scripts.js'                  %}"></script>
   <script>
       const rolePicklist = document.getElementById('id_role')
-      const ownerPicklist = document.getElementById('id_owner');
-      const ticketEditLink= document.getElementById('ticket-edit-link')   
-    
 
-     
-      const ticketEditLinkString = ticketEditLink.value;
+
       if (rolePicklist) {
         rolePicklist.addEventListener('change', function() {
           const selectedRole = this.value;
-      
+          const ownerPicklist = document.getElementById('id_owner');
+          const ticketEditLink= document.getElementById('ticket-edit-link')   
+        
+          // if the ownerlist does not exist or is not a SELECT list
+          // stop right here.  Not a likely scenario given the elements
+          // are generated per a Django Form,  but Gemini recommends it for 
+          // defensive programming... in case of changes in the future
+           if(!ownerPicklist || ownerPicklist.tagName !== "SELECT") {
+              throw new error("Apparently either the Owner dropdown box is gone, or some element with the same id exists that is NOT a selection/dropdown element.")
+           }
+          // The hidden element's id is slightly more likely to be directly edited by someone 
+          if(!ticketEditLink) {
+              throw new error("Apparently the ticket edit link is missing")
+          }
+
+          const ticketEditLinkString = ticketEditLink.value;
+
+
+          // blank out the owners before trying to fetch new owners
+          // if we can't get the new ones I do NOT want the user 
+          // to see the old ones on the "wrong" role
+          ownerPicklist.innerHTML = '';
+
           // AJAX call to the Edit Ticket view
           fetch(ticketEditLinkString + '?selected_role=' + encodeURIComponent(selectedRole), {
             method: 'GET'
           })
           .then(response => {
             if (!response.ok) {
-              throw new Error('Network response was not ok');
+              throw new Error('Ran into an error fetching the owner options for the new role');
             }
             return response.json();
           })
@@ -44,7 +62,6 @@
             console.log('Received from server:', data);
       
             if (data.options) {
-              ownerPicklist.innerHTML = '';
               data.options.forEach(optionData => {
                 const option = document.createElement('option');
                 option.value = optionData.value;
@@ -58,6 +75,9 @@
             console.error('There has been a problem with your fetch operation:', error);
           });
         });
+      }
+      else {
+        console.error("Apparently the Role dropdown box is gone or hasn't loaded yet. Wait a bit, but then, if it doesn't show up, contact your system administrator")
       }
     
       
