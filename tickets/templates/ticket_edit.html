@@ -10,7 +10,7 @@
   <form class="form" method="POST" action="{% url 'edit_ticket' ticket_id %}">
     {% csrf_token %}
     {{ form.as_p }}
-    <button class="primary-button" type="submit">Confirm Ticket Edit</button>
+    <button id="submit-ticket-edit" class="primary-button" type="submit">Confirm Ticket Edit</button>
 
   {% comment %}  If the selected Role changes, re-populate the owner field accordingly
     (tweaking code from Google Gemini + what I have in calendarEvents.js)
@@ -20,9 +20,10 @@
   <script src="{% static 'javascript/scripts.js'                  %}"></script>
   <script>
       const rolePicklist = document.getElementById('id_role')
+      const submitButton = document.getElementById('submit-ticket-edit'); 
 
 
-      if (rolePicklist) {
+      if (rolePicklist && submitButton) {
         rolePicklist.addEventListener('change', function() {
           const selectedRole = this.value;
           const ownerPicklist = document.getElementById('id_owner');
@@ -44,23 +45,33 @@
 
 
           // blank out the owners before trying to fetch new owners
-          // if we can't get the new ones I do NOT want the user 
+          // if we can't get the new ones we NOT want the user 
           // to see the old ones on the "wrong" role
           ownerPicklist.innerHTML = '';
+          // don't update the ticket until the valid owner options for this role have been chosen
+          submitButton.disabled = true; // Disable submit on role change (while loading)
+          submitButton.textContent = "Loading..."; // Change button text
 
           // AJAX call to the Edit Ticket view
           fetch(ticketEditLinkString + '?selected_role=' + encodeURIComponent(selectedRole), {
             method: 'GET'
           })
           .then(response => {
-            if (!response.ok) {
+            if (!response.ok || selectedRole == 3) {
               throw new Error('Ran into an error fetching the owner options for the new role');
             }
             return response.json();
           })
           .then(data => {
             console.log('Received from server:', data);
-      
+            
+            // No matter what's in the list,  start with the blank option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.textContent = "---------";
+            defaultOption.selected = true;
+            ownerPicklist.appendChild(defaultOption);
+             
             if (data.options) {
               data.options.forEach(optionData => {
                 const option = document.createElement('option');
@@ -68,16 +79,29 @@
                 option.textContent = optionData.label;
                 ownerPicklist.appendChild(option);
               });
+              // if we disabled it before, re-enable
+              ownerPicklist.disabled = false;
+              submitButton.disabled = false;
+              submitButton.textContent = "Confirm Ticket Edit";
               console.log("Owner picklist should be updated now");
+
             }
           })
           .catch(error => {
-            console.error('There has been a problem with your fetch operation:', error);
+            console.error('Error loading Owner options for the Role change!', error);
+            const ownerPicklist = document.getElementById('id_owner');
+            const errorOption = document.createElement('option');
+            errorOption.textContent = "Error Updating Owner list... try clearing by changing roles!";
+            ownerPicklist.appendChild(errorOption);
+            ownerPicklist.disabled = true;
+            submitButton.textContent = "Error";
+            submitButton.disabled = true;
+            
           });
         });
       }
       else {
-        console.error("Apparently the Role dropdown box is gone or hasn't loaded yet. Wait a bit, but then, if it doesn't show up, contact your system administrator")
+        console.error("Apparently the Role dropdown box  - OR the Submit button - is gone or hasn't loaded yet.Wait a bit, but then, if it doesn't show up, contact your system administrator")
       }
     
       
