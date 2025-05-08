@@ -25,6 +25,9 @@ class TicketForm(forms.ModelForm):
         # print(kwargs.get('instance').role)
         # print(self.instance.role)
 
+        # I don't allow blank roles, so get rid of empty_label option:
+        self.fields['role'].empty_label = None
+
         if self.instance:
             if self.instance._state.adding:
                 self.fields['owner'].queryset = get_valid_users_with_rbac()

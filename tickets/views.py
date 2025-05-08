@@ -74,6 +74,11 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
     success_url = reverse_lazy('tickets')
 
     def get(self, request, *args, **kwargs):
+
+        # this is the group that tickets will go to by default.
+        Group.objects.get_or_create(name='default_ticket_support')
+        # TODO limit the Ticket role options the user can select from
+        # based on their own roles, or their staff, manager status.
         form = TicketForm()
         context = {'form': form}
         return render(request, self.template_name,  context)
@@ -156,6 +161,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     # Google Gemini suggested using dispatch to check for AJAX call to give back a JSONResponse
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
+        print("Does dispatch think we  have a role?")
+        print(selected_role)
         if selected_role:
             # It's an Ajax request, handle it differently
             the_role_object = get_object_or_404(Group, id=selected_role)
