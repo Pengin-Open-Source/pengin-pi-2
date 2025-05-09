@@ -1,7 +1,6 @@
 from django import forms
 from main.models.users import User
 from tickets.models import Ticket, TicketComment
-from util.security.group_access import get_valid_users_with_rbac
 
 
 # Same technique as in Events
@@ -21,19 +20,22 @@ class TicketForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # print("Here's the ticket")
-        # print(kwargs.get('instance').role)
-        # print(self.instance.role)
 
         # I don't allow blank roles, so get rid of empty_label option:
         self.fields['role'].empty_label = None
+        # get role and owner options sent over.
+        self.fields['role'].queryset = kwargs.get('role_list_options')
+        self.fields['owner'].queryset = kwargs.get('owner_list_options')
+        # if we are adding a ticket,  set it to the default role supplied
+        if self.instance and self.instance._state.adding:
+            self.fields['role'].initial = kwargs.get('role_default')
 
-        if self.instance:
-            if self.instance._state.adding:
-                self.fields['owner'].queryset = get_valid_users_with_rbac()
-            else:
-                self.fields['owner'].queryset = get_valid_users_with_rbac(
-                    self.instance.role)
+        # if self.instance:
+        #     if self.instance._state.adding:
+        #         self.fields['owner'].queryset=get_valid_users_with_rbac()
+        #     else:
+        #         self.fields['owner'].queryset=get_valid_users_with_rbac(
+        #             self.instance.role)
 
 
 class TicketEditStatusForm(forms.ModelForm):

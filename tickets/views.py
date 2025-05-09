@@ -6,11 +6,12 @@ from django.utils import timezone
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
+from main.models.users import User
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_see_ticket, can_edit_ticket
-from util.security.group_access import get_valid_users_with_rbac
+from util.security.group_access import get_valid_users_with_rbac, get_group_managers
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):
@@ -31,8 +32,8 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
         context['primary_title'] = 'Tickets'
 
         # If a staff user is requesting, get all tickets.
-        # otherwise, just get the tickets authored
-        # by the user
+        # Otherwise, get the tickets this particular user has
+        # permission to see
 
         if status != 'all':
             if is_admin:
@@ -75,11 +76,43 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
 
     def get(self, request, *args, **kwargs):
 
-        # this is the group that tickets will go to by default.
-        Group.objects.get_or_create(name='default_ticket_support')
-        # TODO limit the Ticket role options the user can select from
-        # based on their own roles, or their staff, manager status.
-        form = TicketForm()
+        # this is the group that that a new Ticket's Role field will be set
+        # to by default.  This will be the only option available for
+        # users with no roles and no special privileges to create their
+        # tickets in.
+        default_role = Group.objects.get_or_create(
+            name='default_ticket_support')
+        all_groups = Group.objects.all()
+
+        # Get all the roles the user is connected with
+        user_roles = self.request.user.roles.groups.all()
+
+        # Does this user manage ANY role/group?
+        group_managers = get_group_managers(all_groups)
+        is_a_role_manager = User.objects.filter(id__in=group_managers)
+
+        # No matter who I am,  I start with the default_support_role
+        # If I'm staff or a manager,  I can change the ticket to any role
+        # and my preloaded owner options are any users who are in
+        # the default role (if any,  otherwise we get an empty select list)
+        # If I am not a staff or a manager,  I may not assign the
+        # ticket to any *user*. I can assign the ticket
+        # to any *role* I have access to. If I am not connected with any
+        # role,  I must assign the ticket to the default ticket support
+        # role.
+        if self.request.user.is_staff or is_a_role_manager:
+            role_options = all_groups
+            owner_options = get_valid_users_with_rbac(default_role)
+        elif user_roles.exists():
+            role_options = user_roles | Group.objects.filter(
+                pk=default_role.pk)
+            owner_options = get_valid_users_with_rbac()
+        else:
+            role_options = Group.objects.filter(pk=default_role.pk)
+            owner_options = get_valid_users_with_rbac()
+
+        form = TicketForm(role_list_options=role_options,
+                          owner_list_options=owner_options, role_default=default_role)
         context = {'form': form}
         return render(request, self.template_name,  context)
 
@@ -158,7 +191,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     template_name = 'ticket_edit.html'
     context_object_name = 'ticket'
 
-    # Google Gemini suggested using dispatch to check for AJAX call to give back a JSONResponse
+    # Google Gemini suggested using the dispatch function to check for AJAX call to give back a JSONResponse
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
         print("Does dispatch think we  have a role?")
