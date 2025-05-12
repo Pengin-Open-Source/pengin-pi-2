@@ -24,8 +24,12 @@ class TicketForm(forms.ModelForm):
         # I don't allow blank roles, so get rid of empty_label option:
         self.fields['role'].empty_label = None
         # get role and owner options sent over.
-        self.fields['role'].queryset = kwargs.get('role_list_options')
-        self.fields['owner'].queryset = kwargs.get('owner_list_options')
+        role_options = kwargs.get('role_list_options')
+        owner_options = kwargs.get('owner_list_options')
+        if role_options:
+            self.fields['role'].queryset = role_options
+        if owner_options:
+            self.fields['owner'].queryset = owner_options
         # if we are adding a ticket,  set it to the default role supplied
         if self.instance and self.instance._state.adding:
             self.fields['role'].initial = kwargs.get('role_default')

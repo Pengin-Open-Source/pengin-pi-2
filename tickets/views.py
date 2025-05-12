@@ -194,16 +194,11 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     # Google Gemini suggested using the dispatch function to check for AJAX call to give back a JSONResponse
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
-        print("Does dispatch think we  have a role?")
-        print(selected_role)
         if selected_role:
             # It's an Ajax request, handle it differently
             the_role_object = get_object_or_404(Group, id=selected_role)
-            print(the_role_object)
             potential_owners_for_the_role = get_valid_users_with_rbac(
                 the_role_object)
-            print("potential owners for this role")
-            print(potential_owners_for_the_role)
             owner_options = []
             for user in potential_owners_for_the_role:
                 owner_options.append(
