@@ -18,21 +18,19 @@ class TicketForm(forms.ModelForm):
         model = Ticket
         fields = ['summary', 'role', 'owner', 'content', 'tags']
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, role_default=None, role_options=None, owner_options=None,  *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # I don't allow blank roles, so get rid of empty_label option:
         self.fields['role'].empty_label = None
         # get role and owner options sent over.
-        role_options = kwargs.get('role_list_options')
-        owner_options = kwargs.get('owner_list_options')
         if role_options:
             self.fields['role'].queryset = role_options
         if owner_options:
             self.fields['owner'].queryset = owner_options
         # if we are adding a ticket,  set it to the default role supplied
         if self.instance and self.instance._state.adding:
-            self.fields['role'].initial = kwargs.get('role_default')
+            self.fields['role'].initial = role_default
 
         # if self.instance:
         #     if self.instance._state.adding:

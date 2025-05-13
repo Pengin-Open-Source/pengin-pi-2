@@ -79,13 +79,13 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
         # this is the group that that a new Ticket's Role field will be set
         # to by default.  This will be the only option available for
         # users with no roles and no special privileges to create their
-        # tickets in.
-        default_role = Group.objects.get_or_create(
+        # tickets in. group_created is just to catch the unused T/F result.
+        default_role, group_created = Group.objects.get_or_create(
             name='default_ticket_support')
         all_groups = Group.objects.all()
 
         # Get all the roles the user is connected with
-        user_roles = self.request.user.roles.groups.all()
+        user_roles = self.request.user.groups.all()
 
         # Does this user manage ANY role/group?
         group_managers = get_group_managers(all_groups)
@@ -111,8 +111,8 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
             role_options = Group.objects.filter(pk=default_role.pk)
             owner_options = get_valid_users_with_rbac()
 
-        form = TicketForm(role_list_options=role_options,
-                          owner_list_options=owner_options, role_default=default_role)
+        form = TicketForm(role_default=default_role,
+                          role_options=role_options, owner_options=owner_options)
         context = {'form': form}
         return render(request, self.template_name,  context)
 
