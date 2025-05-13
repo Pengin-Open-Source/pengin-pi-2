@@ -11,7 +11,7 @@ from tickets.models import Ticket, TicketComment, transaction, TicketHistory, Ti
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_see_ticket, can_edit_ticket
-from util.security.group_access import get_valid_users_with_rbac, get_group_managers
+from util.security.group_access import get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac,  get_group_managers
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):
@@ -85,11 +85,14 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
         all_groups = Group.objects.all()
 
         # Get all the roles the user is connected with
-        user_roles = self.request.user.groups.all()
+        user_roles = get_all_groups_for_user_with_extended_rbac(
+            self.request.user)
 
         # Does this user manage ANY role/group?
-        group_managers = get_group_managers(all_groups)
-        is_a_role_manager = User.objects.filter(id__in=group_managers)
+        group_managers = get_group_managers()
+        users_who_manage = User.objects.filter(id__in=group_managers)
+
+        is_a_role_manager = self.request.user in users_who_manage
 
         # No matter who I am,  I start with the default_support_role
         # If I'm staff or a manager,  I can change the ticket to any role
@@ -102,14 +105,14 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
         # role.
         if self.request.user.is_staff or is_a_role_manager:
             role_options = all_groups
-            owner_options = get_valid_users_with_rbac(default_role)
+            owner_options = get_users_with_extended_rbac_to_group(default_role)
         elif user_roles.exists():
             role_options = user_roles | Group.objects.filter(
                 pk=default_role.pk)
-            owner_options = get_valid_users_with_rbac()
+            owner_options = get_users_with_extended_rbac_to_group()
         else:
             role_options = Group.objects.filter(pk=default_role.pk)
-            owner_options = get_valid_users_with_rbac()
+            owner_options = get_users_with_extended_rbac_to_group
 
         form = TicketForm(role_default=default_role,
                           role_options=role_options, owner_options=owner_options)

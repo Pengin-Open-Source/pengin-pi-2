@@ -1,7 +1,8 @@
 from django.db.models import OuterRef
 from main.models.users import SubGroup, GroupToGroupAccess, GroupManager, User
 from django.db.models import Q
-# Credit to Google Gemini and Search AI for some suggestiosn for this file
+from django.contrib.auth.models import Group
+# Credit to Google Gemini and Search AI for some suggestions for this file
 
 
 def get_super_groups(groups):
@@ -20,11 +21,14 @@ def get_sub_groups(groups):
     return sub_groups
 
 
-def get_group_managers(groups):
-    super_groups = get_super_groups(groups)
-    group_managers = GroupManager.objects.filter(
-        Q(managed_group__in=groups) | Q(
-            managed_group__in=super_groups)).values('manager')
+def get_group_managers(groups=None):
+    if groups:
+        super_groups = get_super_groups(groups)
+        group_managers = GroupManager.objects.filter(
+            Q(managed_group__in=groups) | Q(
+                managed_group__in=super_groups)).values('manager')
+    else:
+        group_managers = GroupManager.objects.all().values('manager')
     return group_managers
 
 
@@ -40,7 +44,7 @@ def get_cross_group_access(groups):
     return accessed_groups
 
 
-def can_access_group(current_user, group_id):
+def get_all_groups_for_user_with_extended_rbac(current_user):
     user_groups = current_user.groups.all()
 
     # Retrieve all the ancestor groups that the user's group is
@@ -58,13 +62,22 @@ def can_access_group(current_user, group_id):
     # The user has this role
     # The user has a role that is a descendant role of this role.
     # The user has a role that can access this role
-    matching_group = (
-        group_id in [group.id for group in user_groups] or
-        group_id in [id['ancestor'] for id in user_super_groups] or
-        group_id in [id['accessed_group'] for id in user_accessed_groups]
 
-    )
+    group_list = [group.id for group in user_groups]
+    super_group_list = [id['ancestor'] for id in user_super_groups]
+    accesible_group_list = [id['accessed_group']
+                            for id in user_accessed_groups]
+    # all possible unique groups a user has RBAC to.
+    combined_rbac_list = list(
+        set(group_list + super_group_list + accesible_group_list))
+    combined_rbac_queryset = Group.objects.filter(id__in=combined_rbac_list)
+    return combined_rbac_queryset
 
+
+def can_access_group(current_user, group_id):
+
+    rbac_groups = get_all_groups_for_user_with_extended_rbac(current_user)
+    matching_group = group_id in [group.id for group in rbac_groups]
     return matching_group
 
 
@@ -85,7 +98,7 @@ def get_validated_user_ids_with_access_to_group(group):
     return who_can_access_role
 
 
-def get_valid_users_with_rbac(role=None):
+def get_users_with_extended_rbac_to_group(role=None):
     # Like get_validated_user_ids_with_access_to_group,
     # but here we use the ids to run a filter on the objects
     # This resulting queryset can be assigned direcly to
