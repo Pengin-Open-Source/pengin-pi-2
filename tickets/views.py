@@ -84,35 +84,36 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
             name='default_ticket_support')
         all_groups = Group.objects.all()
 
-        # Get all the roles the user is connected with
-        user_roles = get_all_groups_for_user_with_extended_rbac(
-            self.request.user)
-
         # Does this user manage ANY role/group?
         group_managers = get_group_managers()
         users_who_manage = User.objects.filter(id__in=group_managers)
 
         is_a_role_manager = self.request.user in users_who_manage
 
-        # No matter who I am,  I start with the default_support_role
         # If I'm staff or a manager,  I can change the ticket to any role
         # and my preloaded owner options are any users who are in
         # the default role (if any,  otherwise we get an empty select list)
-        # If I am not a staff or a manager,  I may not assign the
-        # ticket to any *user*. I can assign the ticket
-        # to any *role* I have access to. If I am not connected with any
-        # role,  I must assign the ticket to the default ticket support
-        # role.
         if self.request.user.is_staff or is_a_role_manager:
+
             role_options = all_groups
             owner_options = get_users_with_extended_rbac_to_group(default_role)
-        elif user_roles.exists():
-            role_options = user_roles | Group.objects.filter(
-                pk=default_role.pk)
-            owner_options = get_users_with_extended_rbac_to_group()
         else:
-            role_options = Group.objects.filter(pk=default_role.pk)
-            owner_options = get_users_with_extended_rbac_to_group
+            # If I am not a staff or a manager,  I may not assign the
+            # ticket to any *user* to be the Ticket Owner
+            owner_options = None
+            # ..but I can assign the ticket to any *role* I have access to
+            user_roles = get_all_groups_for_user_with_extended_rbac(
+                self.request.user)
+            if user_roles.exists():
+                # Get all the roles the user is connected with
+                # + the default_ticket_support role
+                role_options = user_roles | Group.objects.filter(
+                    pk=default_role.pk)
+            else:
+                # If I am not connected with any role,  I must assign the ticket
+                # to default ticket support,  leaving management to assign it
+                # to the correct role and owner later in the Edit Ticket page.
+                role_options = Group.objects.filter(pk=default_role.pk)
 
         form = TicketForm(role_default=default_role,
                           role_options=role_options, owner_options=owner_options)
@@ -200,7 +201,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         if selected_role:
             # It's an Ajax request, handle it differently
             the_role_object = get_object_or_404(Group, id=selected_role)
-            potential_owners_for_the_role = get_valid_users_with_rbac(
+            potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
                 the_role_object)
             owner_options = []
             for user in potential_owners_for_the_role:
@@ -220,7 +221,47 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
         # perhaps should be refactored to use self.object?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        form = TicketForm(instance=ticket)
+        # For existing tickets,  the default role is the currently
+        # saved Ticket Role
+        default_role = ticket.role
+        all_groups = Group.objects.all()
+
+        # Does this user manage ANY role/group?
+        group_managers = get_group_managers()
+        users_who_manage = User.objects.filter(id__in=group_managers)
+
+        is_a_role_manager = self.request.user in users_who_manage
+
+        # If I'm staff or a manager,  I can change the ticket to any role
+        # and my preloaded owner options are any users who are in
+        # the default role (if any,  otherwise we get an empty select list)
+        if self.request.user.is_staff or is_a_role_manager:
+            role_options = all_groups
+            # TODO restrict option for non-staff managers to the roles they manage
+            owner_options = get_users_with_extended_rbac_to_group(default_role)
+        else:
+            # If I am not a staff or a manager,  I may not assign the
+            # ticket to any *OTHER user* to be the Ticket Owner..
+            # ..but I can assign the ticket to any *role* I have access to
+            user_roles = get_all_groups_for_user_with_extended_rbac(
+                self.request.user)
+            if user_roles.exists():
+                # Get all the roles the user is connected with
+                # + the default_ticket_support role
+                role_options = user_roles | Group.objects.filter(
+                    pk=default_role.pk)
+                # Since the user is part of these roles, they can assign
+                # the ticket to themself.
+                owner_options = User.objects.filter(id=self.request.user.id)
+            else:
+                # If I am not connected with any role,  I must assign the ticket
+                # to default ticket support,  leaving management to assign it
+                # to the correct role and owner later in the Edit Ticket page.
+                role_options = Group.objects.filter(pk=default_role.pk)
+                owner_options = None
+
+        form = TicketForm(role_default=default_role, instance=ticket,
+                          role_options=role_options, owner_options=owner_options)
 
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
