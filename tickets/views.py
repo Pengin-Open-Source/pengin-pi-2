@@ -100,7 +100,8 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
         else:
             # If I am not a staff or a manager,  I may not assign the
             # ticket to any *user* to be the Ticket Owner
-            owner_options = None
+            # (calling this with no role returns an empty list of users)
+            owner_options = get_users_with_extended_rbac_to_group()
             # ..but I can assign the ticket to any *role* I have access to
             user_roles = get_all_groups_for_user_with_extended_rbac(
                 self.request.user)
@@ -115,8 +116,8 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
                 # to the correct role and owner later in the Edit Ticket page.
                 role_options = Group.objects.filter(pk=default_role.pk)
 
-        form = TicketForm(role_default=default_role,
-                          role_options=role_options, owner_options=owner_options)
+        form = TicketForm(role_options=role_options,
+                          owner_options=owner_options, role_default=default_role)
         context = {'form': form}
         return render(request, self.template_name,  context)
 
@@ -140,7 +141,15 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         context = super().get_context_data(**kwargs)
         # perhaps this should be refactored to use self.object instead?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        form = TicketForm(instance=ticket)
+        default_role = ticket.role
+        role_options = Group.objects.filter(pk=default_role.pk)
+        if ticket.owner:
+            owner_options = User.objects.filter(id=ticket.owner.id)
+        else:  # this should return an empty queryset of Users
+            owner_options = get_users_with_extended_rbac_to_group()
+
+        form = TicketForm(role_options=role_options, owner_options=owner_options,
+                          instance=ticket.role)
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
@@ -258,10 +267,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 # to default ticket support,  leaving management to assign it
                 # to the correct role and owner later in the Edit Ticket page.
                 role_options = Group.objects.filter(pk=default_role.pk)
-                owner_options = None
+                owner_options = get_users_with_extended_rbac_to_group()
 
-        form = TicketForm(role_default=default_role, instance=ticket,
-                          role_options=role_options, owner_options=owner_options)
+        form = TicketForm(role_options=role_options, owner_options=owner_options,
+                          role_default=default_role, instance=ticket)
 
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff

@@ -18,7 +18,7 @@ class TicketForm(forms.ModelForm):
         model = Ticket
         fields = ['summary', 'role', 'owner', 'content', 'tags']
 
-    def __init__(self, role_options, role_default=None, owner_options=None,  *args, **kwargs):
+    def __init__(self, role_options, owner_options, role_default=None,   *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # I don't allow blank roles, so get rid of empty_label option:
@@ -26,8 +26,7 @@ class TicketForm(forms.ModelForm):
         # assign the role options (mandatory) and owner options (optional)
         # to the dropdown picklists in the form.
         self.fields['role'].queryset = role_options
-        if owner_options:
-            self.fields['owner'].queryset = owner_options
+        self.fields['owner'].queryset = owner_options
 
         # if we are adding a ticket,  set it to the default role supplied
         if self.instance and self.instance._state.adding:
