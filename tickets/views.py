@@ -148,8 +148,8 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         else:  # this should return an empty queryset of Users
             owner_options = get_users_with_extended_rbac_to_group()
 
-        form = TicketForm(role_options=role_options, owner_options=owner_options,
-                          instance=ticket.role)
+        form = TicketForm(role_options=role_options, owner_options=owner_options, owner_default=ticket.owner,
+                          instance=ticket)
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form

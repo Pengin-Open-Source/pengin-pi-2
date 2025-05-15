@@ -1,6 +1,7 @@
 from django import forms
 from main.models.users import User
 from tickets.models import Ticket, TicketComment
+from django.db.models import QuerySet
 
 
 # Same technique as in Events
@@ -18,19 +19,24 @@ class TicketForm(forms.ModelForm):
         model = Ticket
         fields = ['summary', 'role', 'owner', 'content', 'tags']
 
-    def __init__(self, role_options, owner_options, role_default=None,   *args, **kwargs):
+    def __init__(self, *args, role_options=None, owner_options=None, role_default=None, owner_default=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         # I don't allow blank roles, so get rid of empty_label option:
         self.fields['role'].empty_label = None
         # assign the role options (mandatory) and owner options (optional)
         # to the dropdown picklists in the form.
-        self.fields['role'].queryset = role_options
-        self.fields['owner'].queryset = owner_options
-
-        # if we are adding a ticket,  set it to the default role supplied
-        if self.instance and self.instance._state.adding:
+        if role_options:
+            self.fields['role'].queryset = role_options
+        # Gemini's suggestion for avoiding treating an empty queryset as "None"
+        if isinstance(owner_options, QuerySet):
+            self.fields['owner'].queryset = owner_options
+        # Creating a ticket should have default role of "default_ticket_support"
+        # Editing should have default role of whatever was saved as the current role
+        if role_default:
             self.fields['role'].initial = role_default
+        if owner_default:
+            self.fields['owner'].initial = owner_default
 
 
 class TicketEditStatusForm(forms.ModelForm):
