@@ -10,8 +10,8 @@ from main.models.users import User
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_see_ticket, can_edit_ticket
-from util.security.group_access import get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac,  get_group_managers
+from tickets.permissions import can_see_ticket, can_edit_ticket, is_ticket_manager
+from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac,  get_group_managers, is_manager_of_this_role
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):
@@ -207,11 +207,23 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     # Google Gemini suggested using the dispatch function to check for AJAX call to give back a JSONResponse
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
+        current_user = self.request.user
         if selected_role:
             # It's an Ajax request, handle it differently
             the_role_object = get_object_or_404(Group, id=selected_role)
-            potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
-                the_role_object)
+
+            if current_user.is_staff or is_manager_of_this_role(current_user, the_role_object):
+                potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
+                    the_role_object)
+            else:
+                if (can_access_group(current_user, the_role_object.id)):
+                    # - the user can assign themselves as Owner, that's it.
+                    potential_owners_for_the_role = User.objects.filter(
+                        id=self.request.user.id)
+                else:
+                    # this will return an empty list - user can't assign Ownership anyone.
+                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
+
             owner_options = []
             for user in potential_owners_for_the_role:
                 owner_options.append(
@@ -240,6 +252,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         users_who_manage = User.objects.filter(id__in=group_managers)
 
         is_a_role_manager = self.request.user in users_who_manage
+        users_in_default_role = get_users_with_extended_rbac_to_group(
+            default_role)
+        current_user_has_default_role = self.request.user in users_in_default_role
 
         # If I'm staff or a manager,  I can change the ticket to any role
         # and my preloaded owner options are any users who are in
@@ -247,7 +262,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         if self.request.user.is_staff or is_a_role_manager:
             role_options = all_groups
             # TODO restrict option for non-staff managers to the roles they manage
-            owner_options = get_users_with_extended_rbac_to_group(default_role)
+            owner_options = users_in_default_role
         else:
             # If I am not a staff or a manager,  I may not assign the
             # ticket to any *OTHER user* to be the Ticket Owner..
@@ -260,12 +275,17 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 role_options = user_roles | Group.objects.filter(
                     pk=default_role.pk)
                 # Since the user is part of these roles, they can assign
-                # the ticket to themself.
-                owner_options = User.objects.filter(id=self.request.user.id)
+                # the ticket to themself.  Unless the current role is default_ticket_support,
+                # and the user is not part of that role - in which case, leave the owner list empty.
+                if default_role.name != "default_ticket_support" or current_user_has_default_role:
+                    owner_options = User.objects.filter(
+                        id=self.request.user.id)
+                else:
+                    owner_options = get_users_with_extended_rbac_to_group()
+
             else:
-                # If I am not connected with any role,  I must assign the ticket
-                # to default ticket support,  leaving management to assign it
-                # to the correct role and owner later in the Edit Ticket page.
+                # If I am not connected with any role,  I must leave the ticket
+                # in default ticket support,  and I may not assign to anyone.
                 role_options = Group.objects.filter(pk=default_role.pk)
                 owner_options = get_users_with_extended_rbac_to_group()
 
