@@ -13,11 +13,12 @@ class TicketQuerySet(models.QuerySet):
     # when you need to filter using a custom function
 
     def filter_by_can_see_ticket(self, user):
-        result = []
+        results = []
         for ticket in self:
             if can_see_ticket(user, ticket):
-                result.append(ticket)
-        return result
+                results.append(ticket.id)
+        self.filter(id__in=results)
+        return self.filter(id__in=results)
 
 
 class TicketManager(models.Manager):
