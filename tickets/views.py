@@ -211,18 +211,32 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         if selected_role:
             # It's an Ajax request, handle it differently
             the_role_object = get_object_or_404(Group, id=selected_role)
+            ticket = self.object
+            ticket_owner = None
+            if ticket.owner:
+                ticket_owner = User.objects.filter(id=ticket.owner.id)
 
             if current_user.is_staff or is_manager_of_this_role(current_user, the_role_object):
                 potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
                     the_role_object)
             else:
                 if (can_access_group(current_user, the_role_object.id)):
-                    # - the user can assign themselves as Owner, that's it.
-                    potential_owners_for_the_role = User.objects.filter(
-                        id=self.request.user.id)
+                    # - the user can assign themselves as Owner.
+                    # If the ticket has an owner, and that owner has access
+                    # to the newly selected_role,  they can see that as well
+                    if can_access_group(ticket_owner, selected_role):
+                        potential_owners_for_the_role = User.objects.filter(
+                            id=current_user.id) | ticket_owner
+                    else:
+                        potential_owners_for_the_role = User.objects.filter(
+                            id=current_user.id) | ticket_owner
                 else:
-                    # this will return an empty list - user can't assign Ownership anyone.
-                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
+                    # user can't assign Ownership anyone else, but they
+                    # can see the current owner, if there is one
+                    if ticket_owner:
+                        potential_owners_for_the_role = ticket_owner
+                    else:
+                        potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
 
             owner_options = []
             for user in potential_owners_for_the_role:
