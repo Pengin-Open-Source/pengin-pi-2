@@ -57,7 +57,7 @@
             method: 'GET'
           })
           .then(response => {
-            if (!response.ok || selectedRole == 3) {
+            if (!response.ok ) {  //  ||   selectedRole == 3) {  *uncomment to see an example of the error
               throw new Error('Ran into an error fetching the owner options for the new role');
             }
             return response.json();
