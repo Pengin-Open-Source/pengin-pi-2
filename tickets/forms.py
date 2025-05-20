@@ -35,7 +35,11 @@ class TicketForm(forms.ModelForm):
         # Editing should have default role of whatever was saved as the current role
         if role_default:
             self.fields['role'].initial = role_default
+        # using owner_default as a flag to determine if the user
+        # has permission to assign *no one* "--------" as the owner
+        # if not,  get rid of that option.
         if owner_default:
+            self.fields['owner'].empty_label = None
             self.fields['owner'].initial = owner_default
 
 

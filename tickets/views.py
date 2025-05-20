@@ -204,13 +204,15 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     template_name = 'ticket_edit.html'
     context_object_name = 'ticket'
 
-    # Google Gemini suggested using the dispatch function to check for AJAX call to give back a JSONResponse
+    # Google Gemini suggested using the dispatch function to check for AJAX
+    # call to give back a JSONResponse
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
         current_user = self.request.user
         if selected_role:
             # It's an Ajax request, handle it differently
             the_role_object = get_object_or_404(Group, id=selected_role)
+
             ticket = self.object
             ticket_owner = None
             if ticket.owner:
@@ -221,7 +223,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     the_role_object)
             else:
                 if (can_access_group(current_user, the_role_object.id)):
-                    # - the user can assign themselves as Owner.
+                    # The user can assign themselves as Owner.
                     # If the ticket has an owner, and that owner has access
                     # to the newly selected_role,  they can see that as well
                     if can_access_group(ticket_owner, selected_role):
@@ -229,13 +231,16 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                             id=current_user.id) | ticket_owner
                     else:
                         potential_owners_for_the_role = User.objects.filter(
-                            id=current_user.id) | ticket_owner
+                            id=current_user.id)
                 else:
-                    # user can't assign Ownership anyone else, but they
+                    # user cannot:
+                    # 1) See any role but default_ticket_support
+                    # 2) assign Ownership to anyone
+                    # user CAN
                     # can see the current owner, if there is one
                     if ticket_owner:
                         potential_owners_for_the_role = ticket_owner
-                    else:
+                    else:  # just show the default (empty) owner list
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
 
             owner_options = []
@@ -269,7 +274,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         users_in_default_role = get_users_with_extended_rbac_to_group(
             default_role)
         current_user_has_default_role = self.request.user in users_in_default_role
-
+        # Setting this here, because it is both a value and a flag.
+        # Determines if the "no owner" option is available to the user
+        ticket_owner = None
         # If I'm staff or a manager,  I can change the ticket to any role
         # and my preloaded owner options are any users who are in
         # the default role (if any,  otherwise we get an empty select list)
@@ -278,6 +285,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             # TODO restrict option for non-staff managers to the roles they manage
             owner_options = users_in_default_role
         else:
+            if ticket.owner:
+                ticket_owner = User.objects.filter(id=ticket.owner.id)
+
             # If I am not a staff or a manager,  I may not assign the
             # ticket to any *OTHER user* to be the Ticket Owner..
             # ..but I can assign the ticket to any *role* I have access to
@@ -289,22 +299,33 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 role_options = user_roles | Group.objects.filter(
                     pk=default_role.pk)
                 # Since the user is part of these roles, they can assign
-                # the ticket to themself.  Unless the current role is default_ticket_support,
-                # and the user is not part of that role - in which case, leave the owner list empty.
+                # the ticket to themself -unless the current role is default_ticket_support,
+                # and the user is not part of that role. They can also see the ticket owner, if
+                # there is one
                 if default_role.name != "default_ticket_support" or current_user_has_default_role:
                     owner_options = User.objects.filter(
-                        id=self.request.user.id)
+                        id=self.request.user.id) | ticket_owner
                 else:
-                    owner_options = get_users_with_extended_rbac_to_group()
+                    if ticket_owner:
+                        owner_options = ticket_owner
+                    else:  # just show the default (empty) owner list
+                        owner_options = get_users_with_extended_rbac_to_group()
 
             else:
                 # If I am not connected with any role,  I must leave the ticket
-                # in default ticket support,  and I may not assign to anyone.
+                # in default ticket support,  and I may not assign to anyone else,
+                # ... but I can see the current owner, if there is one
                 role_options = Group.objects.filter(pk=default_role.pk)
-                owner_options = get_users_with_extended_rbac_to_group()
+                if ticket_owner:
+                    owner_options = ticket_owner
+                else:  # just show the default (empty) owner list
+                    owner_options = get_users_with_extended_rbac_to_group()
 
+        # Note that Owner_default = NONE EITHER means: 1) The Ticket has no owner
+        # or 2) The user is a Group Manager or Staff member,  who has permission
+        # to make an assigned Ticket "Unassigned" again.  (or both)
         form = TicketForm(role_options=role_options, owner_options=owner_options,
-                          role_default=default_role, instance=ticket)
+                          role_default=default_role, owner_default=ticket_owner, instance=ticket)
 
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
