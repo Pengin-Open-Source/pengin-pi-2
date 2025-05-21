@@ -66,11 +66,11 @@
             console.log('Received from server:', data);
             
             // No matter what's in the list,  start with the blank option
-            const defaultOption = document.createElement('option');
-            defaultOption.value = "";
-            defaultOption.textContent = "---------";
-            defaultOption.selected = true;
-            ownerPicklist.appendChild(defaultOption);
+            // const defaultOption = document.createElement('option');
+            //defaultOption.value = "";
+            // defaultOption.textContent = "---------";
+            // defaultOption.selected = true;
+            // ownerPicklist.appendChild(defaultOption);
              
             if (data.options) {
               data.options.forEach(optionData => {

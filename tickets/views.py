@@ -204,8 +204,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     template_name = 'ticket_edit.html'
     context_object_name = 'ticket'
 
-    # Google Gemini suggested using the dispatch function to check for AJAX
-    # call to give back a JSONResponse
+    # Google Gemini suggested using the dispatch function
+    # to check for AJAX call to give back a JSONResponse
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
         current_user = self.request.user
@@ -213,22 +213,31 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             # It's an Ajax request, handle it differently
             the_role_object = get_object_or_404(Group, id=selected_role)
 
-            ticket = self.object
+            # permission flag: May the User see the option to set Owner to empty?
+            can_set_ticket_owner_blank = False
+
+            ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
             ticket_owner = None
+
             if ticket.owner:
-                ticket_owner = User.objects.filter(id=ticket.owner.id)
+                ticket_owner = get_object_or_404(User, id=ticket.owner.id)
+            else:
+                can_set_ticket_owner_blank = True
 
             if current_user.is_staff or is_manager_of_this_role(current_user, the_role_object):
                 potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
                     the_role_object)
+                can_set_ticket_owner_blank = True
+
             else:
                 if (can_access_group(current_user, the_role_object.id)):
                     # The user can assign themselves as Owner.
                     # If the ticket has an owner, and that owner has access
                     # to the newly selected_role,  they can see that as well
-                    if can_access_group(ticket_owner, selected_role):
+                    if can_access_group(ticket_owner, the_role_object.id):
                         potential_owners_for_the_role = User.objects.filter(
-                            id=current_user.id) | ticket_owner
+                            id=current_user.id) | User.objects.filter(
+                            id=ticket_owner.id)
                     else:
                         potential_owners_for_the_role = User.objects.filter(
                             id=current_user.id)
@@ -244,6 +253,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
 
             owner_options = []
+            if can_set_ticket_owner_blank:
+                owner_options.append({'value': "",  'label': "---------"})
+
             for user in potential_owners_for_the_role:
                 owner_options.append(
                     {'value': user.pk,  'label': str(user.name)})
