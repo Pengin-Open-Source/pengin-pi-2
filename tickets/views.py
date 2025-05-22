@@ -31,8 +31,7 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
         is_admin = self.request.user.is_staff
         # Using a session variable to keep track of whether this user can see all
         # validated users. Defaulting to true for staff users at the moment.
-        context['owner_displays_all_validated_users'] = self.request.session.get(
-            'owner_displays_all_validated_user', is_admin)
+        self.request.session['owner_displays_all_validated_user'] = is_admin
         context['is_admin'] = is_admin
         context['primary_title'] = 'Tickets'
 
@@ -234,7 +233,6 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 showAllOwnerOptions = self.request.session.get(
                     'owner_displays_all_validated_user')
                 if showAllOwnerOptions:
-                    print("I'm supposed to show all the Owner Options")
                     potential_owners_for_the_role = User.objects.filter(
                         validated=True)
                 else:
@@ -314,6 +312,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             role_options = all_groups
             # TODO restrict option for non-staff managers to the roles they manage
             owner_options = users_in_default_role
+            print("I'm using users in default role")
         else:
             if ticket.owner:
                 ticket_owner = User.objects.filter(id=ticket.owner.id)
@@ -329,10 +328,14 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 role_options = user_roles | Group.objects.filter(
                     pk=default_role.pk)
                 # Since the user is part of these roles, they can assign
-                # the ticket to themself -unless the current role is default_ticket_support,
-                # and the user is not part of that role. They can also see the ticket owner, if
-                # there is one
-                if default_role.name != "default_ticket_support" or current_user_has_default_role:
+                # the ticket to themself -unless the current role is one
+                # the user does not have.  This can happen if the ticket
+                # was created by the user in default_ticket_support,  and
+                # has not been moved from that role,  or if the user created
+                # this ticket,  and management or staff moved it to
+                # a role the user does not have.
+                # They can also see the ticket owner, if there is one
+                if current_user_has_default_role:
                     owner_options = User.objects.filter(
                         id=self.request.user.id) | User.objects.filter(
                             id=ticket.owner.id)
