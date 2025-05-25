@@ -44,8 +44,8 @@ def get_cross_group_access(groups):
     return accessed_groups
 
 
-def get_all_groups_for_user_with_extended_rbac(current_user):
-    user_groups = current_user.groups.all()
+def get_all_groups_for_user_with_extended_rbac(given_user):
+    user_groups = given_user.groups.all()
 
     # Retrieve all the ancestor groups that the user's group is
     # a descendant of, using Subgroup closure table.
@@ -74,9 +74,9 @@ def get_all_groups_for_user_with_extended_rbac(current_user):
     return combined_rbac_queryset
 
 
-def can_access_group(current_user, group_id):
+def can_access_group(given_user, group_id):
 
-    rbac_groups = get_all_groups_for_user_with_extended_rbac(current_user)
+    rbac_groups = get_all_groups_for_user_with_extended_rbac(given_user)
     matching_group = group_id in [group.id for group in rbac_groups]
     return matching_group
 
@@ -115,8 +115,8 @@ def get_users_with_extended_rbac_to_group(role=None):
     return users_with_rbac
 
 
-def is_manager_of_this_role(current_user, role):
+def is_manager_of_this_role(given_user, role):
     role_managers = get_group_managers({role})
     manager_uuids = [uuid['manager'] for uuid in role_managers]
 
-    return current_user.id in manager_uuids
+    return given_user.id in manager_uuids

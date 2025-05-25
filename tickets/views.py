@@ -249,7 +249,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # The user can assign themselves as Owner.
                     # If the ticket has an owner, and that owner has access
                     # to the newly selected_role,  they can see that as well
-                    if can_access_group(ticket_owner, the_role_object.id):
+                    if ticket_owner and can_access_group(ticket_owner, the_role_object.id):
                         potential_owners_for_the_role = User.objects.filter(
                             id=current_user.id) | User.objects.filter(
                             id=ticket.owner.id)
