@@ -5,6 +5,9 @@
 
 {% block pageDropDowns %}
   <a href="{% url 'create_ticket' %}">Create Ticket</a>
+  {% if is_admin  %}
+    <a href="{% url "ticket_settings" %}">Ticket Settings</a>
+  {% endif  %}
 {% endblock %}
 
 

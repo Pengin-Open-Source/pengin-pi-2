@@ -1,14 +1,15 @@
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
 from django.utils import timezone
+from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from main.models.users import User
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
-from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm
+from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac,  get_group_managers, is_manager_of_this_role
@@ -30,8 +31,15 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         is_admin = self.request.user.is_staff
         # Using a session variable to keep track of whether this user can see all
-        # validated users. Defaulting to true for staff users at the moment.
-        self.request.session['owner_displays_all_validated_user'] = is_admin
+        # validated users in the Ticket Owner dropdown list
+        show_all_users = self.request.session.get(
+            'owner_displays_all_validated_users')
+        if show_all_users is None:
+            show_all_users = False
+        # here is where a change can take place....
+        show_all_users = show_all_users and is_admin
+        self.request.session['owner_displays_all_validated_users'] = show_all_users
+
         context['is_admin'] = is_admin
         context['primary_title'] = 'Tickets'
 
@@ -231,7 +239,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             if current_user.is_staff:
                 can_set_ticket_owner_blank = True
                 showAllOwnerOptions = self.request.session.get(
-                    'owner_displays_all_validated_user')
+                    'owner_displays_all_validated_users')
                 if showAllOwnerOptions:
                     potential_owners_for_the_role = User.objects.filter(
                         validated=True)
@@ -289,79 +297,102 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
         # perhaps should be refactored to use self.object?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        # For existing tickets,  the default role is the currently
-        # saved Ticket Role
-        default_role = ticket.role
-        all_groups = Group.objects.all()
 
-        # Does this user manage ANY role/group?
-        group_managers = get_group_managers()
-        users_who_manage = User.objects.filter(id__in=group_managers)
-
-        is_a_role_manager = self.request.user in users_who_manage
-        users_in_default_role = get_users_with_extended_rbac_to_group(
-            default_role)
-        current_user_has_default_role = self.request.user in users_in_default_role
-        # Setting this here, because it is both a value and a flag.
+        # Both a value and a flag.
         # Determines if the "no owner" option is available to the user
         ticket_owner = None
-        # If I'm staff or a manager,  I can change the ticket to any role
-        # and my preloaded owner options are any users who are in
-        # the default role (if any,  otherwise we get an empty select list)
-        if self.request.user.is_staff or is_a_role_manager:
-            role_options = all_groups
-            # TODO restrict option for non-staff managers to the roles they manage
-            owner_options = users_in_default_role
-            print("I'm using users in default role")
-        else:
-            if ticket.owner:
-                ticket_owner = User.objects.filter(id=ticket.owner.id)
+        if ticket.owner:
+            ticket_owner = User.objects.filter(id=ticket.owner.id)
 
-            # If I am not a staff or a manager,  I may not assign the
-            # ticket to any *OTHER user* to be the Ticket Owner..
-            # ..but I can assign the ticket to any *role* I have access to
-            user_roles = get_all_groups_for_user_with_extended_rbac(
-                self.request.user)
-            if user_roles.exists():
-                # Get all the roles the user is connected with
-                # + the default_ticket_support role
-                role_options = user_roles | Group.objects.filter(
-                    pk=default_role.pk)
-                # Since the user is part of these roles, they can assign
-                # the ticket to themself -unless the current role is one
-                # the user does not have.  This can happen if the ticket
-                # was created by the user in default_ticket_support,  and
-                # has not been moved from that role,  or if the user created
-                # this ticket,  and management or staff moved it to
-                # a role the user does not have.
-                # They can also see the ticket owner, if there is one
-                if current_user_has_default_role:
-                    owner_options = User.objects.filter(
-                        id=self.request.user.id) | User.objects.filter(
-                            id=ticket.owner.id)
+        # For existing tickets,  the default role is the currently
+        # saved Ticket Role
+        currently_saved_role = ticket.role
+        users_in_currently_saved_role = get_users_with_extended_rbac_to_group(
+            currently_saved_role)
+        current_user_has_ticket_role = self.request.user in users_in_currently_saved_role
+        all_groups = Group.objects.all()
+
+        is_admin = self.request.user.is_staff
+        if is_admin:
+            role_options = all_groups
+            show_all_owner_options = self.request.session.get(
+                'owner_displays_all_validated_users')
+            if show_all_owner_options:
+                owner_options = User.objects.filter(validated=True)
+            else:
+                # Get all users in the role; handle case where Staff has
+                # already assigned the Ticket to a user outside the role.
+                if ticket_owner:
+                    owner_options = users_in_currently_saved_role | ticket_owner
                 else:
+                    owner_options = users_in_currently_saved_role
+        else:
+            # Does this user manage ANY role/group?
+            group_managers = get_group_managers()
+            users_who_manage = User.objects.filter(id__in=group_managers)
+
+            is_a_role_manager = self.request.user in users_who_manage
+
+            # A manager can change the ticket to any role
+            # and the preloaded owner options are
+            #  1) any users who are in the currently saved role.
+            #  2) The Ticket Owner, if one was assigned
+            # - OR -  and empty select list
+            if is_a_role_manager:
+                role_options = all_groups
+                # TODO restrict option for non-staff managers to the roles they manage
+                if ticket_owner:
+                    owner_options = users_in_currently_saved_role | ticket_owner
+                else:
+                    owner_options = users_in_currently_saved_role
+            else:
+
+                # If I am not a staff or a manager,  I may not assign the
+                # ticket to any *OTHER user* to be the Ticket Owner..
+                # ..but I can assign the ticket to any *role* I have access to
+                user_roles = get_all_groups_for_user_with_extended_rbac(
+                    self.request.user)
+                if user_roles.exists():
+                    # Get all the roles the user is connected with
+                    # + the currently save ticket role
+                    role_options = user_roles | Group.objects.filter(
+                        pk=currently_saved_role.pk)
+                    # Since the user is part of these roles, they can assign
+                    # the ticket to themself -unless the current role is one
+                    # the user does not have.  This can happen if the ticket
+                    # was created by the user in default_ticket_support,  and
+                    # has not been moved from that role,  or if the user created
+                    # this ticket,  and management or staff moved it to
+                    # a role the user does not have.
+                    # They can also see the ticket owner, if there is one
+                    if current_user_has_ticket_role:
+                        owner_options = User.objects.filter(
+                            id=self.request.user.id) | User.objects.filter(
+                                id=ticket.owner.id)
+                    else:
+                        if ticket_owner:
+                            owner_options = User.objects.filter(
+                                id=ticket.owner.id)
+                        else:  # just show the default (empty) owner list
+                            owner_options = get_users_with_extended_rbac_to_group()
+
+                else:
+                    # If I am not connected with any role,  I must leave the ticket
+                    # in default ticket support,  and I may not assign to anyone else,
+                    # ... but I can see the current owner, if there is one
+                    role_options = Group.objects.filter(
+                        pk=currently_saved_role.pk)
                     if ticket_owner:
                         owner_options = User.objects.filter(
                             id=ticket.owner.id)
                     else:  # just show the default (empty) owner list
                         owner_options = get_users_with_extended_rbac_to_group()
 
-            else:
-                # If I am not connected with any role,  I must leave the ticket
-                # in default ticket support,  and I may not assign to anyone else,
-                # ... but I can see the current owner, if there is one
-                role_options = Group.objects.filter(pk=default_role.pk)
-                if ticket_owner:
-                    owner_options = User.objects.filter(
-                        id=ticket.owner.id)
-                else:  # just show the default (empty) owner list
-                    owner_options = get_users_with_extended_rbac_to_group()
-
         # Note that Owner_default = NONE EITHER means: 1) The Ticket has no owner
         # or 2) The user is a Group Manager or Staff member,  who has permission
         # to make an assigned Ticket "Unassigned" again.  (or both)
         form = TicketForm(role_options=role_options, owner_options=owner_options,
-                          role_default=default_role, owner_default=ticket_owner, instance=ticket)
+                          role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket)
 
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
@@ -509,6 +540,48 @@ class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMix
         # Also,  should managers be allowed to delete comments?
 
         return self.request.user == comment.author
+
+
+class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
+    template_name = "ticket_owner_list_settings.html"
+
+    def get(self, request):
+        context = {}
+
+        show_all_users = self.request.session.get(
+            'owner_displays_all_validated_users')
+        if show_all_users:
+            initial_value = 1
+        else:
+            initial_value = 0
+        form = TicketSettingsForm(
+            initial={'show_all_users': initial_value})
+
+        context["form"] = form
+        context["primary_title"] = "Ticket Settings"
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        form = TicketSettingsForm(request.POST)
+        if form.is_valid():
+            form_value = int(form.cleaned_data['show_all_users'])
+            if form_value:  # 1, Truthy
+                show_all_users = True
+            else:  # 0, Falsy
+                show_all_users = False
+
+            self.request.session['owner_displays_all_validated_users'] = show_all_users
+
+            return redirect('tickets')
+
+        context = {}
+        context["form"] = form
+        context["primary_title"] = "Ticket Settings"
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        if self.request.user.is_staff:
+            return True
 
 
 ##                   ##

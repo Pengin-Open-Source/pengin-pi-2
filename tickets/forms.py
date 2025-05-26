@@ -64,3 +64,11 @@ class TicketCommentForm(forms.ModelForm):
     class Meta:
         model = TicketComment
         fields = ['content']
+
+
+class TicketSettingsForm(forms.Form):
+    show_all_users = forms.ChoiceField(
+        label='Users Shown in Owner Dropdown list',
+        choices=[(0, "Users Associated with Selected Role"),
+                 (1, "All Validated Users"),]
+    )
