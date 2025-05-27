@@ -232,7 +232,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             ticket_owner = None
 
             if ticket.owner:
-                ticket_owner = get_object_or_404(User, id=ticket.owner.id)
+                ticket_owner = User.objects.filter(id=ticket.owner.id)
             else:
                 can_set_ticket_owner_blank = True
 
@@ -244,12 +244,20 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     potential_owners_for_the_role = User.objects.filter(
                         validated=True)
                 else:
-                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
-                        the_role_object)
+                    if the_role_object == ticket.role:
+                        potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
+                            the_role_object) | ticket_owner
+                    else:
+                        potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
+                            the_role_object)
 
             elif is_manager_of_this_role(current_user, the_role_object):
-                potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
-                    the_role_object)
+                if the_role_object == ticket.role:
+                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
+                        the_role_object) | ticket_owner
+                else:
+                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
+                        the_role_object)
                 can_set_ticket_owner_blank = True
 
             else:
@@ -257,7 +265,13 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # The user can assign themselves as Owner.
                     # If the ticket has an owner, and that owner has access
                     # to the newly selected_role,  they can see that as well
-                    if ticket_owner and can_access_group(ticket_owner, the_role_object.id):
+                    # The ticket owner will also become visible in this case:
+                    # The Ticket's *saved*, assigned owner was mismatched with the
+                    # Ticket's *saved *role,  and the user selects another role,
+                    # *without saving*,  and then navigates *back* to the currently
+                    # **saved** Ticket role.  (This allows the user to keep the current Owner
+                    # after making some edits and/or looking at other Role/Owner options)
+                    if the_role_object == ticket.role or (ticket_owner and can_access_group(ticket_owner, the_role_object.id)):
                         potential_owners_for_the_role = User.objects.filter(
                             id=current_user.id) | User.objects.filter(
                             id=ticket.owner.id)
