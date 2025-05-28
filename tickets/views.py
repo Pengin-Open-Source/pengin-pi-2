@@ -259,12 +259,13 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                             the_role_object)
 
             elif is_manager_of_this_role(current_user, the_role_object):
-                if the_role_object == ticket.role:
+                if ticket_owner and the_role_object == ticket.role:
                     potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
                         the_role_object) | ticket_owner
                 else:
                     potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
                         the_role_object)
+
                 can_set_ticket_owner_blank = True
 
             else:
@@ -285,12 +286,33 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                         potential_owners_for_the_role = User.objects.filter(
                             id=current_user.id)
                 else:
-                    # user cannot:
-                    # 1) See any role but default_ticket_support
-                    # 2) assign Ownership to anyone
-                    # user CAN
-                    # can see the current owner, if there is one
-                    if ticket_owner:
+                    ################################################
+                    # This case occurs when either
+                    # A)The user is a manager, but this is a role
+                    #    they neither manage nor are a member of.
+                    #    (However, being a manager they can still move
+                    #    the ticket to this or any other role)
+                    # B) Or the user has selected a Role/Group that
+                    #    they have no connection with. This is allowed
+                    #    when the user is the author of the ticket and:
+                    #       1) The ticket was created in the default role.
+                    #          (default_ticket_support)- which can occur
+                    #           even if the user isn't part of that group.
+                    #       2) The Ticket this was assigned,
+                    #          by management or staff, to a role unrelated
+                    #          to the user.
+                    ######################################################
+
+                    #####################################################
+                    # In this situation, the user CAN still see the current owner,
+                    # if there is one
+                    # 1) The Ticket Owner is a member of the role just selcted.
+                    # 2) The user has re-selected the Ticket's saved role -
+                    #    even if the Ticket Owner is not part of the newly
+                    #    seleted role
+                    if ticket_owner and ((the_role_object == ticket.role) or can_access_group(ticket_owner_object, the_role_object.id)):
+                       # TODO If the user is a manager,  can they set an
+                       # *assigned owner* ticket to empty?
                         potential_owners_for_the_role = ticket_owner
                     else:  # just show the default (empty) owner list
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
