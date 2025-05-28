@@ -155,6 +155,10 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
         default_role = ticket.role
         role_options = Group.objects.filter(pk=default_role.pk)
+
+        # Only the ticket.owner should be visible: don't want the other users
+        # to even be frontend code; that way users can't snoop with developer
+        # tools to see all the users they don't have permission to see.
         if ticket.owner:
             owner_options = User.objects.filter(id=ticket.owner.id)
         else:  # this should return an empty queryset of Users
@@ -232,7 +236,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             ticket_owner = None
 
             if ticket.owner:
+                # sometimes I need the object itself,  other times the filtered queryset
                 ticket_owner = User.objects.filter(id=ticket.owner.id)
+                ticket_owner_object = get_object_or_404(
+                    User, id=ticket.owner.id)
             else:
                 can_set_ticket_owner_blank = True
 
@@ -271,10 +278,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # *without saving*,  and then navigates *back* to the currently
                     # **saved** Ticket role.  (This allows the user to keep the current Owner
                     # after making some edits and/or looking at other Role/Owner options)
-                    if the_role_object == ticket.role or (ticket_owner and can_access_group(ticket_owner, the_role_object.id)):
+                    if the_role_object == ticket.role or (ticket_owner and can_access_group(ticket_owner_object, the_role_object.id)):
                         potential_owners_for_the_role = User.objects.filter(
-                            id=current_user.id) | User.objects.filter(
-                            id=ticket.owner.id)
+                            id=current_user.id) | ticket_owner
                     else:
                         potential_owners_for_the_role = User.objects.filter(
                             id=current_user.id)
@@ -285,8 +291,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # user CAN
                     # can see the current owner, if there is one
                     if ticket_owner:
-                        potential_owners_for_the_role = User.objects.filter(
-                            id=ticket.owner.id)
+                        potential_owners_for_the_role = ticket_owner
                     else:  # just show the default (empty) owner list
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
 
@@ -381,12 +386,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # They can also see the ticket owner, if there is one
                     if current_user_has_ticket_role:
                         owner_options = User.objects.filter(
-                            id=self.request.user.id) | User.objects.filter(
-                                id=ticket.owner.id)
+                            id=self.request.user.id) | ticket_owner
                     else:
                         if ticket_owner:
-                            owner_options = User.objects.filter(
-                                id=ticket.owner.id)
+                            owner_options = ticket_owner
                         else:  # just show the default (empty) owner list
                             owner_options = get_users_with_extended_rbac_to_group()
 
@@ -397,8 +400,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     role_options = Group.objects.filter(
                         pk=currently_saved_role.pk)
                     if ticket_owner:
-                        owner_options = User.objects.filter(
-                            id=ticket.owner.id)
+                        owner_options = ticket_owner
                     else:  # just show the default (empty) owner list
                         owner_options = get_users_with_extended_rbac_to_group()
 
