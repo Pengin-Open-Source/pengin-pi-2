@@ -12,7 +12,7 @@ from tickets.models import Ticket, TicketComment, transaction, TicketHistory, Ti
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_see_ticket, can_edit_ticket, is_ticket_manager
-from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac,  get_group_managers, is_manager_of_this_role
+from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac,  get_group_managers, is_a_manager, is_manager_of_this_role
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):
@@ -278,6 +278,21 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 can_set_ticket_owner_blank = True
 
             else:
+                if is_a_manager(current_user):
+                    print("I am A manager, but I am not THE manager")
+
+                    if not (ticket_has_owner and the_role_object == ticket.role):
+                        can_set_ticket_owner_blank = True
+                        print("I can set blank!")
+                    # else: The original setting of False will stick.
+                    #
+                    # if we have moved back to the saved ticket role, there is an
+                    # owner selected for this role,  and we are NOT the manager
+                    # of **this** role,  we cannot change it empty right now.
+                    # While managers can move other managers tickets to other roles,
+                    # we probably want to discourage them from simply meddling
+                    # within another Manager's group by "unassigning" their tickets.
+
                 if (can_access_group(current_user, the_role_object.id)):
                     # The user can assign themselves as Owner.
                     # If the ticket has an owner, and that owner has access

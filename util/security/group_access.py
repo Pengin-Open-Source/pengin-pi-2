@@ -21,6 +21,15 @@ def get_sub_groups(groups):
     return sub_groups
 
 
+def is_a_manager(user_to_check):
+    all_managers = get_group_managers()
+    user_in_manager_queryset = all_managers.filter(manager=user_to_check)
+
+    manages_anything = user_in_manager_queryset.exists()
+
+    return manages_anything
+
+
 def get_group_managers(groups=None):
     if groups:
         super_groups = get_super_groups(groups)

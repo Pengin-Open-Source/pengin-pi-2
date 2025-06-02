@@ -1,12 +1,11 @@
-from util.security.group_access import get_group_managers, is_manager_of_this_role, can_access_group
+from util.security.group_access import is_manager_of_this_role, is_a_manager,  can_access_group
 
 
 def can_see_ticket(current_user, ticket):
 
     matching_role = can_access_group(current_user, ticket.role.id)
 
-    manages_anything = get_group_managers()
-
+    manages_anything = is_a_manager(current_user)
     return (current_user.is_staff or matching_role or current_user == ticket.author or manages_anything)
 
 
