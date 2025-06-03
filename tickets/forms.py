@@ -19,7 +19,7 @@ class TicketForm(forms.ModelForm):
         model = Ticket
         fields = ['summary', 'role', 'owner', 'content', 'tags']
 
-    def __init__(self, *args, role_options=None, owner_options=None, role_default=None, owner_default=None, **kwargs):
+    def __init__(self, *args, can_set_ticket_owner_blank=True, role_options=None, owner_options=None, role_default=None, owner_default=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         # I don't allow blank roles, so get rid of empty_label option:
@@ -38,7 +38,9 @@ class TicketForm(forms.ModelForm):
         # using owner_default as a flag to determine if the user
         # has permission to assign *no one* "--------" as the owner
         # if not,  get rid of that option.
-        if owner_default:
+        if not can_set_ticket_owner_blank:
+            # ASSUMPTION: in this case we **shouldn't** run into
+            # a case where owner_default is None.
             self.fields['owner'].empty_label = None
             self.fields['owner'].initial = owner_default
 
