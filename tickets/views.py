@@ -457,7 +457,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     role_options = Group.objects.filter(
                         pk=currently_saved_role.pk)
 
-            if (can_access_group(current_user, ticket.role)):
+            if (can_access_group(current_user, ticket.role.id)):
                 # The user can assign themselves as Owner.
                 # If the ticket has an owner, they can see that as well
                 if ticket_has_owner:
@@ -468,6 +468,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                         id=current_user.id)
 
             else:
+
                 # If I am not connected with any role, I may not assign to anyone else,
                 # ... but I can see the current owner, if there is one
 
