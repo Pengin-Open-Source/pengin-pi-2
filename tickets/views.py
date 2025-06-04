@@ -365,17 +365,17 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     # If you try to make them more DRY,  just keep the
     # differences in mind:  get_context_data is getting
     # the context for a Ticket being loaded out of the database
-    # for editing. It needs to get the determine the
-    # available roles to this particular user.
+    # for editing. It needs to determine the
+    # available roles for this particular user.
     # The similar section in dispatch does NOT need to be
     # fed the list of roles again. It is responding to
     # on-the-fly changes the user makes to the role,
     # and only needs to re-do the Owner dropdown list.
     # Also, dispatch has to account for the case where
     # the user selects a different role, and then
-    # reselects the original ticket role being before
-    # saving. In such a case it needs to ensure the
-    # user doesn't lose accesst to specially
+    # reselects the original ticket role before
+    # saving. In this case it needs to ensure the
+    # user doesn't lose access to the specially
     # designated/mismatched owner that is not part
     # of the role.
     # )
@@ -405,7 +405,6 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         currently_saved_role = ticket.role
         users_in_currently_saved_role = get_users_with_extended_rbac_to_group(
             currently_saved_role)
-        current_user_has_ticket_role = current_user in users_in_currently_saved_role
         all_groups = Group.objects.all()
 
         is_admin = current_user.is_staff
@@ -425,8 +424,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     owner_options = users_in_currently_saved_role
 
         elif is_manager_of_this_role(current_user, ticket.role):
-            # TODO Shouldn't role options be set here?
             can_set_ticket_owner_blank = True
+            role_options = all_groups
             if ticket_has_owner:
                 # account for the case where a Staff member has
                 # assigned someone outside the role to the ticket.
@@ -469,11 +468,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                         id=current_user.id)
 
             else:
-                # If I am not connected with any role,  I must leave the ticket
-                # in default ticket support,  and I may not assign to anyone else,
+                # If I am not connected with any role, I may not assign to anyone else,
                 # ... but I can see the current owner, if there is one
-                role_options = Group.objects.filter(
-                    pk=currently_saved_role.pk)
+
                 if ticket_has_owner:
                     owner_options = ticket_owner
                 else:  # just show the default (empty) owner list
