@@ -3,10 +3,12 @@ from util.security.group_access import is_manager_of_this_role, is_a_manager,  c
 
 def can_see_ticket(current_user, ticket):
 
-    matching_role = can_access_group(current_user, ticket.role.id)
+    has_a_matching_role = can_access_group(current_user, ticket.role.id)
 
-    manages_anything = is_a_manager(current_user)
-    return (current_user.is_staff or matching_role or current_user == ticket.author or manages_anything)
+    is_a_group_manager = is_a_manager(current_user)
+    is_assigned_to_ticket = current_user == ticket.owner
+    is_author = current_user == ticket.author
+    return (current_user.is_staff or has_a_matching_role or is_author or is_assigned_to_ticket or is_a_group_manager)
 
 
 def can_edit_ticket(current_user, ticket):
