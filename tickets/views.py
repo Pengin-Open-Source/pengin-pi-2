@@ -348,9 +348,18 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             if can_set_ticket_owner_blank:
                 owner_options.append({'value': "",  'label': "---------"})
 
-            for user in potential_owners_for_the_role:
-                owner_options.append(
-                    {'value': user.pk,  'label': str(user.name)})
+            if not ticket_has_owner:
+                for user_option in potential_owners_for_the_role:
+                    owner_options.append(
+                        {'value': user_option.pk,  'label': str(user_option.name)})
+            else:
+                for user_option in potential_owners_for_the_role:
+                    is_selected = False
+                    if user_option.pk == ticket_owner_object.pk:
+                        is_selected = True
+
+                    owner_options.append(
+                        {'value': user_option.pk,  'label': str(user_option.name), 'selected': is_selected})
 
             data = {'message': f'Newly Selected Role: {selected_role}',
                     'status': 'success',  'options': owner_options}

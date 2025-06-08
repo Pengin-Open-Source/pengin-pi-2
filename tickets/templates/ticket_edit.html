@@ -77,6 +77,9 @@
                 const option = document.createElement('option');
                 option.value = optionData.value;
                 option.textContent = optionData.label;
+                if(optionData.selected) {
+                  option.selected = true
+                }
                 ownerPicklist.appendChild(option);
               });
               // if we disabled it before, re-enable
@@ -101,7 +104,7 @@
         });
       }
       else {
-        console.error("Apparently the Role dropdown box  - OR the Submit button - is gone or hasn't loaded yet.Wait a bit, but then, if it doesn't show up, contact your system administrator")
+        console.error("Apparently the Role dropdown box  - OR the Submit button - is gone or hasn't loaded yet. Wait a bit, but then, if it doesn't show up, contact your system administrator")
       }
     
       

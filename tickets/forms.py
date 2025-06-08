@@ -42,6 +42,8 @@ class TicketForm(forms.ModelForm):
         if not can_set_ticket_owner_blank:
             # ASSUMPTION: in this case owner_default
             # *should* never have a value of None.
+            # if does,  I want to see some kind of err
+            # message
             self.fields['owner'].empty_label = None
             self.fields['owner'].initial = owner_default
 
