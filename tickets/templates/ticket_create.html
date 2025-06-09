@@ -1,9 +1,100 @@
 {% extends "layout/fullPageScroll.html" %}
+{% load static %} 
 
 {% block pageContent %}
+   <input type="hidden" id="ticket-create-link" value='{% url 'create_ticket' %}'>
     <form class="form" method="POST" action="{% url 'create_ticket' %}">
         {% csrf_token %}
         {{ form.as_p }}
-        <button class="primary-button" type="submit">Post</button>
-    </form>
+        <button id = "submit-ticket-create" class="primary-button" type="submit"> Create Ticket </button>
+  
+
+
+<script src="{% static 'javascript/jquery/1.12.4/jquery.min.js' %}"></script>
+<script src="{% static 'javascript/scripts.js'                  %}"></script>
+
+<script>
+    const rolePicklist = document.getElementById('id_role')
+    const submitButton = document.getElementById('submit-ticket-create'); 
+    
+
+    if (rolePicklist && submitButton) {
+      rolePicklist.addEventListener('change', function() {
+        const selectedRole = this.value;
+        const ownerPicklist = document.getElementById('id_owner');
+        const ticketCreateLink= document.getElementById('ticket-create-link')   
+      
+        // if the ownerlist does not exist or is not a SELECT list
+        // stop right here.  Not a likely scenario given the elements
+        // are generated per a Django Form,  but Gemini recommends it for 
+        // defensive programming... in case of changes in the future
+         if(!ownerPicklist || ownerPicklist.tagName !== "SELECT") {
+            throw new error("Apparently either the Owner dropdown box is gone, or some element with the same id exists that is NOT a selection/dropdown element.")
+         }
+        // This hidden element's id is slightly more likely to be directly edited by someone 
+        if(!ticketCreateLink) {
+            throw new error("Apparently the ticket create link is missing")
+        }
+
+        const ticketCreateLinkString = ticketCreateLink.value;
+
+
+        // blank out the owners before trying to fetch new owners
+        // if we can't get the new ones we NOT want the user 
+        // to see the old ones on the "wrong" role
+        ownerPicklist.innerHTML = '';
+        // don't update the ticket until the valid owner options for this role have been chosen
+        submitButton.disabled = true; // Disable submit on role change (while loading)
+        submitButton.textContent = "Loading..."; // Change button text
+
+        // AJAX call to the Edit Ticket view
+        fetch(ticketCreateLinkString + '?selected_role=' + encodeURIComponent(selectedRole), {
+          method: 'GET'
+        })
+        .then(response => {
+          if (!response.ok ) {  //  ||   selectedRole == 3) {  *uncomment to see an example of the error
+            throw new Error('Ran into an error fetching the owner options for the new role');
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Received from server:', data);
+      
+           
+          if (data.options) {
+            data.options.forEach(optionData => {
+              const option = document.createElement('option');
+              option.value = optionData.value;
+              option.textContent = optionData.label;
+              ownerPicklist.appendChild(option);
+            });
+            // if we disabled it before, re-enable
+            ownerPicklist.disabled = false;
+            submitButton.disabled = false;
+            submitButton.textContent = "Create Ticket";
+            console.log("Owner picklist should be updated now");
+
+          }
+        })
+        .catch(error => {
+          console.error('Error loading Owner options for the Role change!', error);
+          const ownerPicklist = document.getElementById('id_owner');
+          const errorOption = document.createElement('option');
+          errorOption.textContent = "Error Updating Owner list... try clearing by changing roles!";
+          ownerPicklist.appendChild(errorOption);
+          ownerPicklist.disabled = true;
+          submitButton.textContent = "Error";
+          submitButton.disabled = true;
+          
+        });
+      });
+    }
+    else {
+      console.error("Apparently the Role dropdown box  - OR the Submit button - is gone or hasn't loaded yet. Wait a bit, but then, if it doesn't show up, contact your system administrator")
+    }
+  
+    
+</script>
+</form>
+
 {% endblock %}

@@ -86,6 +86,60 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
 
     success_url = reverse_lazy('tickets')
 
+    def dispatch(self, request, *args, **kwargs):
+        selected_role = request.GET.get('selected_role')
+        current_user = self.request.user
+        if selected_role:
+            # It's an Ajax request, handle it differently
+            the_role_object = get_object_or_404(Group, id=selected_role)
+
+            if current_user.is_staff:
+                showAllOwnerOptions = self.request.session.get(
+                    'owner_displays_all_validated_users')
+                if showAllOwnerOptions:
+                    potential_owners_for_the_role = User.objects.filter(
+                        validated=True)
+                else:
+                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
+                        the_role_object)
+
+            elif is_manager_of_this_role(current_user, the_role_object):
+                potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
+                    the_role_object)
+
+            else:
+                if (can_access_group(current_user, the_role_object.id)):
+                    # The user can assign themselves as Owner.
+                    potential_owners_for_the_role = User.objects.filter(
+                        id=current_user.id)
+                else:
+                    ################################################
+                    # This case occurs when either
+                    # A)The user is a manager, but this is a role
+                    #    they neither manage nor are a member of.
+                    #    (However, being a manager they can still move
+                    #    the ticket to this or any other role)
+                    # B) Or the user has selected a Role/Group that
+                    #    they have no connection with. All users can
+                    #    do this on creation, with the default_ticket_support
+                    #    role.
+                    # In either case, we will just show the default
+                    #  (empty) owner list
+                    ######################################################
+                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
+
+            owner_options = []
+            owner_options.append({'value': "",  'label': "---------"})
+
+            for user_option in potential_owners_for_the_role:
+                owner_options.append(
+                    {'value': user_option.pk,  'label': str(user_option.name)})
+
+            data = {'message': f'Newly Selected Role: {selected_role}',
+                    'status': 'success',  'options': owner_options}
+            return JsonResponse(data)
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
 
         # this is the group that that a new Ticket's Role field will be set
