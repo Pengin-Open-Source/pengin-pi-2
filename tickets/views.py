@@ -155,14 +155,20 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
         users_who_manage = User.objects.filter(id__in=group_managers)
 
         is_a_role_manager = self.request.user in users_who_manage
+        is_admin = self.request.user.is_staff
 
         # If I'm staff or a manager,  I can change the ticket to any role
         # and my preloaded owner options are any users who are in
         # the default role (if any,  otherwise we get an empty select list)
-        if self.request.user.is_staff or is_a_role_manager:
-
+        if is_admin or is_a_role_manager:
             role_options = all_groups
-            owner_options = get_users_with_extended_rbac_to_group(default_role)
+            owner_options = get_users_with_extended_rbac_to_group()
+            if is_admin:
+                showAllOwnerOptions = self.request.session.get(
+                    'owner_displays_all_validated_users')
+                if showAllOwnerOptions:
+                    owner_options = get_users_with_extended_rbac_to_group(
+                        default_role)
         else:
             # If I am not a staff or a manager,  I may not assign the
             # ticket to any *user* to be the Ticket Owner
@@ -314,7 +320,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     potential_owners_for_the_role = User.objects.filter(
                         validated=True)
                 else:
-                    if the_role_object == ticket.role:
+                    if ticket_has_owner and the_role_object == ticket.role:
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
                             the_role_object) | ticket_owner
                     else:
