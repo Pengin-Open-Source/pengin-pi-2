@@ -149,26 +149,30 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
         default_role, group_created = Group.objects.get_or_create(
             name='default_ticket_support')
         all_groups = Group.objects.all()
-
+        current_user = self.request.user
         # Does this user manage ANY role/group?
-        group_managers = get_group_managers()
-        users_who_manage = User.objects.filter(id__in=group_managers)
-
-        is_a_role_manager = self.request.user in users_who_manage
-        is_admin = self.request.user.is_staff
+        is_a_role_manager = is_a_manager(current_user)
+        is_admin = current_user.is_staff
 
         # If I'm staff or a manager,  I can change the ticket to any role
         # and my preloaded owner options are any users who are in
         # the default role (if any,  otherwise we get an empty select list)
         if is_admin or is_a_role_manager:
             role_options = all_groups
-            owner_options = get_users_with_extended_rbac_to_group()
             if is_admin:
                 showAllOwnerOptions = self.request.session.get(
                     'owner_displays_all_validated_users')
                 if showAllOwnerOptions:
+                    owner_options = User.objects.filter(validated=True)
+                else:
                     owner_options = get_users_with_extended_rbac_to_group(
                         default_role)
+            elif is_manager_of_this_role(current_user, default_role):
+                owner_options = get_users_with_extended_rbac_to_group(
+                    default_role)
+            else:
+                owner_options = get_users_with_extended_rbac_to_group()
+
         else:
             # If I am not a staff or a manager,  I may not assign the
             # ticket to any *user* to be the Ticket Owner
@@ -176,7 +180,7 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
             owner_options = get_users_with_extended_rbac_to_group()
             # ..but I can assign the ticket to any *role* I have access to
             user_roles = get_all_groups_for_user_with_extended_rbac(
-                self.request.user)
+                current_user)
             if user_roles.exists():
                 # Get all the roles the user is connected with
                 # + the default_ticket_support role
@@ -460,7 +464,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         can_set_ticket_owner_blank = False
 
         # Both a value and a flag.
-        # Determines if the "no owner" option is available to the user
+        # Determines if the "no owner" option is
+        # available to the user
         ticket_owner = None
         ticket_has_owner = ticket.owner is not None
 
@@ -469,8 +474,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         else:
             can_set_ticket_owner_blank = True
 
-        # For existing tickets,  the default role is the currently
-        # saved Ticket Role
+        # For existing tickets,  the default role
+        # is the currently saved Ticket Role
         currently_saved_role = ticket.role
         users_in_currently_saved_role = get_users_with_extended_rbac_to_group(
             currently_saved_role)
