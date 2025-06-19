@@ -516,20 +516,11 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 # A manager can change the ticket to any role
                 role_options = all_groups
             else:
-                # If I am not staff or a manager,
-                # I can assign the ticket to any *role* I have access to
-                user_roles = get_all_groups_for_user_with_extended_rbac(
-                    current_user)
-                if user_roles.exists():
-                    # Get all the roles the user is connected with
-                    # + the currently save ticket role
-                    role_options = user_roles | Group.objects.filter(
-                        pk=currently_saved_role.pk)
-                else:
-                    # If I am not connected with any role,  I must leave the ticket
-                    # in the role it is currently in.
-                    role_options = Group.objects.filter(
-                        pk=currently_saved_role.pk)
+                # If I am not a privileged user,
+                # I must leave the ticket
+                # in the role it is currently in.
+                role_options = Group.objects.filter(
+                    pk=currently_saved_role.pk)
 
             if (can_access_group(current_user, ticket.role.id)):
                 # The user can assign themselves as Owner.
