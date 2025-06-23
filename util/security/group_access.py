@@ -126,8 +126,6 @@ def get_users_with_extended_rbac_to_group(role=None):
 
 def is_manager_of_this_role(given_user, role):
     role_managers = get_group_managers({role})
-    print("The Role Managers")
-    print(role_managers)
     manager_uuids = [uuid['manager'] for uuid in role_managers]
 
     return given_user.id in manager_uuids

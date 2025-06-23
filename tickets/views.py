@@ -12,7 +12,7 @@ from main.models.users import User
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_see_ticket, can_edit_ticket
+from tickets.permissions import can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
 
 
@@ -219,6 +219,8 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         # perhaps this should be refactored to use self.object instead?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
         default_role = ticket.role
+        manages_ticket = is_manager_of_this_role(
+            self.request.user, default_role)
         role_options = Group.objects.filter(pk=default_role.pk)
 
         # Only the ticket.owner should be visible: don't want the other users
@@ -258,6 +260,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
         context['comment_form'] = comment_form
+        context['is_ticket_manager'] = manages_ticket
         is_admin = self.request.user.is_staff
         context['is_admin'] = is_admin
         context['can_edit_ticket'] = can_edit_ticket(self.request.user, ticket)
@@ -556,10 +559,6 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         context['ticket_id'] = self.object.id
         return context
 
-    # def get(self, request, **kwargs):
-    #     context = self.get_context_data(**kwargs)
-    #     return render(request, self.template_name, context)
-
     def post(self, request, *args, **kwargs):
         ticket_id = self.kwargs.get('pk')
         ticket = get_object_or_404(
@@ -668,12 +667,20 @@ class TicketCommentEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': comment.ticket.id}))
 
     def test_func(self):
-        if self.request.user.is_staff:
+        current_user = self.request.user
+        if current_user.is_staff:
             return True
 
         comment = self.get_object()
+        if current_user == comment.author:
+            return True
 
-        return self.request.user == comment.author
+        ticket = get_object_or_404(Ticket, id=comment.ticket.id)
+
+        if is_ticket_manager(current_user, ticket):
+            return True
+
+        return False
 
 
 class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -687,15 +694,20 @@ class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMix
         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket_id}))
 
     def test_func(self):
-        if self.request.user.is_staff:
+        current_user = self.request.user
+        if current_user.is_staff:
             return True
 
         comment = self.get_object()
+        if current_user == comment.author:
+            return True
 
-        # TODO  Perhaps customer-level users shouldn'te  be allowed to delete STAFF comments
-        # Also,  should managers be allowed to delete comments?
+        ticket = get_object_or_404(Ticket, id=comment.ticket.id)
 
-        return self.request.user == comment.author
+        if is_ticket_manager(current_user, ticket):
+            return True
+
+        return False
 
 
 class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
