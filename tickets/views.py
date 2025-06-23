@@ -1,4 +1,5 @@
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, Http404
+
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
@@ -11,8 +12,8 @@ from main.models.users import User
 from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_see_ticket, can_edit_ticket, is_ticket_manager
-from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac,  get_group_managers, is_a_manager, is_manager_of_this_role
+from tickets.permissions import can_see_ticket, can_edit_ticket
+from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
 
 
 class TicketsListView(LoginAndValidationRequiredMixin, ListView):
@@ -346,11 +347,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
                 can_set_ticket_owner_blank = True
 
-            else:
-                if is_a_manager(current_user):
+            elif is_a_manager(current_user):
 
-                    if not (ticket_has_owner and the_role_object == ticket.role):
-                        can_set_ticket_owner_blank = True
+                if not (ticket_has_owner and the_role_object == ticket.role):
+                    can_set_ticket_owner_blank = True
                     # else: The original setting of False will stick.
                     #
                     # if we have moved back to the saved ticket role, there is an
@@ -361,15 +361,23 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # within another Manager's group by "unassigning" their tickets.
 
                 if (can_access_group(current_user, the_role_object.id)):
-                    # The user can assign themselves as Owner.
-                    # If the ticket has an owner, and that owner has access
-                    # to the newly selected_role,  they can see that as well
+                    # A manager user can assign themselves as Owner if they are
+                    # part of the group,  even if this is not the group that
+                    # they manage.
+                    #
+                    # If the Ticket has an owner, and that owner has access
+                    # to the newly selected_role,  they can select the owner.
+                    #
                     # The ticket owner will also become visible in this case:
                     # The Ticket's *saved*, assigned owner was mismatched with the
-                    # Ticket's *saved *role,  and the user selects another role,
+                    # Ticket's *saved *role, (by Staff).
+                    # Now if this manager user selects another role,
                     # *without saving*,  and then navigates *back* to the currently
-                    # **saved** Ticket role.  (This allows the user to keep the current Owner
-                    # after lookng at other Role/Owner options without saving)
+                    # **saved** Ticket role , they can still see the owner.
+                    # (This way a manager can select another role for the ticket,  change
+                    # their mind and go back to the original role,  without losing the
+                    # "specially assigned" (mismatched) owner that Staff put on the Ticket.)
+
                     if ticket_has_owner and (the_role_object == ticket.role or can_access_group(ticket_owner_object, the_role_object.id)):
                         potential_owners_for_the_role = User.objects.filter(
                             id=current_user.id) | ticket_owner
@@ -378,25 +386,15 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                             id=current_user.id)
                 else:
                     ################################################
-                    # This case occurs when either
-                    # A)The user is a manager, but this is a role
-                    #    they neither manage nor are a member of.
-                    #    (However, being a manager they can still move
-                    #    the ticket to this or any other role)
-                    # B) Or the user has selected a Role/Group that
-                    #    they have no connection with. This is allowed
-                    #    when the user is the author of the ticket and:
-                    #       1) The ticket was created in the default role.
-                    #          (default_ticket_support)- which can occur
-                    #           even if the user isn't part of that group.
-                    #       2) The Ticket this was assigned,
-                    #          by management or staff, to a role unrelated
-                    #          to the user.
-                    ######################################################
-
-                    #####################################################
-                    # In this situation, the user CAN still see the current owner,
-                    # if there is one
+                    # This case occurs when the user is a manager,
+                    # but this is not one of the roles they manage,
+                    # and they are not a member of this  role.
+                    # (However, being a manager they can still move
+                    #  the ticket to this or any other role)
+                    # They cannot assign themselves as Ticket
+                    # Owner. Usually,  they set the ticket owner
+                    # # to blank when they change roles,  except when
+                    # there is already a saved Ticket owner and:
                     # 1) The Ticket Owner is a member of the role just selcted.
                     # 2) The user has re-selected the Ticket's saved role -
                     #    even if the Ticket Owner is not part of the newly
@@ -407,6 +405,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                         potential_owners_for_the_role = ticket_owner
                     else:  # just show the default (empty) owner list
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
+
+            else:  # We SHOULDN'T hit this code.
+                raise Http404(
+                    "Non-privileged user tried to change roles on existing ticket. No code path should have permitted this. ")
 
             owner_options = []
             if can_set_ticket_owner_blank:
