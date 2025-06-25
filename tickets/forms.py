@@ -2,6 +2,9 @@ from django import forms
 from main.models.users import User
 from tickets.models import Ticket, TicketComment
 from django.db.models import QuerySet
+from django.contrib.auth.models import Group
+
+from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group, is_a_manager, is_manager_of_this_role
 
 
 # Same technique as in Events
@@ -20,6 +23,9 @@ class TicketForm(forms.ModelForm):
         fields = ['summary', 'role', 'owner', 'content', 'tags']
 
     def __init__(self, *args, can_set_ticket_owner_blank=True, role_options=None, owner_options=None, role_default=None, owner_default=None, **kwargs):
+        self.current_user = kwargs.pop('current_user', None)
+        print("kwargs says current user is")
+        print(self.current_user)
         super().__init__(*args, **kwargs)
 
         # I don't allow blank roles, so get rid of empty_label option:
@@ -46,6 +52,103 @@ class TicketForm(forms.ModelForm):
             # message
             self.fields['owner'].empty_label = None
             self.fields['owner'].initial = owner_default
+
+    def clean(self):
+        cleaned_data = super().clean()
+        current_user = self.current_user
+
+        # May the User see the option to set Owner to empty?
+        can_set_ticket_owner_blank = False
+
+        role = cleaned_data.get('role')
+        owner = cleaned_data.get('owner')
+        print("owner")
+        print(owner)
+
+        if self.instance and not self.instance._state.adding:
+            ticket = self.instance
+
+            # Determines if the "no owner" option is
+            # available to the user
+            ticket_owner = None
+            ticket_has_owner = ticket.owner is not None
+
+            if ticket_has_owner:
+                ticket_owner = User.objects.filter(id=ticket.owner.id)
+            else:
+                can_set_ticket_owner_blank = True
+
+            # For existing tickets,  the default role
+            # is the currently saved Ticket Role
+            currently_saved_role = ticket.role
+            users_in_currently_saved_role = get_users_with_extended_rbac_to_group(
+                currently_saved_role)
+            all_groups = Group.objects.all()
+
+            is_admin = current_user.is_staff
+            if is_admin:
+                can_set_ticket_owner_blank = True
+                role_options = all_groups
+                show_all_owner_options = self.request.session.get(
+                    'owner_displays_all_validated_users')
+                if show_all_owner_options:
+                    owner_options = User.objects.filter(validated=True)
+                else:
+                    # Get all users in the role; handle case where Staff has
+                    # already assigned the Ticket to a user outside the role.
+                    if ticket_has_owner:
+                        owner_options = users_in_currently_saved_role | ticket_owner
+                    else:
+                        owner_options = users_in_currently_saved_role
+
+            elif is_manager_of_this_role(current_user, ticket.role):
+                can_set_ticket_owner_blank = True
+                role_options = all_groups
+                if ticket_has_owner:
+                    # account for the case where a Staff member has
+                    # assigned someone outside the role to the ticket.
+                    # We don't want to lose to option of that Ticket
+                    # Owner until the ticket is saved.
+                    owner_options = get_users_with_extended_rbac_to_group(
+                        ticket.role) | ticket_owner
+                else:
+                    owner_options = get_users_with_extended_rbac_to_group(
+                        ticket.role)
+            else:
+                # Does this user manage ANY role/group?
+                if is_a_manager(current_user):
+                    # A manager can change the ticket to any role
+                    role_options = all_groups
+                else:
+                    # If I am not a privileged user,
+                    # I must leave the ticket
+                    # in the role it is currently in.
+                    role_options = Group.objects.filter(
+                        pk=currently_saved_role.pk)
+
+                if (can_access_group(current_user, ticket.role.id)):
+                    # The user can assign themselves as Owner.
+                    # If the ticket has an owner, they can see that as well
+                    if ticket_has_owner:
+                        owner_options = User.objects.filter(
+                            id=current_user.id) | ticket_owner
+                    else:
+                        owner_options = User.objects.filter(
+                            id=current_user.id)
+
+                else:
+
+                    # If I am not connected with any role, I may not assign to anyone else,
+                    # ... but I can see the current owner, if there is one
+
+                    if ticket_has_owner:
+                        owner_options = ticket_owner
+                    else:  # just show the default (empty) owner list
+                        owner_options = get_users_with_extended_rbac_to_group()
+
+        # if role and owner and role.name == 'Viewer' and owner.is_superuser:
+        #     raise forms.ValidationError("Viewers cannot be superusers.")
+        return cleaned_data
 
 
 class TicketEditStatusForm(forms.ModelForm):

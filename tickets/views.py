@@ -87,6 +87,11 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
 
     success_url = reverse_lazy('tickets')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['current_user'] = self.request.user
+        return kwargs
+
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
         current_user = self.request.user
@@ -295,6 +300,13 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     # (Google Gemini suggested using the dispatch function
     # to check for AJAX call to give back a JSONResponse)
     #
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['current_user'] = self.request.user
+        print("in kwargs")
+        print(kwargs['current_user'])
+        return kwargs
 
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
