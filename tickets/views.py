@@ -403,8 +403,6 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     #    even if the Ticket Owner is not part of the newly
                     #    seleted role
                     if ticket_has_owner and ((the_role_object == ticket.role) or can_access_group(ticket_owner_object, the_role_object.id)):
-                       # TODO If the user is a manager,  can they set an
-                       # *assigned owner* ticket to empty?
                         potential_owners_for_the_role = ticket_owner
                     else:  # just show the default (empty) owner list
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
