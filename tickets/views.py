@@ -301,13 +301,6 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     # to check for AJAX call to give back a JSONResponse)
     #
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['current_user'] = self.request.user
-        print("in kwargs")
-        print(kwargs['current_user'])
-        return kwargs
-
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
         current_user = self.request.user
@@ -315,17 +308,19 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             # It's an Ajax request, handle it differently
             the_role_object = get_object_or_404(Group, id=selected_role)
 
-            # permission flag: May the User see the option to set Owner to empty?
+            # permission flag: May the User
+            # see the option to set Owner to empty?
             can_set_ticket_owner_blank = False
 
             ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-            # Theorectically,  we'll never user ticket_owner when it's None but JIC...
+            # Theorectically,  we'll never user ticket_owner when it's
+            # None but JIC...
             ticket_owner = None
             ticket_has_owner = ticket.owner is not None
 
             if ticket_has_owner:
-                # sometimes I need the object itself,  other times the filtered queryset
-                # other times,  I'd like to use the boolean I just created.
+                # sometimes I need the object itself,  other times the filtered
+                # queryset other times,  I'd like to use the boolean I just created.
                 ticket_owner = User.objects.filter(id=ticket.owner.id)
                 ticket_owner_object = get_object_or_404(
                     User, id=ticket.owner.id)
@@ -561,7 +556,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         # or 2) The user is a Group Manager or Staff member,  who has permission
         # to make an assigned Ticket "Unassigned" again.  (or both)
         form = TicketForm(can_set_ticket_owner_blank=can_set_ticket_owner_blank, role_options=role_options, owner_options=owner_options,
-                          role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket)
+                          role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket, current_user=current_user)
 
         context['form'] = form
         context['is_admin'] = is_admin
@@ -573,7 +568,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         ticket_id = self.kwargs.get('pk')
         ticket = get_object_or_404(
             Ticket, id=ticket_id)
-        ticket_form = TicketForm(request.POST, instance=ticket)
+        current_user = self.request.user
+        ticket_form = TicketForm(
+            request.POST, instance=ticket, current_user=current_user)
         if ticket_form.is_valid():
             # ticket = ticket_form.save(commit=False)
             ticket_to_be_edited = ticket_form.instance
