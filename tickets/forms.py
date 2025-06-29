@@ -1,4 +1,5 @@
 from django import forms
+from django.http import Http404
 from main.models.users import User
 from tickets.models import Ticket, TicketComment
 from django.db.models import QuerySet
@@ -145,9 +146,10 @@ class TicketForm(forms.ModelForm):
                         owner_options = ticket_owner
                     else:  # just show the default (empty) owner list
                         owner_options = get_users_with_extended_rbac_to_group()
+            if not (role in role_options and owner in owner_options):
+                raise Http404(
+                    "Warning! You are not allowed to select this Role or Owner")
 
-        # if role and owner and role.name == 'Viewer' and owner.is_superuser:
-        #     raise forms.ValidationError("Viewers cannot be superusers.")
         return cleaned_data
 
 
