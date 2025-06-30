@@ -25,8 +25,6 @@ class TicketForm(forms.ModelForm):
 
     def __init__(self, *args, can_set_ticket_owner_blank=True, role_options=None, owner_options=None, role_default=None, owner_default=None, **kwargs):
         self.current_user = kwargs.pop('current_user', None)
-        print("kwargs says current user is")
-        print(self.current_user)
         super().__init__(*args, **kwargs)
 
         # I don't allow blank roles, so get rid of empty_label option:
@@ -63,8 +61,6 @@ class TicketForm(forms.ModelForm):
 
         role = cleaned_data.get('role')
         owner = cleaned_data.get('owner')
-        print("owner")
-        print(owner)
 
         if self.instance and not self.instance._state.adding:
             ticket = self.instance
@@ -146,9 +142,18 @@ class TicketForm(forms.ModelForm):
                         owner_options = ticket_owner
                     else:  # just show the default (empty) owner list
                         owner_options = get_users_with_extended_rbac_to_group()
-            if not (role in role_options and owner in owner_options):
+
+            if not role in role_options:
                 raise Http404(
-                    "Warning! You are not allowed to select this Role or Owner")
+                    "Warning! You are not allowed to select this Role!")
+
+            if not owner in owner_options:
+                if owner:
+                    raise Http404(
+                        "Warning! You are not allowed to select this Owner")
+                elif not can_set_ticket_owner_blank:
+                    raise Http404(
+                        "Warning! Empty Owner not allowed on this ticket!")
 
         return cleaned_data
 
