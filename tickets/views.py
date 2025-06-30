@@ -628,7 +628,11 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
 
         ticket = self.get_object()
 
-        return self.request.user == ticket.author
+        if self.request.user == ticket.author:
+            return True
+
+        ticket_role = ticket.role
+        return is_manager_of_this_role(self.request.user, ticket_role)
 
 
 class TicketDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DeleteView):
