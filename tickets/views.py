@@ -87,11 +87,6 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
 
     success_url = reverse_lazy('tickets')
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['current_user'] = self.request.user
-        return kwargs
-
     def dispatch(self, request, *args, **kwargs):
         selected_role = request.GET.get('selected_role')
         current_user = self.request.user
@@ -199,12 +194,12 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
                 role_options = Group.objects.filter(pk=default_role.pk)
 
         form = TicketForm(role_options=role_options,
-                          owner_options=owner_options, role_default=default_role)
+                          owner_options=owner_options, role_default=default_role, current_user=current_user)
         context = {'form': form}
         return render(request, self.template_name,  context)
 
     def post(self, request):
-        form = TicketForm(request.POST)
+        form = TicketForm(request.POST, current_user=request.user)
         if form.is_valid():
             form.instance.author = self.request.user
             form.instance.row_action = 'CREATE'
