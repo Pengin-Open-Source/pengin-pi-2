@@ -643,6 +643,11 @@ class TicketDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Del
         if self.request.user.is_staff:
             return True
 
+        ticket = self.get_object()
+
+        if is_ticket_manager(self.request.user, ticket):
+            return True
+
 
 class TicketCommentEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
     model = TicketComment
