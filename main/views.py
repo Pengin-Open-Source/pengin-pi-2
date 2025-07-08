@@ -2,12 +2,15 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
+from main.mixins import LoginAndValidationRequiredMixin
 from util.mail import send_mail
 from django.utils.decorators import method_decorator
+from django.core.paginator import Paginator
 from django.views import View
 from .forms import LoginForm, SignUpForm, PasswordResetForm, SetPasswordForm
-from .models.users import User
+from .models.users import GroupManager, User
 from datetime import datetime, timedelta
 import uuid
 from django_ratelimit.decorators import ratelimit
@@ -60,7 +63,8 @@ class LogoutView(View):
     def get(self, request):
         logout(request)
         return redirect('home_view')
-   
+
+
 class PasswordResetRequestView(View):
     def get(self, request):
         form = PasswordResetForm()
@@ -112,3 +116,23 @@ class PasswordResetView(View):
             else:
                 messages.error(request, 'Passwords do not match.')
         return redirect('reset_password', token=token)
+
+
+# Group/Role Management
+
+class GroupManagerListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "group-manager/GroupManagers.html"
+
+    def get(self, request, *args, **kwargs):
+
+        group_managers = GroupManager.objects.all().order_by('managed_group')
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(group_managers, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['page_obj'] = page_obj
+
+        return render(request, context)
