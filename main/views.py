@@ -1,5 +1,5 @@
 # views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -9,8 +9,8 @@ from util.mail import send_mail
 from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 from django.views import View
-from .forms import LoginForm, SignUpForm, PasswordResetForm, SetPasswordForm
-from .models.users import GroupManager, User
+from .forms import GroupForm, GroupManagerForm, LoginForm, SignUpForm, PasswordResetForm, SetPasswordForm
+from .models.users import Group, GroupManager, User
 from datetime import datetime, timedelta
 import uuid
 from django_ratelimit.decorators import ratelimit
@@ -120,19 +120,44 @@ class PasswordResetView(View):
 
 # Group/Role Management
 
-class GroupManagerListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+class GroupListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
 
-    template_name = "group-manager/GroupManagers.html"
+    template_name = "management/groups.html"
 
     def get(self, request, *args, **kwargs):
 
-        group_managers = GroupManager.objects.all().order_by('managed_group')
+        groups = Group.objects.all().order_by('name')
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
-        paginator = Paginator(group_managers, 10)
+        paginator = Paginator(groups, 10)
         page_obj = paginator.get_page(page_number)
         context = {}
+        context['is_admin'] = request.user.is_staff
         context['page_obj'] = page_obj
 
-        return render(request, context)
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/manage_group.html"
+
+    def get(self, request, *args, **kwargs):
+
+        group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        # group_with_manager = get_object_or_404(
+        #    GroupManager, managed_group=group)
+        form = GroupForm(instance=group)
+
+        context = {}
+        context['form'] = form
+        context['is_admin'] = request.user.is_staff
+
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff

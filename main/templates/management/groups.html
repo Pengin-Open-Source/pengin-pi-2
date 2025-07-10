@@ -6,9 +6,9 @@
 
 {% block tableContent %}
 
-{% for group_manager in page_obj %}
+{% for group in page_obj %}
 <tr><td class="post-container">
-  <a class="alternating-colors-table-links" href="{% url 'group_manager'  group_manager.id %}">{{ group_manager.group |escape }}</a>
+  <a class="alternating-colors-table-links" href="{% url "group" group.id %}">{{ group.name |escape }}</a>
   <div class="comment-title-underline"> 
 </td></tr>
 {% endfor %}

@@ -1,7 +1,7 @@
 # main/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from .views import GroupManagerListView, LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
+from .views import GroupListView, GroupDetailView, LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -19,7 +19,8 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('signup/', SignupView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),
-    path('group-managers/', GroupManagerListView.as_view(), name='group_managers'),
+    path('groups/', GroupListView.as_view(), name='groups'),
+    path('groups/<int:pk>',  GroupDetailView.as_view(), name="group"),
     path('generate-prt/', PasswordResetRequestView.as_view(), name='generate_prt'),
     path('reset-password/<str:token>/',
          PasswordResetView.as_view(), name='reset_password'),
