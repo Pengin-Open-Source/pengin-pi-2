@@ -2,6 +2,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models.users import User, Group, GroupManager
+from util.forms.fields import UserModelChoiceField
 
 
 class LoginForm(AuthenticationForm):
@@ -24,12 +25,17 @@ class SetPasswordForm(forms.Form):
 
 
 class GroupManagerForm(forms.ModelForm):
+
+    manager = UserModelChoiceField(
+        queryset=User.objects.filter(validated=True), required=False)
+
     class Meta:
         model = GroupManager
-        fields = ['manager', 'managed_group']
+        fields = ['manager']
 
 
 class GroupForm(forms.ModelForm):
+
     class Meta:
         model = Group
         fields = ['name']

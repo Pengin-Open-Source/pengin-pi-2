@@ -149,11 +149,23 @@ class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, Vie
     def get(self, request, *args, **kwargs):
 
         group = get_object_or_404(Group, id=self.kwargs.get('pk'))
-        # group_with_manager = get_object_or_404(
-        #    GroupManager, managed_group=group)
-        form = GroupForm(instance=group)
+        group_manager = GroupManager.objects.filter(
+            managed_group=group).first()
 
         context = {}
+        if group_manager:
+            manager_form = GroupManagerForm(instance=group_manager)
+        else:
+            manager_form = GroupManagerForm()
+
+        for field in manager_form.fields:
+            manager_form.fields[field].widget.attrs['disabled'] = True
+        form = GroupForm(instance=group)
+
+        for field in form.fields:
+            form.fields[field].widget.attrs['disabled'] = True
+
+        context['manager_form'] = manager_form
         context['form'] = form
         context['is_admin'] = request.user.is_staff
 

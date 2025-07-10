@@ -5,14 +5,8 @@ from main.models.users import User
 from tickets.models import Ticket, TicketComment
 from django.db.models import QuerySet
 from django.contrib.auth.models import Group
-
+from util.forms.fields import UserModelChoiceField
 from util.security.group_access import can_access_group, get_all_groups_for_user_with_extended_rbac, get_users_with_extended_rbac_to_group, is_a_manager, is_manager_of_this_role
-
-
-# Same technique as in Events
-class UserModelChoiceField(forms.ModelChoiceField):
-    def label_from_instance(self, obj):
-        return obj.name
 
 
 class TicketForm(forms.ModelForm):

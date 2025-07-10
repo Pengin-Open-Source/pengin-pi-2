@@ -1,6 +1,10 @@
 {% extends "layout/fullPageScroll.html" %}
 {% block pageContent %}
     <form>
+            {% csrf_token %}
+            {{ manager_form.as_p }}
+    </form> 
+    <form>
         {% csrf_token %}
         {{ form.as_p }}
     </form>    
