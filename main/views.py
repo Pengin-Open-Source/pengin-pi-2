@@ -4,6 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
+from util.security.group_access import get_direct_parent
 from main.mixins import LoginAndValidationRequiredMixin
 from util.mail import send_mail
 from django.utils.decorators import method_decorator
@@ -164,6 +165,8 @@ class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, Vie
 
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
+        parent = get_direct_parent(group)
+        context['parent_group'] = parent
 
         context['manager_form'] = manager_form
         context['form'] = form

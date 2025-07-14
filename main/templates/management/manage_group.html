@@ -7,5 +7,15 @@
     <form>
         {% csrf_token %}
         {{ form.as_p }}
-    </form>    
+    </form>  
+
+<b>Parent Group: </b>
+{% if parent_group  %}
+   <a class="text-button" style="color: purple;" href="{% url "group" parent_group.id %}">{{ parent_group.name |escape }}</a>
+{% else  %}
+    <a class="text-button" style="color: purple;" href= "">(None) </a>
+{% endif  %}
+                 
+    
+
 {% endblock %}

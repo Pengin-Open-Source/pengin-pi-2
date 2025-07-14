@@ -13,6 +13,21 @@ def get_super_groups(groups):
     return super_groups
 
 
+def get_direct_parent(group):
+    # TODO There SHOULD only be one result. Adding more than one parent
+    # might cause unpleasant diamond problems. However
+    # the current table logic doesn't prevent that.
+    # Either fix that or provide a way for dealing
+    # with multiple parents.
+    parents = SubGroup.objects.filter(
+        descendant__in={group}).filter(depth=1).values('ancestor')
+
+    parent_list = [id['ancestor'] for id in parents]
+    parent = Group.objects.filter(id__in=parent_list).order_by('name').first()
+
+    return parent
+
+
 def get_sub_groups(groups):
     # Retreive all the descendant groups that this set of groups is
     # an ancestor of, using the Subgroup closure table.
