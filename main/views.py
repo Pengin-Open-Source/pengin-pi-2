@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
-from util.security.group_access import get_direct_parent
+from util.security.group_access import get_cross_group_access, get_direct_children_of_group, get_direct_parent
 from main.mixins import LoginAndValidationRequiredMixin
 from util.mail import send_mail
 from django.utils.decorators import method_decorator
@@ -145,7 +145,7 @@ class GroupListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View)
 
 class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
 
-    template_name = "management/manage_group.html"
+    template_name = "management/group_detail.html"
 
     def get(self, request, *args, **kwargs):
 
@@ -166,12 +166,64 @@ class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, Vie
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         parent = get_direct_parent(group)
-        context['parent_group'] = parent
 
+        context['parent_group'] = parent
+        context['group'] = group
         context['manager_form'] = manager_form
         context['form'] = form
         context['is_admin'] = request.user.is_staff
 
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupChildListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/group_children_detail.html"
+
+    def get(self, request, *args, **kwargs):
+
+        parent_group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        child_groups = get_direct_children_of_group(parent_group)
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(child_groups, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['parent_group'] = parent_group
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class NonHierarchicalAccessGroupListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/groups_non_tree_access.html"
+
+    def get(self, request, *args, **kwargs):
+
+        group_with_access = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        accesible_groups = get_cross_group_access({group_with_access})
+
+        accesible_group_list = [id['accessed_group']
+                                for id in accesible_groups]
+        accessed_groups = Group.objects.filter(
+            id__in=accesible_group_list)
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(accessed_groups, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['group_with_access'] = group_with_access
         return render(request, self.template_name, context)
 
     def test_func(self):

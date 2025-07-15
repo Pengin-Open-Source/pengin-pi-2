@@ -13,9 +13,15 @@
 {% if parent_group  %}
    <a class="text-button" style="color: purple;" href="{% url "group" parent_group.id %}">{{ parent_group.name |escape }}</a>
 {% else  %}
-    <a class="text-button" style="color: purple;" href= "">(None) </a>
+    (None) 
 {% endif  %}
-                 
-    
+<p>
+    <a class="text-button" style="color: purple;" href="{% url "child_groups" group.id %}">See Child Group List...</a>
+</p>
+
+<p>
+    <a class="text-button" style="color: purple;" href="{% url "non_tree_accessed_groups" group.id %}"> Other Connected Groups...</a>
+</p>
+      
 
 {% endblock %}

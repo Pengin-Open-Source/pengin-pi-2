@@ -17,7 +17,7 @@ def get_direct_parent(group):
     # TODO There SHOULD only be one result. Adding more than one parent
     # might cause unpleasant diamond problems. However
     # the current table logic doesn't prevent that.
-    # Either fix that or provide a way for dealing
+    # Either fix that or provide some safety rails for dealing
     # with multiple parents.
     parents = SubGroup.objects.filter(
         descendant__in={group}).filter(depth=1).values('ancestor')
@@ -34,6 +34,15 @@ def get_sub_groups(groups):
     sub_groups = SubGroup.objects.filter(
         ancestor__in=groups).values('descendant')
     return sub_groups
+
+
+def get_direct_children_of_group(group):
+    children = SubGroup.objects.filter(
+        ancestor__in={group}).filter(depth=1).values('descendant')
+    child_list = [id['descendant'] for id in children]
+    group_children = Group.objects.filter(id__in=child_list).order_by('name')
+
+    return group_children
 
 
 def is_a_manager(user_to_check):
@@ -57,9 +66,10 @@ def get_group_managers(groups=None):
 
 
 def get_cross_group_access(groups):
-    # Retrieve all the groups that this set of groups has cross-hierarchy access to,
-    # using the GroupToGroupAccess table
-    # IMPORTANT. There is a KEY difference from being an actual member of a group/role
+    # Retrieve all the groups that this set of groups has
+    # cross-hierarchy access to, using the GroupToGroupAccess table
+    # IMPORTANT. There is a KEY difference from being an actual member of
+    # a group/role
     # If the user merely has special access to a role/group,  they do NOT also
     # INHERIT the permissions from the accessed group's ancestor roles
     accessed_groups = GroupToGroupAccess.objects.filter(

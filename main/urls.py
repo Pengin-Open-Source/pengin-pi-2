@@ -1,7 +1,7 @@
 # main/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from .views import GroupListView, GroupDetailView, LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
+from .views import GroupListView, GroupDetailView, GroupChildListDetailView, NonHierarchicalAccessGroupListDetailView, LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -20,7 +20,11 @@ urlpatterns = [
     path('signup/', SignupView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('groups/', GroupListView.as_view(), name='groups'),
-    path('groups/<int:pk>',  GroupDetailView.as_view(), name="group"),
+    path('group/<int:pk>',  GroupDetailView.as_view(), name="group"),
+    path('group/children/<int:pk>',
+         GroupChildListDetailView.as_view(), name="child_groups"),
+    path('group/non-tree-access/<int:pk>',
+         NonHierarchicalAccessGroupListDetailView.as_view(), name="non_tree_accessed_groups"),
     path('generate-prt/', PasswordResetRequestView.as_view(), name='generate_prt'),
     path('reset-password/<str:token>/',
          PasswordResetView.as_view(), name='reset_password'),
