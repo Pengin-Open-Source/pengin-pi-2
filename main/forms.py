@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models.users import User, Group, GroupManager
-from util.forms.fields import UserModelChoiceField
+from util.forms.fields import UserModelChoiceField, UserModelMultipleChoiceField
 
 
 class LoginForm(AuthenticationForm):

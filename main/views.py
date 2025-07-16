@@ -136,6 +136,7 @@ class GroupListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View)
         context = {}
         context['is_admin'] = request.user.is_staff
         context['page_obj'] = page_obj
+        context['primary_title'] = "Groups (aka Roles)"
 
         return render(request, self.template_name, context)
 
@@ -172,6 +173,7 @@ class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, Vie
         context['manager_form'] = manager_form
         context['form'] = form
         context['is_admin'] = request.user.is_staff
+        context['primary_title'] = "Details For Group: " + group.name
 
         return render(request, self.template_name, context)
 
@@ -196,6 +198,7 @@ class GroupChildListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestM
         context['is_admin'] = request.user.is_staff
         context['page_obj'] = page_obj
         context['parent_group'] = parent_group
+        context['primary_title'] = parent_group.name + "'s Direct Subgroups"
         return render(request, self.template_name, context)
 
     def test_func(self):
@@ -224,6 +227,8 @@ class NonHierarchicalAccessGroupListDetailView(LoginAndValidationRequiredMixin, 
         context['is_admin'] = request.user.is_staff
         context['page_obj'] = page_obj
         context['group_with_access'] = group_with_access
+        context['primary_title'] = group_with_access.name + \
+            " Granted Special Access To Groups:"
         return render(request, self.template_name, context)
 
     def test_func(self):
@@ -247,7 +252,7 @@ class GroupMemberListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin,
         context['is_admin'] = request.user.is_staff
         context['page_obj'] = page_obj
         context['group'] = group
-
+        context['primary_title'] = "Members of " + group.name
         return render(request, self.template_name, context)
 
     def test_func(self):
