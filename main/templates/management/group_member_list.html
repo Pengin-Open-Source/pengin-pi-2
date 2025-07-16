@@ -1,0 +1,25 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+{% block pageDropDowns %}
+<a href="{% url "group" group.id %}">Back to {{ group.name |escape }} </a>
+{% if is_admin %}
+  {% comment %} <a href="{% url 'edit_group_members' pk=group.id %}">Edit Members</a> {% endcomment %}
+{% endif %}
+{% endblock %}
+
+{% block pageContent %}
+<div class="content-section">
+  <div class="member-list">
+    <ul>
+      {% comment %} User List pre-filtered on membership in Group {% endcomment %}
+      {% for user in page_obj %}
+          <li>{{ user.name }} - {{ user.email }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% use_macro render_pagination page_obj %}
+</div>
+{% endblock %}

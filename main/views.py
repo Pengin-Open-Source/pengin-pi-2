@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
-from util.security.group_access import get_cross_group_access, get_direct_children_of_group, get_direct_parent
+from util.security.group_access import get_cross_group_access, get_direct_children_of_group, get_direct_parent, get_users_with_extended_rbac_to_group
 from main.mixins import LoginAndValidationRequiredMixin
 from util.mail import send_mail
 from django.utils.decorators import method_decorator
@@ -224,6 +224,30 @@ class NonHierarchicalAccessGroupListDetailView(LoginAndValidationRequiredMixin, 
         context['is_admin'] = request.user.is_staff
         context['page_obj'] = page_obj
         context['group_with_access'] = group_with_access
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupMemberListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/group_member_list.html"
+
+    def get(self, request, *args, **kwargs):
+
+        group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        users_in_group = get_users_with_extended_rbac_to_group(group)
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(users_in_group, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['group'] = group
+
         return render(request, self.template_name, context)
 
     def test_func(self):
