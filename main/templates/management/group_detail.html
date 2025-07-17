@@ -1,7 +1,7 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageDropDowns %}
-    <a href="{% url 'display_group_members' pk=group.id %}">View Members</a>
+    <a href="{% url 'display_group_members' pk=group.id member_filter='all' %}">View Members</a>
     <a href="{% url "groups" %}">Return To Groups List</a>
     {% comment %} {% if is_admin %}
        <a href="{% url 'edit_company_info_post' pk=company.id %}">Edit Company</a>
@@ -14,8 +14,6 @@
 {% endblock %}
 
 
-
-<a href="{% url 'display_company_members' pk=company.id %}">View Members</a>
 
 {% block pageContent %}
     <form>

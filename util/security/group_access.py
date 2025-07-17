@@ -82,8 +82,9 @@ def get_cross_group_access(groups):
 # or group inheritance,  but this lets you see/manage
 # who is direct member of this group
 def get_all_direct_group_members(group):
-    validated_users = User.objects.filter(validated=True)
-    # TODO finish.
+    group_members = User.objects.filter(
+        validated=True).filter(groups__id=group.id).order_by('name')
+    return group_members
 
 
 def get_all_groups_for_user_with_extended_rbac(given_user):
@@ -130,8 +131,6 @@ def get_validated_user_ids_with_access_to_group(group):
     # have a related role)
     # Ideally,  the "validated" part of this should
     # be redundant - A user who is not validated
-    urls.py
-
     # shouldn't have a role.
     validated_users = User.objects.filter(validated=True)
     who_can_access_role = []
@@ -156,7 +155,7 @@ def get_users_with_extended_rbac_to_group(role=None):
         users_with_rbac = User.objects.filter(
             id__in=allowed_user_ids)
 
-    return users_with_rbac
+    return users_with_rbac.order_by('name')
 
 
 def is_manager_of_this_role(given_user, role):

@@ -25,7 +25,7 @@ urlpatterns = [
          GroupChildListDetailView.as_view(), name="child_groups"),
     path('group/non-tree-access/<int:pk>',
          NonHierarchicalAccessGroupListDetailView.as_view(), name="non_tree_accessed_groups"),
-    path('group/<int:pk>/members',
+    path('group/<int:pk>/members/<member_filter>',
          GroupMemberListView.as_view(), name="display_group_members"),
     path('generate-prt/', PasswordResetRequestView.as_view(), name='generate_prt'),
     path('reset-password/<str:token>/',

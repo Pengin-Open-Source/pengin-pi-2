@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
-from util.security.group_access import get_cross_group_access, get_direct_children_of_group, get_direct_parent, get_users_with_extended_rbac_to_group
+from util.security.group_access import get_all_direct_group_members, get_cross_group_access, get_direct_children_of_group, get_direct_parent, get_users_with_extended_rbac_to_group
 from main.mixins import LoginAndValidationRequiredMixin
 from util.mail import send_mail
 from django.utils.decorators import method_decorator
@@ -240,9 +240,14 @@ class GroupMemberListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin,
     template_name = "management/group_member_list.html"
 
     def get(self, request, *args, **kwargs):
-
+        member_filter = self.kwargs.get('member_filter')
+        if member_filter is None:
+            member_filter = 'all'
         group = get_object_or_404(Group, id=self.kwargs.get('pk'))
-        users_in_group = get_users_with_extended_rbac_to_group(group)
+        if member_filter == 'all':
+            users_in_group = get_users_with_extended_rbac_to_group(group)
+        else:
+            users_in_group = get_all_direct_group_members(group)
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
