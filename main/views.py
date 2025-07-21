@@ -212,12 +212,7 @@ class NonHierarchicalAccessGroupListDetailView(LoginAndValidationRequiredMixin, 
     def get(self, request, *args, **kwargs):
 
         group_with_access = get_object_or_404(Group, id=self.kwargs.get('pk'))
-        accesible_groups = get_cross_group_access({group_with_access})
-
-        accesible_group_list = [id['accessed_group']
-                                for id in accesible_groups]
-        accessed_groups = Group.objects.filter(
-            id__in=accesible_group_list)
+        accessed_groups = get_cross_group_access({group_with_access})
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)

@@ -8,8 +8,12 @@ from django.contrib.auth.models import Group
 def get_super_groups(groups):
     # Retreive all the ancestor groups that this set of groups is
     # a descendant of, using the Subgroup closure table.
-    super_groups = SubGroup.objects.filter(
+    ancestor_groups = SubGroup.objects.filter(
         descendant__in=groups).values('ancestor')
+
+    super_group_list = [id['ancestor'] for id in ancestor_groups]
+    super_groups = Group.objects.filter(
+        id__in=super_group_list)
     return super_groups
 
 
@@ -31,8 +35,13 @@ def get_direct_parent(group):
 def get_sub_groups(groups):
     # Retreive all the descendant groups that this set of groups is
     # an ancestor of, using the Subgroup closure table.
-    sub_groups = SubGroup.objects.filter(
+    descendant_groups = SubGroup.objects.filter(
         ancestor__in=groups).values('descendant')
+
+    child_group_list = [id['ancestor'] for id in descendant_groups]
+    sub_groups = Group.objects.filter(
+        id__in=child_group_list)
+
     return sub_groups
 
 
@@ -40,7 +49,7 @@ def get_direct_children_of_group(group):
     children = SubGroup.objects.filter(
         ancestor__in={group}).filter(depth=1).values('descendant')
     child_list = [id['descendant'] for id in children]
-    group_children = Group.objects.filter(id__in=child_list).order_by('name')
+    group_children = Group.objects.filter(id__in=child_list)
 
     return group_children
 
@@ -57,11 +66,16 @@ def is_a_manager(user_to_check):
 def get_group_managers(groups=None):
     if groups:
         super_groups = get_super_groups(groups)
-        group_managers = GroupManager.objects.filter(
+        group_manager_objects = GroupManager.objects.filter(
             Q(managed_group__in=groups) | Q(
                 managed_group__in=super_groups)).values('manager')
     else:
-        group_managers = GroupManager.objects.all().values('manager')
+        group_manager_objects = GroupManager.objects.all().values('manager')
+
+    manager_uuids = [uuid['manager'] for uuid in group_manager_objects]
+
+    group_managers = User.objects.filter(id__in=manager_uuids)
+
     return group_managers
 
 
@@ -72,8 +86,13 @@ def get_cross_group_access(groups):
     # a group/role
     # If the user merely has special access to a role/group,  they do NOT also
     # INHERIT the permissions from the accessed group's ancestor roles
-    accessed_groups = GroupToGroupAccess.objects.filter(
+    groups_accessed = GroupToGroupAccess.objects.filter(
         group_with_access__in=groups).values('accessed_group')
+
+    accesible_group_list = [id['accessed_group']
+                            for id in groups_accessed]
+    accessed_groups = Group.objects.filter(
+        id__in=accesible_group_list)
 
     return accessed_groups
 
@@ -83,7 +102,7 @@ def get_cross_group_access(groups):
 # who is direct member of this group
 def get_all_direct_group_members(group):
     group_members = User.objects.filter(
-        validated=True).filter(groups__id=group.id).order_by('name')
+        validated=True).filter(groups__id=group.id)
     return group_members
 
 
@@ -105,16 +124,10 @@ def get_all_groups_for_user_with_extended_rbac(given_user):
     # The user has this role
     # The user has a role that is a descendant role of this role.
     # The user has a role that can access this role
-
-    group_list = [group.id for group in user_groups]
-    super_group_list = [id['ancestor'] for id in user_super_groups]
-    accesible_group_list = [id['accessed_group']
-                            for id in user_accessed_groups]
     # all possible unique groups a user has RBAC to.
-    combined_rbac_list = list(
-        set(group_list + super_group_list + accesible_group_list))
-    combined_rbac_queryset = Group.objects.filter(id__in=combined_rbac_list)
-    return combined_rbac_queryset
+
+    combined_rbac_set = user_groups | user_super_groups | user_accessed_groups
+    return combined_rbac_set
 
 
 def can_access_group(given_user, group_id):
@@ -155,11 +168,10 @@ def get_users_with_extended_rbac_to_group(role=None):
         users_with_rbac = User.objects.filter(
             id__in=allowed_user_ids)
 
-    return users_with_rbac.order_by('name')
+    return users_with_rbac
 
 
 def is_manager_of_this_role(given_user, role):
     role_managers = get_group_managers({role})
-    manager_uuids = [uuid['manager'] for uuid in role_managers]
 
-    return given_user.id in manager_uuids
+    return given_user in role_managers
