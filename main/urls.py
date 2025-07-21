@@ -1,7 +1,7 @@
 # main/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from .views import GroupListView, GroupDetailView, GroupChildListDetailView, GroupMemberListView, NonHierarchicalAccessGroupListDetailView, LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
+from .views import GroupListView, GroupDetailView, GroupChildListDetailView, GroupMemberListView, GroupsIHaveSpecialAccessToListDetailView, GroupsWithSpecialAccessToMeListDetailView, LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,8 +23,10 @@ urlpatterns = [
     path('group/<int:pk>',  GroupDetailView.as_view(), name="group"),
     path('group/children/<int:pk>',
          GroupChildListDetailView.as_view(), name="child_groups"),
-    path('group/non-tree-access/<int:pk>',
-         NonHierarchicalAccessGroupListDetailView.as_view(), name="non_tree_accessed_groups"),
+    path('group/non-tree-access-to-groups/<int:pk>',
+         GroupsIHaveSpecialAccessToListDetailView.as_view(), name="non_tree_accessed_groups"),
+    path('group/non-tree-access-to-me/<int:pk>',
+         GroupsWithSpecialAccessToMeListDetailView.as_view(), name="groups_with_non_tree_access_to_me"),
     path('group/<int:pk>/members/<member_filter>',
          GroupMemberListView.as_view(), name="display_group_members"),
     path('generate-prt/', PasswordResetRequestView.as_view(), name='generate_prt'),

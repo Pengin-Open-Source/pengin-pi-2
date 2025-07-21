@@ -36,8 +36,14 @@
 </p>
 
 <p>
-    <a class="text-button" style="color: purple;" href="{% url "non_tree_accessed_groups" group.id %}"> Other Connected Groups...</a>
+    <a class="text-button" style="color: purple;" href="{% url "non_tree_accessed_groups" group.id %}"> Other Groups {{ group.name |escape }} Has Access To...</a>
 </p>
+
+<p>
+    <a class="text-button" style="color: purple;" href="{% url "groups_with_non_tree_access_to_me" group.id %}"> Groups with Special Direct Access to {{ group.name |escape }} </a>
+</p>
+
+
       
 
 {% endblock %}

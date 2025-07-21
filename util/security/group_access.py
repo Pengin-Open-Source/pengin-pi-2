@@ -78,7 +78,9 @@ def get_group_managers(groups=None):
     return group_managers
 
 
-def get_cross_group_access(groups):
+def get_non_tree_accessed_groups(groups):
+    # NOTE that this gets all groups accessed by a SET of groups.
+    # (but that set could at times have only one group)
     # Retrieve all the groups that this set of groups has
     # cross-hierarchy access to, using the GroupToGroupAccess table
     # IMPORTANT. There is a KEY difference from being an actual member of
@@ -96,9 +98,24 @@ def get_cross_group_access(groups):
     return accessed_groups
 
 
+def get_non_tree_accessor_groups(group):
+    # Retrieve all the groups that have non-tree based access
+    # TO a SINGLE group. Uses the GroupToGroupAccess table
+    group_values_accessing_me = GroupToGroupAccess.objects.filter(
+        accessed_group=group).values('group_with_access')
+
+    group_ids_accessing_me_list = [id['group_with_access']
+                                   for id in group_values_accessing_me]
+    group_accessing_me = Group.objects.filter(
+        id__in=group_ids_accessing_me_list)
+
+    return group_accessing_me
+
 # You can also access a group via group to group access
 # or group inheritance,  but this lets you see/manage
 # who is direct member of this group
+
+
 def get_all_direct_group_members(group):
     group_members = User.objects.filter(
         validated=True).filter(groups__id=group.id)
@@ -117,7 +134,7 @@ def get_all_groups_for_user_with_extended_rbac(given_user):
     # IMPORTANT. This has a KEY difference from being an actual member of a group/role
     # If the user merely has special access to a role,  they do NOT also
     # inherit the permissions from this group's ancestor roles
-    user_accessed_groups = get_cross_group_access(user_groups)
+    user_accessed_groups = get_non_tree_accessed_groups(user_groups)
 
     # A matching role is a group/role assigned to this event where:
     # The user has this role

@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
-from util.security.group_access import get_all_direct_group_members, get_cross_group_access, get_direct_children_of_group, get_direct_parent, get_users_with_extended_rbac_to_group
+from util.security.group_access import get_all_direct_group_members, get_non_tree_accessor_groups, get_non_tree_accessed_groups, get_direct_children_of_group, get_direct_parent, get_users_with_extended_rbac_to_group
 from main.mixins import LoginAndValidationRequiredMixin
 from util.mail import send_mail
 from django.utils.decorators import method_decorator
@@ -205,14 +205,14 @@ class GroupChildListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestM
         return self.request.user.is_staff
 
 
-class NonHierarchicalAccessGroupListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+class GroupsIHaveSpecialAccessToListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
 
-    template_name = "management/groups_non_tree_access.html"
+    template_name = "management/group_has_non_tree_access_to_groups.html"
 
     def get(self, request, *args, **kwargs):
 
         group_with_access = get_object_or_404(Group, id=self.kwargs.get('pk'))
-        accessed_groups = get_cross_group_access({group_with_access})
+        accessed_groups = get_non_tree_accessed_groups({group_with_access})
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -253,6 +253,31 @@ class GroupMemberListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin,
         context['page_obj'] = page_obj
         context['group'] = group
         context['primary_title'] = "Members of " + group.name
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupsWithSpecialAccessToMeListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/groups_with_non_tree_access_to_this_group.html"
+
+    def get(self, request, *args, **kwargs):
+
+        accessed_group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        groups_accessing_me = get_non_tree_accessor_groups(accessed_group)
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(groups_accessing_me, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['accessed_group'] = accessed_group
+        context['primary_title'] = "Special Access to " + \
+            accessed_group.name + " is Granted to These Groups:"
         return render(request, self.template_name, context)
 
     def test_func(self):
