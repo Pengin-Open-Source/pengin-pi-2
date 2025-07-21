@@ -56,9 +56,8 @@ def get_direct_children_of_group(group):
 
 def is_a_manager(user_to_check):
     all_managers = get_group_managers()
-    user_in_manager_queryset = all_managers.filter(manager=user_to_check)
 
-    manages_anything = user_in_manager_queryset.exists()
+    manages_anything = user_to_check in all_managers
 
     return manages_anything
 
