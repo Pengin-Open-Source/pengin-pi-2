@@ -73,29 +73,13 @@ class TicketForm(forms.ModelForm):
             else:
                 can_set_ticket_owner_blank = True
 
-            # For existing tickets,  the default role
-            # is the currently saved Ticket Role
-            currently_saved_role = ticket.role
-            users_in_currently_saved_role = get_users_with_extended_rbac_to_group(
-                currently_saved_role)
             all_groups = Group.objects.all()
 
             is_admin = current_user.is_staff
             if is_admin:
                 can_set_ticket_owner_blank = True
                 role_options = all_groups
-                show_all_owner_options = self.request.session.get(
-                    'owner_displays_all_validated_users')
-                if show_all_owner_options:
-                    owner_options = User.objects.filter(validated=True)
-                else:
-                    # Get all users in the role; handle case where Staff has
-                    # already assigned the Ticket to a user outside the role.
-                    if ticket_has_owner:
-                        owner_options = users_in_currently_saved_role | ticket_owner
-                    else:
-                        owner_options = users_in_currently_saved_role
-
+                owner_options = User.objects.filter(validated=True)
             elif is_manager_of_this_role(current_user, ticket.role):
                 can_set_ticket_owner_blank = True
                 role_options = all_groups
