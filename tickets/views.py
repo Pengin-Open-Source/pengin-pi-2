@@ -116,7 +116,7 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
                 else:
                     ################################################
                     # This case occurs when either
-                    # A)The user is a manager, but this is a role
+                    # A) The user is a manager, but this is a role
                     #    they neither manage nor are a member of.
                     #    (However, being a manager they can still move
                     #    the ticket to this or any other role)

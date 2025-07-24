@@ -73,6 +73,8 @@ class TicketForm(forms.ModelForm):
             else:
                 can_set_ticket_owner_blank = True
 
+            currently_saved_role = ticket.role
+
             all_groups = Group.objects.all()
 
             is_admin = current_user.is_staff
@@ -147,9 +149,13 @@ class TicketForm(forms.ModelForm):
             is_a_role_manager = is_a_manager(current_user)
             is_admin = current_user.is_staff
 
-            # If I'm staff or a manager,  I can change the ticket to any role
-            # and my preloaded owner options are any users who are in
-            # the default role (if any,  otherwise we get an empty select list)
+            # If I'm staff or a manager,  I can change the ticket to any role.
+            # The valid owner options for:
+            # 1) A Staff member - any validated users
+            # 2) A manager of this role - any users belonging to the
+            #    the default role (if there are any,  otherwise we get
+            #    an empty select list)
+            # 3) Any other manager - empty list.
             if is_admin or is_a_role_manager:
                 role_options = all_groups
                 if is_admin:
@@ -197,7 +203,7 @@ class TicketForm(forms.ModelForm):
 
 
 class TicketEditStatusForm(forms.ModelForm):
-   # I decided to put the selection choices in the form itself
+   # I decided to put the selection choices in the form itself.
    # Gemini's suggestion on how:
     resolution_status = forms.ChoiceField(
         choices=(
