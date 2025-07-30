@@ -557,6 +557,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         context['is_admin'] = is_admin
         context['primary_title'] = self.object.summary
         context['ticket_id'] = self.object.id
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -575,6 +576,13 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             ticket_form.instance = ticket_to_be_edited
             ticket = ticket_form.save()
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
+        else:
+            context = {}
+            context['form'] = ticket_form
+            context['is_admin'] = self.request.user.is_staff
+            context['primary_title'] = ticket.summary
+            context['ticket_id'] = ticket.id
+            return render(request, self.template_name,  context)
 
     def test_func(self):
 

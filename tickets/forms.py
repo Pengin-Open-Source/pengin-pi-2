@@ -12,7 +12,12 @@ from util.security.group_access import can_access_group, get_all_groups_for_user
 class TicketForm(forms.ModelForm):
 
     owner = UserModelChoiceField(
-        queryset=User.objects.filter(validated=True), required=False)
+        queryset=User.objects.filter(validated=True),
+        required=False,
+        error_messages={
+            'not_valid': "Invalid Owner Selection",
+        }
+    )
 
     class Meta:
         model = Ticket
@@ -57,6 +62,8 @@ class TicketForm(forms.ModelForm):
 
         role = cleaned_data.get('role')
         owner = cleaned_data.get('owner')
+        print("At the beginning of clean, owner is")
+        print(owner)
 
         # make sure that the user didn't tamper with the role/owner options
         # on the client side: check roles and owner options again
@@ -191,6 +198,9 @@ class TicketForm(forms.ModelForm):
                 raise Http404(
                     "Warning! You are not allowed to select this Role!")
 
+            print("EXCUSE ME CAN YOU LET ME OUT OF HERE!")
+            print("owner", owner)
+            print("owner_options", owner_options)
             if not owner in owner_options:
                 if owner:
                     raise Http404(
