@@ -188,7 +188,8 @@ class GroupChildListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestM
     def get(self, request, *args, **kwargs):
 
         parent_group = get_object_or_404(Group, id=self.kwargs.get('pk'))
-        child_groups = get_direct_children_of_group(parent_group)
+        child_groups = get_direct_children_of_group(
+            parent_group).order_by('-name')
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -212,7 +213,8 @@ class GroupsIHaveSpecialAccessToListDetailView(LoginAndValidationRequiredMixin, 
     def get(self, request, *args, **kwargs):
 
         group_with_access = get_object_or_404(Group, id=self.kwargs.get('pk'))
-        accessed_groups = get_non_tree_accessed_groups({group_with_access})
+        accessed_groups = get_non_tree_accessed_groups(
+            {group_with_access}).order_by('name')
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)

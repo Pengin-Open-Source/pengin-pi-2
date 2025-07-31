@@ -1,5 +1,5 @@
 from django import forms
-from django.http import Http404
+from django.core.exceptions import SuspiciousOperation
 from django.shortcuts import get_object_or_404
 from main.models.users import User
 from tickets.models import Ticket, TicketComment
@@ -62,8 +62,6 @@ class TicketForm(forms.ModelForm):
 
         role = cleaned_data.get('role')
         owner = cleaned_data.get('owner')
-        print("At the beginning of clean, owner is")
-        print(owner)
 
         # make sure that the user didn't tamper with the role/owner options
         # on the client side: check roles and owner options again
@@ -135,15 +133,18 @@ class TicketForm(forms.ModelForm):
                         owner_options = get_users_with_extended_rbac_to_group()
 
             if not role in role_options:
-                raise Http404(
+                raise SuspiciousOperation(
                     "Warning! You are not allowed to select this Role!")
 
+            owner_errors = self.errors.get('owner', [])
             if not owner in owner_options:
                 if owner:
-                    raise Http404(
+                    raise SuspiciousOperation(
                         "Warning! You are not allowed to select this Owner")
+                elif owner_errors:
+                    raise SuspiciousOperation(owner_errors)
                 elif not can_set_ticket_owner_blank:
-                    raise Http404(
+                    raise SuspiciousOperation(
                         "Warning! Empty Owner not allowed on this ticket!")
         else:  # new Ticket
             can_set_ticket_owner_blank = True
@@ -195,19 +196,19 @@ class TicketForm(forms.ModelForm):
             # stop this submit if the role or owner is not in the approved list
 
             if not role in role_options:
-                raise Http404(
+                raise SuspiciousOperation(
                     "Warning! You are not allowed to select this Role!")
 
-            print("EXCUSE ME CAN YOU LET ME OUT OF HERE!")
-            print("owner", owner)
-            print("owner_options", owner_options)
+            owner_errors = self.errors.get('owner', [])
             if not owner in owner_options:
                 if owner:
-                    raise Http404(
+                    raise SuspiciousOperation(
                         "Warning! You are not allowed to select this Owner")
-                elif not can_set_ticket_owner_blank:
-                    raise Http404(
-                        "Warning! Empty Owner not allowed on this ticket!")
+            elif owner_errors:
+                raise SuspiciousOperation(owner_errors)
+            elif not can_set_ticket_owner_blank:
+                raise SuspiciousOperation(
+                    "Warning! Empty Owner not allowed on this ticket!")
 
         return cleaned_data
 
