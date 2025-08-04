@@ -22,6 +22,10 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 
+def handler400(request,  exception):
+    return (render(request, "400.html", {'error_message': str(exception)}, status=400))
+
+
 class LoginView(View):
     def get(self, request):
         form = LoginForm()
