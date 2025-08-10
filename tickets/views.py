@@ -109,25 +109,14 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
                     the_role_object)
 
             else:
-                if (can_access_group(current_user, the_role_object.id)):
-                    # The user can assign themselves as Owner.
-                    potential_owners_for_the_role = User.objects.filter(
-                        id=current_user.id)
-                else:
-                    ################################################
-                    # This case occurs when either
-                    # A) The user is a manager, but this is a role
-                    #    they neither manage nor are a member of.
-                    #    (However, being a manager they can still move
-                    #    the ticket to this or any other role)
-                    # B) Or the user has selected a Role/Group that
-                    #    they have no connection with. All users can
-                    #    do this on creation, with the default_ticket_support
-                    #    role.
-                    # In either case, we will just show the default
-                    #  (empty) owner list
-                    ######################################################
-                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
+                ################################################
+                # The user is not staff or the manager
+                # *** of this specific role**.
+                # We will just show the default (empty) owner list
+                # Users with any roles may come back and EDIT
+                # the ticket and assign themselves as the owner
+                ######################################################
+                potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
 
             owner_options = []
             owner_options.append({'value': "",  'label': "---------"})
