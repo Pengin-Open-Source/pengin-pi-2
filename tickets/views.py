@@ -174,8 +174,11 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
             if user_roles.exists():
                 # Get all the roles the user is connected with
                 # + the default_ticket_support role
-                role_options = user_roles | Group.objects.filter(
-                    pk=default_role.pk)
+                if not user_roles.filter(pk=default_role.pk).exists():
+                    role_options = user_roles | Group.objects.filter(
+                        pk=default_role.pk)
+                else:
+                    role_options = user_roles
             else:
                 # If I am not connected with any role,  I must assign the ticket
                 # to default ticket support,  leaving management to assign it
