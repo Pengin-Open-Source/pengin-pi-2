@@ -170,15 +170,13 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
             owner_options = get_users_with_extended_rbac_to_group()
             # ..but I can assign the ticket to any *role* I have access to
             user_roles = get_all_groups_for_user_with_extended_rbac(
-                current_user)
+                current_user).distinct()
+            default_role_as_queryset = Group.objects.filter(
+                pk=default_role.pk).distinct()
             if user_roles.exists():
                 # Get all the roles the user is connected with
                 # + the default_ticket_support role
-                if not user_roles.filter(pk=default_role.pk).exists():
-                    role_options = user_roles | Group.objects.filter(
-                        pk=default_role.pk)
-                else:
-                    role_options = user_roles
+                role_options = user_roles | default_role_as_queryset
             else:
                 # If I am not connected with any role,  I must assign the ticket
                 # to default ticket support,  leaving management to assign it
