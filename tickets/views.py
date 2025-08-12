@@ -306,7 +306,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             if ticket_has_owner:
                 # sometimes I need the object itself,  other times the filtered
                 # queryset other times,  I'd like to use the boolean I just created.
-                ticket_owner = User.objects.filter(id=ticket.owner.id)
+                ticket_owner = User.objects.filter(
+                    id=ticket.owner.id).distinct()
                 ticket_owner_object = get_object_or_404(
                     User, id=ticket.owner.id)
             else:
@@ -322,7 +323,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 else:
                     if ticket_has_owner and the_role_object == ticket.role:
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
-                            the_role_object) | ticket_owner
+                            the_role_object).distinct() | ticket_owner
                     else:
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
                             the_role_object)
@@ -335,7 +336,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # We don't want to lose to option of that Ticket
                     # Owner until the ticket is saved.
                     potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
-                        the_role_object) | ticket_owner
+                        the_role_object).distinct() | ticket_owner
                 else:
                     potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
                         the_role_object)
@@ -375,7 +376,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
                     if ticket_has_owner and (the_role_object == ticket.role or can_access_group(ticket_owner_object, the_role_object.id)):
                         potential_owners_for_the_role = User.objects.filter(
-                            id=current_user.id) | ticket_owner
+                            id=current_user.id).distinct() | ticket_owner
                     else:
                         potential_owners_for_the_role = User.objects.filter(
                             id=current_user.id)
@@ -465,7 +466,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         ticket_has_owner = ticket.owner is not None
 
         if ticket_has_owner:
-            ticket_owner = User.objects.filter(id=ticket.owner.id)
+            ticket_owner = User.objects.filter(id=ticket.owner.id).distinct()
         else:
             can_set_ticket_owner_blank = True
 
@@ -488,7 +489,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 # Get all users in the role; handle case where Staff has
                 # already assigned the Ticket to a user outside the role.
                 if ticket_has_owner:
-                    owner_options = users_in_currently_saved_role | ticket_owner
+                    owner_options = users_in_currently_saved_role.distinct() | ticket_owner
                 else:
                     owner_options = users_in_currently_saved_role
 
@@ -501,7 +502,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 # We don't want to lose to option of that Ticket
                 # Owner until the ticket is saved.
                 owner_options = get_users_with_extended_rbac_to_group(
-                    ticket.role) | ticket_owner
+                    ticket.role).distinct() | ticket_owner
             else:
                 owner_options = get_users_with_extended_rbac_to_group(
                     ticket.role)
@@ -522,7 +523,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 # If the ticket has an owner, they can see that as well
                 if ticket_has_owner:
                     owner_options = User.objects.filter(
-                        id=current_user.id) | ticket_owner
+                        id=current_user.id).distinct() | ticket_owner
                 else:
                     owner_options = User.objects.filter(
                         id=current_user.id)
