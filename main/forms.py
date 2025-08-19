@@ -1,8 +1,9 @@
 # forms.py
 from django import forms
+from django.contrib import admin
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models.users import User, Group, GroupManager
-from util.forms.fields import UserModelChoiceField, UserModelMultipleChoiceField
+from util.forms.fields import UserModelChoiceField
 
 
 class LoginForm(AuthenticationForm):
@@ -32,6 +33,20 @@ class GroupManagerForm(forms.ModelForm):
     class Meta:
         model = GroupManager
         fields = ['manager']
+
+
+class GroupManagerDjangoSiteForm(forms.ModelForm):
+
+    manager = UserModelChoiceField(
+        queryset=User.objects.filter(validated=True), required=False)
+
+    class Meta:
+        model = GroupManager
+        fields = '__all__'
+
+
+class GroupManagerDjangoSiteFormAdmin(admin.ModelAdmin):
+    form = GroupManagerDjangoSiteForm
 
 
 class GroupForm(forms.ModelForm):
