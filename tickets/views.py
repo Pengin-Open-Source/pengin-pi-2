@@ -682,10 +682,9 @@ class TicketCommentEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin
             return True
 
         comment = self.get_object()
-        if current_user == comment.author:
-            return True
-
         ticket = get_object_or_404(Ticket, id=comment.ticket.id)
+        if can_see_ticket(current_user, ticket) and current_user == comment.author:
+            return True
 
         if is_ticket_manager(current_user, ticket):
             return True
@@ -709,10 +708,9 @@ class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMix
             return True
 
         comment = self.get_object()
-        if current_user == comment.author:
-            return True
-
         ticket = get_object_or_404(Ticket, id=comment.ticket.id)
+        if can_see_ticket(current_user, ticket) and current_user == comment.author:
+            return True
 
         if is_ticket_manager(current_user, ticket):
             return True
