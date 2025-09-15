@@ -249,10 +249,17 @@ class GroupMemberListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin,
         if member_filter is None:
             member_filter = 'all'
         group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        # If list of members gets in the 1000s
+        # and performance may suffer. In that case,
+        # consider replacing Lower() call with some
+        # other strategy,  like a lowercase name
+        # field in the database.
         if member_filter == 'all':
-            users_in_group = get_users_with_extended_rbac_to_group(group)
+            users_in_group = get_users_with_extended_rbac_to_group(
+                group).order_by(Lower('name'))
         else:
-            users_in_group = get_all_direct_group_members(group)
+            users_in_group = get_all_direct_group_members(
+                group).order_by(Lower('name'))
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
