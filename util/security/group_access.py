@@ -1,7 +1,9 @@
 from django.db.models import OuterRef
 from main.models.users import SubGroup, GroupToGroupAccess, GroupManager, User
 from django.db.models import Q
+from django.db.models.functions import Lower
 from django.contrib.auth.models import Group
+
 # Credit to Google Gemini and Search AI for some suggestions for this file
 
 
@@ -27,7 +29,8 @@ def get_direct_parent(group):
         descendant__in={group}).filter(depth=1).values('ancestor')
 
     parent_list = [id['ancestor'] for id in parents]
-    parent = Group.objects.filter(id__in=parent_list).order_by('name').first()
+    parent = Group.objects.filter(
+        id__in=parent_list).order_by(Lower('name')).first()
 
     return parent
 

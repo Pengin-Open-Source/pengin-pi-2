@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 from django.views import View
 from .forms import GroupForm, GroupManagerForm, LoginForm, SignUpForm, PasswordResetForm, SetPasswordForm
+from django.db.models.functions import Lower
 from .models.users import Group, GroupManager, User
 from datetime import datetime, timedelta
 import uuid
@@ -131,7 +132,10 @@ class GroupListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View)
 
     def get(self, request, *args, **kwargs):
 
-        groups = Group.objects.all().order_by('name')
+        # we may have peformance issues using Lower if
+        # we have THOUSANDS of groups, but for right
+        # now this approach should be fine
+        groups = Group.objects.all().order_by(Lower('name'))
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -193,7 +197,7 @@ class GroupChildListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestM
 
         parent_group = get_object_or_404(Group, id=self.kwargs.get('pk'))
         child_groups = get_direct_children_of_group(
-            parent_group).order_by('name')
+            parent_group).order_by(Lower('name'))
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -218,7 +222,7 @@ class GroupsIHaveSpecialAccessToListDetailView(LoginAndValidationRequiredMixin, 
 
         group_with_access = get_object_or_404(Group, id=self.kwargs.get('pk'))
         accessed_groups = get_non_tree_accessed_groups(
-            {group_with_access}).order_by('name')
+            {group_with_access}).order_by(Lower('name'))
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
@@ -273,7 +277,7 @@ class GroupsWithSpecialAccessToMeListDetailView(LoginAndValidationRequiredMixin,
 
         accessed_group = get_object_or_404(Group, id=self.kwargs.get('pk'))
         groups_accessing_me = get_non_tree_accessor_groups(
-            accessed_group).order_by('name')
+            accessed_group).order_by(Lower('name'))
 
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
