@@ -298,7 +298,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             can_set_ticket_owner_blank = False
 
             ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-            # Theorectically,  we'll never user ticket_owner when it's
+            # Theorectically,  we'll never use ticket_owner when it's
             # None but JIC...
             ticket_owner = None
             ticket_has_owner = ticket.owner is not None
@@ -352,7 +352,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # if we have moved back to the saved ticket role, there is an
                     # owner selected for this role,  and we are NOT the manager
                     # of **this** role,  we cannot change it empty right now.
-                    # While managers can move other managers tickets to other roles,
+                    # While managers can move other managers' tickets to other roles,
                     # we probably want to discourage them from simply meddling
                     # within another Manager's group by "unassigning" their tickets.
 
@@ -361,10 +361,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # part of the group,  even if this is not the group that
                     # they manage.
                     #
-                    # If the Ticket has an owner, and that owner has access
-                    # to the newly selected_role,  they can select the owner.
-                    #
-                    # The ticket owner will also become visible in this case:
+                    # The ticket owner also becomes an option in this case:
                     # The Ticket's *saved*, assigned owner was mismatched with the
                     # Ticket's *saved *role, (by Staff).
                     # Now if this manager user selects another role,
@@ -374,7 +371,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # their mind and go back to the original role,  without losing the
                     # "specially assigned" (mismatched) owner that Staff put on the Ticket.)
 
-                    if ticket_has_owner and (the_role_object == ticket.role or can_access_group(ticket_owner_object, the_role_object.id)):
+                    if ticket_has_owner and (the_role_object == ticket.role):
                         potential_owners_for_the_role = User.objects.filter(
                             id=current_user.id).distinct() | ticket_owner
                     else:
@@ -384,18 +381,17 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     ################################################
                     # This case occurs when the user is a manager,
                     # but this is not one of the roles they manage,
-                    # and they are not a member of this  role.
+                    # and they are not a member of this role.
                     # (However, being a manager they can still move
                     #  the ticket to this or any other role)
                     # They cannot assign themselves as Ticket
                     # Owner. Usually,  they set the ticket owner
-                    # # to blank when they change roles,  except when
+                    # to blank when they change roles,  except when
                     # there is already a saved Ticket owner and:
-                    # 1) The Ticket Owner is a member of the role just selcted.
-                    # 2) The user has re-selected the Ticket's saved role -
-                    #    even if the Ticket Owner is not part of the newly
-                    #    seleted role
-                    if ticket_has_owner and ((the_role_object == ticket.role) or can_access_group(ticket_owner_object, the_role_object.id)):
+                    # the user has re-selected the Ticket's saved role -
+                    # even if the Ticket Owner is not part of the newly
+                    # seleted role
+                    if ticket_has_owner and (the_role_object == ticket.role):
                         potential_owners_for_the_role = ticket_owner
                     else:  # just show the default (empty) owner list
                         potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
@@ -447,6 +443,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
     # user doesn't lose access to the specially
     # designated/mismatched owner that is not part
     # of the role.
+    # I don't account for that here in get_context_data
     # )
 
     def get_context_data(self, **kwargs):

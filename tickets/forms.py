@@ -60,8 +60,8 @@ class TicketForm(forms.ModelForm):
         # May the User see the option to set Owner to empty?
         can_set_ticket_owner_blank = False
 
-        role = cleaned_data.get('role')
-        owner = cleaned_data.get('owner')
+        selected_role = cleaned_data.get('role')
+        selected_owner = cleaned_data.get('owner')
 
         # make sure that the user didn't tamper with the role/owner options
         # on the client side: check roles and owner options again
@@ -70,11 +70,12 @@ class TicketForm(forms.ModelForm):
 
             # Determines if the "no owner" option is
             # available to the user
-            ticket_owner = None
+            saved_ticket_owner = None
             ticket_has_owner = ticket.owner is not None
 
             if ticket_has_owner:
-                ticket_owner = User.objects.filter(id=ticket.owner.id)
+                # the owner that is saved
+                saved_ticket_owner = User.objects.filter(id=ticket.owner.id)
             else:
                 can_set_ticket_owner_blank = True
 
@@ -87,19 +88,21 @@ class TicketForm(forms.ModelForm):
                 can_set_ticket_owner_blank = True
                 role_options = all_groups
                 owner_options = User.objects.filter(validated=True)
-            elif is_manager_of_this_role(current_user, ticket.role):
+            elif is_manager_of_this_role(current_user, selected_role):
                 can_set_ticket_owner_blank = True
                 role_options = all_groups
-                if ticket_has_owner:
+                if ticket_has_owner and selected_role == currently_saved_role:
                     # account for the case where a Staff member has
-                    # assigned someone outside the role to the ticket.
+                    # assigned someone outside the role to the ticket,
+                    # and the manager has selected the saved ticket role.
                     # We don't want to lose to option of that Ticket
-                    # Owner until the ticket is saved.
+                    # Owner until/unless the ticket is saved with a different
+                    # owner or a different mismatched role.
                     owner_options = get_users_with_extended_rbac_to_group(
-                        ticket.role) | ticket_owner
+                        selected_role) | saved_ticket_owner
                 else:
                     owner_options = get_users_with_extended_rbac_to_group(
-                        ticket.role)
+                        selected_role)
             else:
                 # Does this user manage ANY role/group?
                 if is_a_manager(current_user):
@@ -112,12 +115,17 @@ class TicketForm(forms.ModelForm):
                     role_options = Group.objects.filter(
                         pk=currently_saved_role.pk)
 
-                if (can_access_group(current_user, ticket.role.id)):
+                if (can_access_group(current_user, selected_role)):
                     # The user can assign themselves as Owner.
-                    # If the ticket has an owner, they can see that as well
-                    if ticket_has_owner:
+                    # If the ticket has an owner, and the they
+                    # are on the saved role, they can see that as well
+                    # (They should not have have been allowed to change
+                    # roles if they were not a manager of any roles, but
+                    # this method should catch them if they try to "cheat"
+                    # and change roles with Browser Tools)
+                    if ticket_has_owner and selected_role == currently_saved_role:
                         owner_options = User.objects.filter(
-                            id=current_user.id) | ticket_owner
+                            id=current_user.id) | saved_ticket_owner
                     else:
                         owner_options = User.objects.filter(
                             id=current_user.id)
@@ -125,20 +133,23 @@ class TicketForm(forms.ModelForm):
                 else:
 
                     # If I am not connected with any role, I may not assign to anyone else,
-                    # ... but I can see the current owner, if there is one
+                    # ... but I can see the current owner, if there is one and I
+                    # did not "cheat" and try to change from the saved role.
 
-                    if ticket_has_owner:
-                        owner_options = ticket_owner
+                    if ticket_has_owner and selected_role == currently_saved_role:
+                        owner_options = saved_ticket_owner
                     else:  # just show the default (empty) owner list
                         owner_options = get_users_with_extended_rbac_to_group()
 
-            if not role in role_options:
+            if not selected_role in role_options:
                 raise SuspiciousOperation(
                     "Warning! You are not allowed to select this Role!")
 
             owner_errors = self.errors.get('owner', [])
-            if not owner in owner_options:
-                if owner:
+            if not selected_owner in owner_options:
+                print(selected_owner)
+                print(owner_options)
+                if selected_owner:
                     raise SuspiciousOperation(
                         "Warning! You are not allowed to select this Owner")
                 elif owner_errors:
@@ -161,16 +172,16 @@ class TicketForm(forms.ModelForm):
             # The valid owner options for:
             # 1) A Staff member - any validated users
             # 2) A manager of this role - any users belonging to the
-            #    the default role (if there are any,  otherwise we get
+            #    their role (if there are any,  otherwise we get
             #    an empty select list)
             # 3) Any other manager - empty list.
             if is_admin or is_a_role_manager:
                 role_options = all_groups
                 if is_admin:
                     owner_options = User.objects.filter(validated=True)
-                elif is_manager_of_this_role(current_user, default_role):
+                elif is_manager_of_this_role(current_user, selected_role):
                     owner_options = get_users_with_extended_rbac_to_group(
-                        default_role)
+                        selected_role)
                 else:
                     owner_options = get_users_with_extended_rbac_to_group()
 
@@ -195,13 +206,13 @@ class TicketForm(forms.ModelForm):
 
             # stop this submit if the role or owner is not in the approved list
 
-            if not role in role_options:
+            if not selected_role in role_options:
                 raise SuspiciousOperation(
                     "Warning! You are not allowed to select this Role!")
 
             owner_errors = self.errors.get('owner', [])
-            if not owner in owner_options:
-                if owner:
+            if not selected_owner in owner_options:
+                if selected_owner:
                     raise SuspiciousOperation(
                         "Warning! You are not allowed to select this Owner")
             elif owner_errors:
