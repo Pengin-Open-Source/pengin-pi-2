@@ -115,7 +115,7 @@ class TicketForm(forms.ModelForm):
                     role_options = Group.objects.filter(
                         pk=currently_saved_role.pk)
 
-                if (can_access_group(current_user, selected_role)):
+                if (can_access_group(current_user, selected_role.id)):
                     # The user can assign themselves as Owner.
                     # If the ticket has an owner, and the they
                     # are on the saved role, they can see that as well
@@ -147,8 +147,7 @@ class TicketForm(forms.ModelForm):
 
             owner_errors = self.errors.get('owner', [])
             if not selected_owner in owner_options:
-                print(selected_owner)
-                print(owner_options)
+
                 if selected_owner:
                     raise SuspiciousOperation(
                         "Warning! You are not allowed to select this Owner")
