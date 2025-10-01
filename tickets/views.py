@@ -266,6 +266,13 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
             comment_form.instance.author = request.user
             comment_form.instance.row_action = 'CREATE'
             comment_form.save()
+            if ticket.resolution_status != 'open':
+                ticket.last_edited_by = request.user
+                ticket.row_action = 'EDIT'
+                ticket.date = timezone.now()
+                ticket.resolution_status = 'open'
+                ticket.resolution_date = ''
+                ticket.save()
         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
@@ -600,15 +607,20 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         ticket = get_object_or_404(
             Ticket, id=ticket_id)
         ticket_form = TicketEditStatusForm(request.POST, instance=ticket)
+        if ticket.resolution_status == 'open':
+            resolve_date = ''
+        else:
+            resolve_date = ticket.resolution_date
         if ticket_form.is_valid():
             ticket = ticket_form.save(commit=False)
             ticket.last_edited_by = request.user
             ticket.row_action = 'EDIT'
             ticket.date = timezone.now()
-            if ticket.resolution_status == 'resolved':
+            # if the ticket
+            if ticket.resolution_status == 'resolved' and not ticket.resolution_date:
                 ticket.resolution_date = timezone.now()
             else:
-                ticket.resolution_date = ''
+                ticket.resolution_date = resolve_date
 
             ticket.save()
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
@@ -620,6 +632,8 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         ticket = self.get_object()
 
         if self.request.user == ticket.author:
+            return True
+        if self.request.user == ticket.owner:
             return True
 
         ticket_role = ticket.role

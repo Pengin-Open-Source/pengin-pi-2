@@ -19,7 +19,7 @@
 {% if can_edit_ticket  %}
      <a href="{% url 'edit_ticket' ticket.id %}">Edit</a>
 {% endif %}
-{% if is_admin or is_ticket_manager or user == ticket.author %}
+{% if is_admin or is_ticket_manager or user == ticket.author or user == ticket.owner %}
       <a href="{% url 'edit_ticket_status' ticket.id %}">Change Resolution Status</a>
 {% endif %}
 
