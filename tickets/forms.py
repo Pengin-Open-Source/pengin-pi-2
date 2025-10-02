@@ -239,6 +239,17 @@ class TicketEditStatusForm(forms.ModelForm):
         model = Ticket
         fields = ['resolution_status']
 
+    def __init__(self, *args, restrict_choices=False, **kwargs):
+        # Always call the parent's init first
+        super().__init__(*args, **kwargs)
+
+        if restrict_choices:
+            new_choices = (
+                ('resolved', 'Resolved'),
+                ('closed', 'Closed'),
+            )
+            self.fields['resolution_status'].choices = new_choices
+
 
 class TicketCommentForm(forms.ModelForm):
     class Meta:

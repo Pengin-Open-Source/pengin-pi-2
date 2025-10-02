@@ -595,7 +595,11 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         context = super().get_context_data(**kwargs)
         # perhaps should be refactored to use self.object?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        form = TicketEditStatusForm(instance=ticket)
+        restrict_choices = False
+        current_user = self.request.user
+        if not (current_user == ticket.owner or current_user.is_staff or is_a_manager(current_user) or current_user == ticket.author):
+            restrict_choices = True
+        form = TicketEditStatusForm(restrict_choices, instance=ticket)
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.summary
