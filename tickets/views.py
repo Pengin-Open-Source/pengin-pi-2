@@ -599,7 +599,8 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         current_user = self.request.user
         if not (current_user == ticket.owner or current_user.is_staff or is_a_manager(current_user) or current_user == ticket.author):
             restrict_choices = True
-        form = TicketEditStatusForm(restrict_choices, instance=ticket)
+        form = TicketEditStatusForm(
+            restrict_choices=restrict_choices, instance=ticket)
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.summary
@@ -635,13 +636,16 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
 
         ticket = self.get_object()
 
-        if self.request.user == ticket.author:
-            return True
-        if self.request.user == ticket.owner:
+        if can_edit_ticket(self.request.user, ticket):
             return True
 
-        ticket_role = ticket.role
-        return is_manager_of_this_role(self.request.user, ticket_role)
+        # if self.request.user == ticket.author:
+        #     return True
+        # if self.request.user == ticket.owner:
+        #     return True
+
+        # ticket_role = ticket.role
+        # return is_manager_of_this_role(self.request.user, ticket_role)
 
 
 class TicketDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DeleteView):
