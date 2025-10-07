@@ -575,6 +575,13 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             ticket_to_be_edited = ticket_form.instance
             ticket_to_be_edited.last_edited_by = request.user
             ticket_to_be_edited.row_action = 'EDIT'
+            # If *CURRENT* resolution_status is NOT Open,
+            # Re-open this ticket.
+            if ticket.resolution_status != 'open':
+                ticket.last_edited_by = request.user
+                ticket.row_action = 'EDIT'
+                ticket.resolution_status = 'open'
+                ticket.resolution_date = ''
             ticket_to_be_edited.date = timezone.now()
             ticket_form.instance = ticket_to_be_edited
             ticket = ticket_form.save()
