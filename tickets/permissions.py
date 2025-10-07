@@ -3,22 +3,41 @@ from util.security.group_access import is_manager_of_this_role, is_a_manager,  c
 
 def can_see_ticket(current_user, ticket):
 
-    has_a_matching_role = can_access_group(current_user, ticket.role.id)
-
-    is_a_group_manager = is_a_manager(current_user)
-    is_assigned_to_ticket = current_user == ticket.owner
-    is_author = current_user == ticket.author
-    return (current_user.is_staff or has_a_matching_role or is_author or is_assigned_to_ticket or is_a_group_manager)
+    if can_edit_ticket(current_user, ticket):
+        return True
+    else:
+        return can_access_group(current_user, ticket.role.id)
 
 
 def can_edit_ticket(current_user, ticket):
-    # At the moment,  this is redundant with can_see_ticket,
-    # since the current logic allows a user to edit any ticket it can see
-    # (although not all users can edit in the same way - see forms.py).
-    # However, some day we may switch to blocking some users who can VIEW
-    # tickets from actually EDITing them. In that case, we can just revisit
-    # the logic here in this one method.
-    return can_see_ticket(current_user, ticket)
+    # To edit a ticket, the user must be
+    # the author or owner of the ticket,
+    # or be any kind of manager, or staff.
+    # Or else,  the user must be part of a
+    # related role AND the ticket must be open.
+    # Note that not all users  who can edit,
+    # can edit in the same way - see forms.py.
+
+    if current_user.is_staff:
+        return True
+    if is_a_manager(current_user):
+        return True
+    if current_user == ticket.owner:
+        return True
+    if current_user == ticket.author:
+        return True
+    if ticket.resolution_status == 'open':
+        if can_access_group(current_user, ticket.role.id):
+            return True
+
+    return False
+
+
+def can_comment_on_ticket(current_user, ticket):
+    # currently whoever can edit the ticket can comment on it.
+    # so this is redundant right now.
+    # But if that changes,  we just have to change the logic here
+    can_edit_ticket(current_user, ticket)
 
 
 def is_ticket_manager(current_user, ticket):

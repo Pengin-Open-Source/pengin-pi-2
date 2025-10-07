@@ -235,7 +235,13 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
             ticket_creation_info = get_ticket_create_info(ticket)
             ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
-        comment_form = TicketCommentForm()
+        # don't allow comments if user can't edit the ticket
+        can_comment = False
+        if can_edit_ticket(self.request.user, ticket):
+            comment_form = TicketCommentForm()
+            context['comment_form'] = comment_form
+            can_comment = True
+        context['can_comment'] = can_comment
         comments = self.object.comments.all().order_by('-date')
         for comment in comments:
             if comment.row_action == 'CREATE':
@@ -249,7 +255,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         paginator = Paginator(comments, 10)
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
-        context['comment_form'] = comment_form
+
         context['is_ticket_manager'] = manages_ticket
         is_admin = self.request.user.is_staff
         context['is_admin'] = is_admin
@@ -260,19 +266,21 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
 
     def post(self, request, *args, **kwargs):
         ticket = self.get_object()
-        comment_form = TicketCommentForm(request.POST)
-        if comment_form.is_valid():
-            comment_form.instance.ticket = ticket
-            comment_form.instance.author = request.user
-            comment_form.instance.row_action = 'CREATE'
-            comment_form.save()
-            if ticket.resolution_status != 'open':
-                ticket.last_edited_by = request.user
-                ticket.row_action = 'EDIT'
-                ticket.date = timezone.now()
-                ticket.resolution_status = 'open'
-                ticket.resolution_date = ''
-                ticket.save()
+        # don't allow comments if user can't edit the ticket
+        if can_edit_ticket(self.request.user, ticket):
+            comment_form = TicketCommentForm(request.POST)
+            if comment_form.is_valid():
+                comment_form.instance.ticket = ticket
+                comment_form.instance.author = request.user
+                comment_form.instance.row_action = 'CREATE'
+                comment_form.save()
+                if ticket.resolution_status != 'open':
+                    ticket.last_edited_by = request.user
+                    ticket.row_action = 'EDIT'
+                    ticket.date = timezone.now()
+                    ticket.resolution_status = 'open'
+                    ticket.resolution_date = ''
+                    ticket.save()
         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
@@ -597,7 +605,7 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
         restrict_choices = False
         current_user = self.request.user
-        if not (current_user == ticket.owner or current_user.is_staff or is_a_manager(current_user) or current_user == ticket.author):
+        if not can_edit_ticket(current_user, ticket):
             restrict_choices = True
         form = TicketEditStatusForm(
             restrict_choices=restrict_choices, instance=ticket)
@@ -635,17 +643,12 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
             return True
 
         ticket = self.get_object()
-
-        if can_edit_ticket(self.request.user, ticket):
+        # may eventually change this to be more restrictive
+        # right now, anyone who can see it could have a valid
+        # reason change the ticket status.
+        if can_see_ticket(self.request.user, ticket):
             return True
-
-        # if self.request.user == ticket.author:
-        #     return True
-        # if self.request.user == ticket.owner:
-        #     return True
-
-        # ticket_role = ticket.role
-        # return is_manager_of_this_role(self.request.user, ticket_role)
+        return False
 
 
 class TicketDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DeleteView):
