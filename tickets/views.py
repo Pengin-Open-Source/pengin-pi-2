@@ -9,8 +9,8 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from main.models.users import User
-from tickets.models import Ticket, TicketComment, transaction, TicketHistory, TicketCommentHistory
-from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketSettingsForm
+from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
+from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
@@ -319,7 +319,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             ticket_has_owner = ticket.owner is not None
 
             if ticket_has_owner:
-                # sometimes I need the object itself,  other times the filtered
+                # sometimes I need the object it2self,  other times the filtered
                 # queryset other times,  I'd like to use the boolean I just created.
                 ticket_owner = User.objects.filter(
                     id=ticket.owner.id).distinct()
@@ -787,6 +787,25 @@ class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View)
     def test_func(self):
         if self.request.user.is_staff:
             return True
+
+
+# class TicketReOpenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):
+#     model = TicketOpenRequest
+#     form_class = TicketOpenRequestForm
+#     template_name = 'ticket_reopen_request.html'
+
+#     def post(self, request, *args, **kwargs):
+#         ticket_id = self.kwargs.get('ticket_id')
+#         ticket = get_object_or_404(Ticket, ticket_id)
+#         reopen_form = TicketOpenRequestForm(request.POST)
+#         if reopen_form.is_valid():
+#             reopen_form.instance.ticket = ticket
+#             reopen_form.instance.author = request.user
+#             reopen_form.instance.row_action = 'CREATE'
+#             reopen_form.save()
+#         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket_id}))
+
+    
 
 
 ##                   ##

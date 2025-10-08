@@ -48,6 +48,8 @@
   {% use_macro render_comment_form ticket ticket_url comment_form %}
 {% else %}
 <p style="color:gray; text-transform:uppercase;"> <b><i> TICKET IS {{ ticket.resolution_status }}. NEW COMMENTS ARE DISABLED. </i> </b> </p>
+{% comment %} <a href="{% url 'reopen_ticket_request' ticket.id  %}">Request to Open Ticket</a> {% endcomment %}
+
 {% endif %}
 
 {% endblock %}

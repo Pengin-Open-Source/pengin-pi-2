@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import SuspiciousOperation
 from django.shortcuts import get_object_or_404
 from main.models.users import User
-from tickets.models import Ticket, TicketComment
+from tickets.models import Ticket, TicketComment, TicketOpenRequest
 from django.db.models import QuerySet
 from django.contrib.auth.models import Group
 from util.forms.fields import UserModelChoiceField
@@ -250,11 +250,21 @@ class TicketEditStatusForm(forms.ModelForm):
             )
             self.fields['resolution_status'].choices = new_choices
 
-
 class TicketCommentForm(forms.ModelForm):
     class Meta:
         model = TicketComment
         fields = ['content']
+
+class TicketOpenRequestForm(forms.ModelForm):
+    class Meta:
+        model = TicketOpenRequest
+        fields = ['reason']
+
+
+class TicketOpenRequestResponseForm(forms.ModelForm):
+    class Meta:
+        model = TicketOpenRequest
+        fields = ['reason', 'approval_status', 'approver_comment']
 
 
 class TicketSettingsForm(forms.Form):

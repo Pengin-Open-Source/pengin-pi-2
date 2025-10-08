@@ -217,58 +217,22 @@ class TicketCommentHistory(models.Model):
 
 class TicketOpenRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    content = models.TextField()
-    date = models.DateTimeField(default=timezone.now)
+    reason = models.TextField()
+    request_date = models.DateTimeField(default=timezone.now)
     ticket = models.ForeignKey(
-        Ticket, on_delete=models.CASCADE, related_name='comments')
+        Ticket, on_delete=models.CASCADE, related_name='reopen_requests')
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='ticket_comments')
+        User, on_delete=models.CASCADE, related_name='reopen_ticket_requests')
+    approver_denier = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='reopen_ticket_requests_handled', null=True)
     # CREATE, DELETE - which put the row in this state?
     # (DELETE is used for TicketOpenRequestHistory. Not allowing
     # Editing of Tickets for awhile.
     row_action = models.CharField(max_length=10, default='ERROR')
     # 'pending' 'approved' 'denied 're-opened by other user'
-    approval_status = models.CharField(max_length=100)
+    approval_status = models.CharField(max_length=100, default='pending')
+    approver_comment = models.TextField(null=True,  blank=True)
+    approved_or_denied_date = models.CharField(max_length=100)
 
     def __str__(self):
-        return str(self.content)[:20]
-
-    def save(self, *args, **kwargs):
-        save_method = self.row_action
-
-        with transaction.atomic():
-            # Do backup of current values in the row first.
-            # (Note we backup before a DELETE.  Frequently,  a
-            # Comment row will have no backup history until we enter DELETE)
-            # Rows will still be backed up even if 'ERROR' was assigned to the row_action.
-            if save_method != "CREATE":
-
-                original_comment = TicketComment.objects.get(pk=self.pk)
-                if original_comment.last_edited_by:
-                    comment_backup = TicketCommentHistory(comment_id=original_comment.id, content=original_comment.content, date=original_comment.date, ticket=original_comment.ticket.pk,
-                                                          author=original_comment.author.pk, last_edited_by=original_comment.last_edited_by.pk, row_action=original_comment.row_action)
-                else:
-                    comment_backup = TicketCommentHistory(comment_id=original_comment.id, content=original_comment.content, date=original_comment.date, ticket=original_comment.ticket.pk,
-                                                          author=original_comment.author.pk, row_action=original_comment.row_action)
-                comment_backup.save()
-
-            # else: this is a newly created comment don't save it to backup table yet
-
-            # No matter what happens,  save this new comment or comment update to the database.
-            super().save(*args, **kwargs)
-
-            # if this is a pre-delete save,  the comment row will have been updated to contain
-            # 1) The action/method: "DELETE"
-            # 2) The User who did the Delete
-            # 3) The Author of the comment
-            # 4) The time of the deletion
-            # We need to make sure this information is copied into comment history
-            # before we delete the comment.
-            # (If comment history needs to be totally deleted, that should be done
-            # by a DBA)
-            if save_method == 'DELETE':
-                archived_comment = TicketCommentHistory(comment_id=self.id, content=self.content, date=self.date, ticket=self.ticket.pk,
-                                                        author=self.author.pk, last_edited_by=self.last_edited_by.pk, row_action=self.row_action)
-                archived_comment.save()
-
-        super().save(*args, **kwargs)
+        return "Re-Open Request From: " + self.author.name + " " + str(self.reason)[:20]
