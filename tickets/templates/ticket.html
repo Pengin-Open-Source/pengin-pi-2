@@ -2,6 +2,8 @@
 {% load macros %}
 {% loadmacros "macros/forum_tickets/comments_render.html" %}
 {% loadmacros "macros/forum_tickets/comment_form.html"  %}
+{% loadmacros "macros/forum_tickets/reopen_ticket_form.html"  %}
+
 
 {% block tags %}
   {% if ticket.tags %}
@@ -47,9 +49,8 @@
 {% if can_comment %}
   {% use_macro render_comment_form ticket ticket_url comment_form %}
 {% else %}
-<p style="color:gray; text-transform:uppercase;"> <b><i> TICKET IS {{ ticket.resolution_status }}. NEW COMMENTS ARE DISABLED. </i> </b> </p>
-{% comment %} <a href="{% url 'reopen_ticket_request' ticket.id  %}">Request to Open Ticket</a> {% endcomment %}
-
+<p style="color:gray; text-transform:uppercase;"> <b><i> TICKET IS {{ ticket.resolution_status }}. NEW COMMENTS ARE DISABLED. </i> </b> </p> 
+   {% use_macro render_reopen_ticket_form ticket ticket_url reopen_request_form %} 
 {% endif %}
 
 {% endblock %}

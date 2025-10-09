@@ -1,0 +1,14 @@
+{% load macros %}
+{% macro render_reopen_ticket_form ticket action_url request_form %}
+
+  <form class="comment-form" method="POST" action="{{action_url}}">
+    {% csrf_token %}
+    <label for="reason"> <h2> Justification For Re-opening Ticket: {{ ticket.name }}  </h2> </label>
+    {% for field in request_form %}
+    <div class="fieldWrapper">
+        <p> {{ field }} </span> <p>
+    </div>
+  {% endfor %} </p>
+    <button class="primary-button" type="submit">Submit Request</button>
+
+{% endmacro %}

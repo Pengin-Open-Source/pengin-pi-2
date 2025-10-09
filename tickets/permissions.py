@@ -40,5 +40,10 @@ def can_comment_on_ticket(current_user, ticket):
     can_edit_ticket(current_user, ticket)
 
 
+def can_request_reopen(current_user, ticket):
+    is_open_ticket = ticket.resolution_status == 'open'
+    return (not is_open_ticket) and not can_edit_ticket(current_user, ticket) and can_see_ticket(current_user, ticket)
+
+
 def is_ticket_manager(current_user, ticket):
     return is_manager_of_this_role(current_user, ticket.role)

@@ -12,7 +12,7 @@ from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_see_ticket, can_edit_ticket, is_ticket_manager
+from tickets.permissions import can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
 
 
@@ -235,13 +235,15 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
             ticket_creation_info = get_ticket_create_info(ticket)
             ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
+        #### HANDLE COMENTS #######
+
         # don't allow comments if user can't edit the ticket
-        can_comment = False
-        if can_edit_ticket(self.request.user, ticket):
+        can_comment = can_edit_ticket(self.request.user, ticket)
+        context['can_comment'] = can_comment
+        if can_comment:
             comment_form = TicketCommentForm()
             context['comment_form'] = comment_form
-            can_comment = True
-        context['can_comment'] = can_comment
+
         comments = self.object.comments.all().order_by('-date')
         for comment in comments:
             if comment.row_action == 'CREATE':
@@ -255,6 +257,14 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         paginator = Paginator(comments, 10)
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
+
+        ##########  HANDLE RE-OPEN TICKET REQUESTS #######
+        can_ask_to_reopen = can_request_reopen(self.request.user, ticket)
+        context["can_ask_to_repen"] = can_ask_to_reopen
+        if can_ask_to_reopen:
+            print("I should have the context right!")
+            reopen_request_form = TicketOpenRequestForm()
+            context['reopen_request_form'] = reopen_request_form
 
         context['is_ticket_manager'] = manages_ticket
         is_admin = self.request.user.is_staff
@@ -281,6 +291,13 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
                     ticket.resolution_status = 'open'
                     ticket.resolution_date = ''
                     ticket.save()
+        elif can_request_reopen(self.request.user, ticket):
+            reopen_form = TicketOpenRequestForm(request.POST)
+            if reopen_form.is_valid():
+                reopen_form.instance.ticket = ticket
+                reopen_form.instance.author = request.user
+                reopen_form.instance.row_action = 'CREATE'
+                reopen_form.save()
         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
@@ -804,8 +821,6 @@ class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View)
 #             reopen_form.instance.row_action = 'CREATE'
 #             reopen_form.save()
 #         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket_id}))
-
-    
 
 
 ##                   ##
