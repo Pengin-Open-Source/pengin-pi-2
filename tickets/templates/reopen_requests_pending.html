@@ -1,0 +1,47 @@
+{% extends "layout/alternating_color_table.html" %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+{% block pageDropDowns %}
+  <a href="{% url 'ticket'  ticket.id %}"> Return to Ticket Details  </a>
+{% endblock %}
+
+
+{% block tableContent %}
+ {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
+<script>
+  function convertUTCToLocal(utcTime) {
+    const utcMillis = new Date(utcTime).getTime();
+    const localDate = new Date(utcMillis);
+    return localDate.toLocaleString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    });
+  
+  }
+</script>
+  {% for reopen_request in page_obj %}
+  <tr><td class="post-container">
+    <a class="alternating-colors-table-links" href="">{{ reopen_request.reason|escape }}</a>
+    <div class="comment-title-underline">
+      <div><b> Requested by {{reopen_request.author.name|escape}}  on  <span id="request-time-{{forloop.counter}}"></span> </b> </div>
+      <script>
+        var utcTime = new Date('{{ reopen_request.request_date|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('request-time-{{forloop.counter}}').textContent = localTime;
+      </script>
+    </div>
+  </td></tr>
+  {% endfor %}
+  {% use_macro render_pagination page_obj %}
+
+
+
+
+{% endblock %}
+
+

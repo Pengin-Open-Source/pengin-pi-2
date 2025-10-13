@@ -12,7 +12,7 @@ from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
+from tickets.permissions import can_approve_reopen_request, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
 
 
@@ -58,7 +58,7 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
                     self.request.user).order_by('-date')
         else:
             if is_admin:
-                tickets = self.queryset.order_by('-date').order_by('-date')
+                tickets = self.queryset.order_by('-date')
             else:
                 tickets = Ticket.objects.filter_by_can_see_ticket(
                     self.request.user).order_by('-date')
@@ -805,6 +805,35 @@ class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View)
         if self.request.user.is_staff:
             return True
 
+
+class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
+
+    template_name = 'reopen_requests_pending.html'
+    model = Ticket
+    context_object_name = 'ticket'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
+        context['primary_title'] = 'Pending Requests to Open Ticket: ' + \
+            requested_ticket.summary
+
+        requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
+            approval_status="pending").order_by('-request_date')
+
+        # Similar to what Sincere is using for companies
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(requests, 10)
+        page_obj = paginator.get_page(page_number)
+        context['page_obj'] = page_obj
+
+        return context
+
+    def test_func(self):
+        current_user = self.request.user
+        ticket = self.get_object()
+        return can_approve_reopen_request(current_user, ticket)
 
 # class TicketReOpenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):
 #     model = TicketOpenRequest

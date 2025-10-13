@@ -47,3 +47,15 @@ def can_request_reopen(current_user, ticket):
 
 def is_ticket_manager(current_user, ticket):
     return is_manager_of_this_role(current_user, ticket.role)
+
+
+def can_approve_reopen_request(current_user, ticket):
+    if current_user.is_staff:
+        return True
+    # only managers of THIS ticket's role can approve another request
+    if is_ticket_manager(current_user, ticket):
+        return True
+    if current_user == ticket.owner:
+        return True
+    # note we don't let the author approve,  although they can re-open themselves.
+    return False

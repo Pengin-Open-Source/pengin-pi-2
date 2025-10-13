@@ -225,15 +225,24 @@ class TicketOpenRequest(models.Model):
         User, on_delete=models.CASCADE, related_name='reopen_ticket_requests')
     approver_denier = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reopen_ticket_requests_handled', null=True, blank=True)
-    # CREATE, DELETE - which put the row in this state?
+    # CREATE, DELETE - which put the row in this state?)
     # (DELETE is used for TicketOpenRequestHistory. Not allowing
-    # Editing of Tickets for awhile.
+    # Editing of Tickets for awhile.)
     row_action = models.CharField(max_length=10, default='ERROR')
     # 'pending' 'approved' 'denied 're-opened by other user'
     approval_status = models.CharField(max_length=100, default='pending')
-    approver_comment = models.TextField(null=True,  blank=True)
-    approved_or_denied_date = models.CharField(
+    handler_comment = models.TextField(null=True,  blank=True)
+    date_handled = models.CharField(
         max_length=100, null=True, blank=True)
+    # if some other request resulted in a reopen,  making this request obsolete/de facto granted.
+    # I don't think we want to cascade delete all requests
+    related_request_approved = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='side_effect_approved_requests'
+    )
 
     def __str__(self):
         return "Re-Open Request From: " + self.author.name + " " + str(self.reason)[:20]

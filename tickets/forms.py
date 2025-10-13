@@ -250,10 +250,12 @@ class TicketEditStatusForm(forms.ModelForm):
             )
             self.fields['resolution_status'].choices = new_choices
 
+
 class TicketCommentForm(forms.ModelForm):
     class Meta:
         model = TicketComment
         fields = ['content']
+
 
 class TicketOpenRequestForm(forms.ModelForm):
     class Meta:
@@ -264,7 +266,7 @@ class TicketOpenRequestForm(forms.ModelForm):
 class TicketOpenRequestResponseForm(forms.ModelForm):
     class Meta:
         model = TicketOpenRequest
-        fields = ['reason', 'approval_status', 'approver_comment']
+        fields = ['reason', 'approval_status', 'handler_comment']
 
 
 class TicketSettingsForm(forms.Form):
