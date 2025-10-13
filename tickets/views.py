@@ -258,13 +258,22 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
 
-        ##########  HANDLE RE-OPEN TICKET REQUESTS #######
-        can_ask_to_reopen = can_request_reopen(self.request.user, ticket)
-        context["can_ask_to_repen"] = can_ask_to_reopen
-        if can_ask_to_reopen:
+        ##########  HANDLE RE-OPEN TICKET REQUESTS ##############
+        context['has_pending_requests_for_me_to_approve'] = False
+        context["can_ask_to_reopen"] = False
+        context["can_approve_reopen_request"] = False
+        if can_approve_reopen_request(self.request.user, ticket):
+            requests = TicketOpenRequest.objects.filter(ticket=ticket).filter(
+                approval_status="pending")
+            context["can_approve_reopen_request"] = True
+            context['has_pending_requests_for_me_to_approve'] = requests.exists()
+        elif can_request_reopen(self.request.user, ticket):
             print("I should have the context right!")
             reopen_request_form = TicketOpenRequestForm()
             context['reopen_request_form'] = reopen_request_form
+            context["can_ask_to_reopen"] = True
+
+        ##########################################################
 
         context['is_ticket_manager'] = manages_ticket
         is_admin = self.request.user.is_staff
