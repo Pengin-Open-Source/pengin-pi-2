@@ -258,9 +258,17 @@ class TicketCommentForm(forms.ModelForm):
 
 
 class TicketOpenRequestForm(forms.ModelForm):
+    author = UserModelChoiceField(
+        queryset=User.objects.filter(validated=True),
+        required=False,
+        error_messages={
+            'not_valid': "Invalid Owner Selection",
+        }
+    )
+
     class Meta:
         model = TicketOpenRequest
-        fields = ['reason']
+        fields = ['author', 'reason']
 
 
 class TicketOpenRequestResponseForm(forms.ModelForm):

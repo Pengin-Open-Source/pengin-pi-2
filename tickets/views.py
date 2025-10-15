@@ -345,7 +345,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             ticket_has_owner = ticket.owner is not None
 
             if ticket_has_owner:
-                # sometimes I need the object it2self,  other times the filtered
+                # sometimes I need the object itself,  other times the filtered
                 # queryset other times,  I'd like to use the boolean I just created.
                 ticket_owner = User.objects.filter(
                     id=ticket.owner.id).distinct()
@@ -843,6 +843,38 @@ class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPass
         current_user = self.request.user
         ticket = self.get_object()
         return can_approve_reopen_request(current_user, ticket)
+
+
+class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+    template_name = "reopen_request.html"
+    model = TicketOpenRequest
+    context_object_name = 'request'
+    form_class = TicketOpenRequest
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reopen_request = get_object_or_404(
+            TicketOpenRequest, id=self.kwargs.get('pk'))
+        requested_ticket = reopen_request.ticket
+        owner_options = User.objects.filter(id=ticket.owner.id)
+        for field in form.fields:
+            form.fields[field].widget.attrs['disabled'] = True
+        context['form'] = form
+
+        form = TicketOpenRequestForm(instance=reopen_request)
+
+        context["form"] = form
+        context["reopen_request"] = reopen_request
+        context["ticket_id"] = requested_ticket.id
+        context["primary_title"] = "Request to Reopen Ticket: " + \
+            requested_ticket.summary
+
+        return context
+
+    def test_func(self):
+        current_user = self.request.user
+        reopen_request = self.get_object()
+        return can_approve_reopen_request(current_user, reopen_request.ticket)
 
 # class TicketReOpenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):
 #     model = TicketOpenRequest
