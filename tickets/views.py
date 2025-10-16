@@ -856,12 +856,11 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
         reopen_request = get_object_or_404(
             TicketOpenRequest, id=self.kwargs.get('pk'))
         requested_ticket = reopen_request.ticket
-        owner_options = User.objects.filter(id=ticket.owner.id)
+        form = TicketOpenRequestForm(instance=reopen_request)
+
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
-
-        form = TicketOpenRequestForm(instance=reopen_request)
 
         context["form"] = form
         context["reopen_request"] = reopen_request
