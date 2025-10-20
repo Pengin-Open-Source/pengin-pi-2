@@ -256,12 +256,35 @@ class TicketCommentForm(forms.ModelForm):
         model = TicketComment
         fields = ['content']
 
+# Create a request to reopen a ticket
 
-class TicketOpenRequestForm(forms.ModelForm):
+
+class TicketCreateOpenRequestForm(forms.ModelForm):
 
     class Meta:
         model = TicketOpenRequest
         fields = ['reason']
+
+
+class TicketPendingOpenRequestForm(forms.ModelForm):
+    author = UserModelChoiceField(
+        queryset=User.objects.filter(validated=True),
+        required=False,
+        error_messages={
+            'not_valid': "Invalid Owner Selection",
+        }
+    )
+
+    class Meta:
+        model = TicketOpenRequest
+        fields = ['author', 'approval_status', 'reason']
+
+    def __init__(self, *args, **kwargs):
+        # Always call the parent's init first
+        super().__init__(*args, **kwargs)
+
+        self.fields['author'].initial = User.objects.filter(
+            id=self.instance.author.id)
 
 
 class TicketOpenRequestResponseForm(forms.ModelForm):

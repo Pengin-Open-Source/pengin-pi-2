@@ -57,5 +57,5 @@ def can_approve_reopen_request(current_user, ticket):
         return True
     if current_user == ticket.owner:
         return True
-    # note we don't let the author approve,  although they can re-open themselves.
+    # note we don't let the author approve,  although they can reopen themselves.
     return False

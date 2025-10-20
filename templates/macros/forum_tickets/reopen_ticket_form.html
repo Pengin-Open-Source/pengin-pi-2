@@ -3,7 +3,7 @@
 
   <form class="comment-form" method="POST" action="{{action_url}}">
     {% csrf_token %}
-    <label for="reason"> <h2> Justification For Re-opening Ticket: {{ ticket.name }}  </h2> </label>
+    <label for="reason"> <h2> Justification For Reopening Ticket: {{ ticket.name }}  </h2> </label>
     {% for field in request_form %}
     <div class="fieldWrapper">
         <p> {{ field }} </span> <p>

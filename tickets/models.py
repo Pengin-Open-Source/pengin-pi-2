@@ -229,7 +229,7 @@ class TicketOpenRequest(models.Model):
     # (DELETE is used for TicketOpenRequestHistory. Not allowing
     # Editing of Tickets for awhile.)
     row_action = models.CharField(max_length=10, default='ERROR')
-    # 'pending' 'approved' 'denied 're-opened by other user'
+    # 'pending' 'approved' 'denied 'reopened by other user'
     approval_status = models.CharField(max_length=100, default='pending')
     handler_comment = models.TextField(null=True,  blank=True)
     date_handled = models.CharField(
@@ -245,4 +245,4 @@ class TicketOpenRequest(models.Model):
     )
 
     def __str__(self):
-        return "Re-Open Request From: " + self.author.name + " " + str(self.reason)[:20]
+        return "Reopen Request From: " + self.author.name + " " + str(self.reason)[:20]

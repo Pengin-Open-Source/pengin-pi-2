@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
-from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestForm, TicketSettingsForm
+from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_approve_reopen_request, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
@@ -258,7 +258,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
 
-        ##########  HANDLE RE-OPEN TICKET REQUESTS ##############
+        ##########  HANDLE REOPEN TICKET REQUESTS ##############
         context['has_pending_requests_for_me_to_approve'] = False
         context["can_ask_to_reopen"] = False
         context["can_approve_reopen_request"] = False
@@ -269,7 +269,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
             context['has_pending_requests_for_me_to_approve'] = requests.exists()
         elif can_request_reopen(self.request.user, ticket):
             print("I should have the context right!")
-            reopen_request_form = TicketOpenRequestForm()
+            reopen_request_form = TicketCreateOpenRequestForm()
             context['reopen_request_form'] = reopen_request_form
             context["can_ask_to_reopen"] = True
 
@@ -301,7 +301,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
                     ticket.resolution_date = ''
                     ticket.save()
         elif can_request_reopen(self.request.user, ticket):
-            reopen_form = TicketOpenRequestForm(request.POST)
+            reopen_form = TicketCreateOpenRequestForm(request.POST)
             if reopen_form.is_valid():
                 reopen_form.instance.ticket = ticket
                 reopen_form.instance.author = request.user
@@ -602,7 +602,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             ticket_to_be_edited.last_edited_by = request.user
             ticket_to_be_edited.row_action = 'EDIT'
             # If *CURRENT* resolution_status is NOT Open,
-            # Re-open this ticket.
+            # Reopen this ticket.
             if ticket.resolution_status != 'open':
                 ticket.last_edited_by = request.user
                 ticket.row_action = 'EDIT'
@@ -849,14 +849,14 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
     template_name = "reopen_request.html"
     model = TicketOpenRequest
     context_object_name = 'request'
-    form_class = TicketOpenRequest
+    form_class = TicketPendingOpenRequestForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         reopen_request = get_object_or_404(
             TicketOpenRequest, id=self.kwargs.get('pk'))
         requested_ticket = reopen_request.ticket
-        form = TicketOpenRequestForm(instance=reopen_request)
+        form = TicketPendingOpenRequestForm(instance=reopen_request)
 
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
@@ -874,6 +874,9 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
         current_user = self.request.user
         reopen_request = self.get_object()
         return can_approve_reopen_request(current_user, reopen_request.ticket)
+
+
+class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
 
 # class TicketReOpenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):
 #     model = TicketOpenRequest
