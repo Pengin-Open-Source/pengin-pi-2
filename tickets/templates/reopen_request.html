@@ -32,6 +32,5 @@
         document.getElementById('request-time').textContent = localTime;
     </script>
 </p>
-
-<a class="text-button" style="color:purple;" href="#"> Approve/Deny this Request </a>
+<a class="text-button" style="color:purple;" href="{% url 'handle_reopen_request'  reopen_request.id %}"> Approve/Deny this Request </a>
 {% endblock %}

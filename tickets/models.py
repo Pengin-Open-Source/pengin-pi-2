@@ -225,9 +225,11 @@ class TicketOpenRequest(models.Model):
         User, on_delete=models.CASCADE, related_name='reopen_ticket_requests')
     approver_denier = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reopen_ticket_requests_handled', null=True, blank=True)
-    # CREATE, DELETE - which put the row in this state?)
-    # (DELETE is used for TicketOpenRequestHistory. Not allowing
-    # Editing of Tickets for awhile.)
+    # CREATE, EDIT DELETE - which put the row in this state?)
+    # (DELETE is used for TicketOpenRequestHistory. )
+    # Edit will at least be used by the Approver.
+    # At the moment,  Author is not allowed to edit, so as to
+    # prevent changing of the reason for the re-open request.
     row_action = models.CharField(max_length=10, default='ERROR')
     # 'pending' 'approved' 'denied 'reopened by other user'
     approval_status = models.CharField(max_length=100, default='pending')

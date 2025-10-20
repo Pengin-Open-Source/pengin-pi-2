@@ -653,18 +653,26 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         ticket = get_object_or_404(
             Ticket, id=ticket_id)
         ticket_form = TicketEditStatusForm(request.POST, instance=ticket)
+        # what was the resolution status and date before now?
         if ticket.resolution_status == 'open':
             resolve_date = ''
         else:
+            # grab the resolution date that existed before this
+            # post
             resolve_date = ticket.resolution_date
         if ticket_form.is_valid():
+            # now ticket object contains the newly selected status
             ticket = ticket_form.save(commit=False)
             ticket.last_edited_by = request.user
             ticket.row_action = 'EDIT'
             ticket.date = timezone.now()
-            # if the ticket
+
             if ticket.resolution_status == 'resolved' and not ticket.resolution_date:
                 ticket.resolution_date = timezone.now()
+            # if we are CHANGING the status to open, blank out the date.
+            elif ticket.resolution_status == 'open':
+                ticket.resolution_date = ''
+            # otherwise just keep the current resolution date.
             else:
                 ticket.resolution_date = resolve_date
 
@@ -816,7 +824,6 @@ class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View)
 
 
 class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
-
     template_name = 'reopen_requests_pending.html'
     model = Ticket
     context_object_name = 'ticket'
@@ -876,7 +883,53 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
         return can_approve_reopen_request(current_user, reopen_request.ticket)
 
 
-class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+class HandleTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+    model = TicketOpenRequest
+    form_class = TicketOpenRequestResponseForm
+    template_name = 'approve_deny.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reopen_request = get_object_or_404(
+            TicketOpenRequest, id=self.kwargs.get('pk'))
+        form = TicketOpenRequestResponseForm(instance=reopen_request)
+        context['form'] = form
+        context["reopen_request"] = reopen_request
+        context['ticket_id'] = self.object.ticket.id
+        context['request_id'] = self.object.id
+        context["primary_title"] = "Approve/Deny Request to Reopen Ticket: " + \
+            self.object.ticket.summary
+        return context
+
+    def test_func(self):
+        current_user = self.request.user
+        reopen_request = self.get_object()
+        return can_approve_reopen_request(current_user, reopen_request.ticket)
+
+
+class DenyTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = TicketOpenRequest
+
+    def post(self, request, *args, **kwargs):
+        denied_request = get_object_or_404(
+            TicketOpenRequest, id=self.kwargs.get('pk'))
+        ticket = denied_request.ticket
+        denied_request_form = TicketOpenRequestResponseForm(
+            request.POST, instance=denied_request)
+        if denied_request_form.is_valid():
+            denied_request_form.instance.approval_status = 'denied'
+            denied_request_form.instance.approver_denier = request.user
+            denied_request_form.instance.date_handled = timezone.now()
+            denied_request_form.instance.row_action = 'EDIT'
+            denied_request_form.save()
+
+        return HttpResponseRedirect(reverse_lazy('view_pending_reopen_requests', kwargs={'pk': ticket.id}))
+
+    def test_func(self):
+        current_user = self.request.user
+        reopen_request = self.get_object()
+        return can_approve_reopen_request(current_user, reopen_request.ticket)
+
 
 # class TicketReOpenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):
 #     model = TicketOpenRequest
