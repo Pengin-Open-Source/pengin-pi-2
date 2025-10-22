@@ -12,7 +12,7 @@ from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_approve_reopen_request, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
+from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
 
 
@@ -262,13 +262,12 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         context['has_pending_requests_for_me_to_approve'] = False
         context["can_ask_to_reopen"] = False
         context["can_approve_reopen_request"] = False
-        if can_approve_reopen_request(self.request.user, ticket):
+        if can_approve_reopen_requests_for_ticket(self.request.user, ticket):
             requests = TicketOpenRequest.objects.filter(ticket=ticket).filter(
                 approval_status="pending")
             context["can_approve_reopen_request"] = True
             context['has_pending_requests_for_me_to_approve'] = requests.exists()
         elif can_request_reopen(self.request.user, ticket):
-            print("I should have the context right!")
             reopen_request_form = TicketCreateOpenRequestForm()
             context['reopen_request_form'] = reopen_request_form
             context["can_ask_to_reopen"] = True
@@ -849,7 +848,7 @@ class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPass
     def test_func(self):
         current_user = self.request.user
         ticket = self.get_object()
-        return can_approve_reopen_request(current_user, ticket)
+        return can_approve_reopen_requests_for_ticket(current_user, ticket)
 
 
 class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
@@ -880,13 +879,13 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
     def test_func(self):
         current_user = self.request.user
         reopen_request = self.get_object()
-        return can_approve_reopen_request(current_user, reopen_request.ticket)
+        return can_approve_reopen_requests_for_ticket(current_user, reopen_request.ticket)
 
 
-class HandleTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
     model = TicketOpenRequest
     form_class = TicketOpenRequestResponseForm
-    template_name = 'approve_deny.html'
+    template_name = 'reopen_request_approve.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -897,18 +896,80 @@ class HandleTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesT
         context["reopen_request"] = reopen_request
         context['ticket_id'] = self.object.ticket.id
         context['request_id'] = self.object.id
-        context["primary_title"] = "Approve/Deny Request to Reopen Ticket: " + \
+        context["primary_title"] = "Approve Reopen of Ticket: " + \
             self.object.ticket.summary
         return context
+
+    def post(self, request, *args, **kwargs):
+        approved_request = get_object_or_404(
+            TicketOpenRequest, id=self.kwargs.get('pk'))
+        ticket = approved_request.ticket
+        approved_request_form = TicketOpenRequestResponseForm(
+            request.POST, instance=approved_request)
+        if approved_request_form.is_valid():
+            # approve this request directly
+            approved_request = approved_request_form.save(commit=False)
+            approved_request.approval_status = 'approved'
+            approved_request.approver_denier = request.user
+            approved_request.date_handled = timezone.now()
+            approved_request.row_action = 'EDIT'
+            approved_request.save()
+            # open the ticket if it's not open.
+            if ticket.resolution_status != 'open':
+                ticket.last_edited_by = request.user
+                ticket.row_action = 'EDIT'
+                ticket.date = timezone.now()
+                ticket.resolution_status = 'open'
+                ticket.resolution_date = ''
+                ticket.save()
+            # indirectly resolve any other reopen requests on this ticket
+            other_pending = TicketOpenRequest.objects.filter(
+                approval_status='pending').filter(ticket_id=ticket.id)
+            other_pending_ids = list(
+                other_pending.values_list('pk', flat=True))
+            for pending_request_id in other_pending_ids:
+                pending_request = TicketOpenRequest.objects.get(
+                    pk=pending_request_id)
+                pending_request.approval_status = 'related request approved'
+
+                # Uncomment this??? I'm inclined not to - since this request
+                # wasn't DIRECTLY approved. The approver of the approved request may
+                # never have even read the other requestor's reasons for requesting
+                # reopening. However, the did indirectly approve,  so there's two
+                # ways to look at it.
+                # approved_request.approver_denier = request.user
+
+                pending_request.date_handled = timezone.now()
+                pending_request.row_action = 'EDIT'
+                # link back to the request that caused this one to be resolved
+                pending_request.related_request_approved = approved_request
+                pending_request.save()
+
+            return HttpResponseRedirect(reverse_lazy('view_pending_reopen_requests', kwargs={'pk': ticket.id}))
 
     def test_func(self):
         current_user = self.request.user
         reopen_request = self.get_object()
-        return can_approve_reopen_request(current_user, reopen_request.ticket)
+        return can_approve_this_reopen_request(current_user, reopen_request)
 
 
 class DenyTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
     model = TicketOpenRequest
+    form_class = TicketOpenRequestResponseForm
+    template_name = 'reopen_request_deny.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reopen_request = get_object_or_404(
+            TicketOpenRequest, id=self.kwargs.get('pk'))
+        form = TicketOpenRequestResponseForm(instance=reopen_request)
+        context['form'] = form
+        context["reopen_request"] = reopen_request
+        context['ticket_id'] = self.object.ticket.id
+        context['request_id'] = self.object.id
+        context["primary_title"] = "Deny Reopen of Ticket: " + \
+            self.object.ticket.summary
+        return context
 
     def post(self, request, *args, **kwargs):
         denied_request = get_object_or_404(
@@ -917,18 +978,18 @@ class DenyTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTes
         denied_request_form = TicketOpenRequestResponseForm(
             request.POST, instance=denied_request)
         if denied_request_form.is_valid():
-            denied_request_form.instance.approval_status = 'denied'
-            denied_request_form.instance.approver_denier = request.user
-            denied_request_form.instance.date_handled = timezone.now()
-            denied_request_form.instance.row_action = 'EDIT'
-            denied_request_form.save()
-
-        return HttpResponseRedirect(reverse_lazy('view_pending_reopen_requests', kwargs={'pk': ticket.id}))
+            denied_request = denied_request_form.save(commit=False)
+            denied_request.approval_status = 'denied'
+            denied_request.approver_denier = request.user
+            denied_request.date_handled = timezone.now()
+            denied_request.row_action = 'EDIT'
+            denied_request.save()
+            return HttpResponseRedirect(reverse_lazy('view_pending_reopen_requests', kwargs={'pk': ticket.id}))
 
     def test_func(self):
         current_user = self.request.user
         reopen_request = self.get_object()
-        return can_approve_reopen_request(current_user, reopen_request.ticket)
+        return can_approve_this_reopen_request(current_user, reopen_request)
 
 
 # class TicketReOpenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):

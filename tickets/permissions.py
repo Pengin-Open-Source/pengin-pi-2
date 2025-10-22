@@ -49,7 +49,17 @@ def is_ticket_manager(current_user, ticket):
     return is_manager_of_this_role(current_user, ticket.role)
 
 
-def can_approve_reopen_request(current_user, ticket):
+def can_approve_this_reopen_request(current_user, reopen_request):
+
+    if reopen_request.approval_status != 'pending':
+        return False
+
+    ticket = reopen_request.ticket
+    return can_approve_reopen_requests_for_ticket(current_user, ticket)
+  
+
+
+def can_approve_reopen_requests_for_ticket(current_user, ticket):
     if current_user.is_staff:
         return True
     # only managers of THIS ticket's role can approve another request
