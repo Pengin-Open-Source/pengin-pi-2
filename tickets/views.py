@@ -488,10 +488,14 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
+        # Users who can edit Summary, Content, and Tags:
+        # Owner, Manager,  Staff, Author
+        can_edit_text_fields = False
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
 
         current_user = self.request.user
+        if ticket.author == current_user:
+            can_edit_text_fields = True
 
         # May the User see the option to set Owner to empty?
         can_set_ticket_owner_blank = False
@@ -504,6 +508,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
         if ticket_has_owner:
             ticket_owner = User.objects.filter(id=ticket.owner.id).distinct()
+            if current_user.id == ticket.owner.id:
+                can_edit_text_fields = True
         else:
             can_set_ticket_owner_blank = True
 
@@ -516,6 +522,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
         is_admin = current_user.is_staff
         if is_admin:
+            can_edit_text_fields = True
             can_set_ticket_owner_blank = True
             role_options = all_groups
             show_all_owner_options = self.request.session.get(
@@ -531,6 +538,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     owner_options = users_in_currently_saved_role
 
         elif is_manager_of_this_role(current_user, ticket.role):
+            can_edit_text_fields = True
             can_set_ticket_owner_blank = True
             role_options = all_groups
             if ticket_has_owner:
@@ -580,6 +588,12 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         # to make an assigned Ticket "Unassigned" again.  (or both)
         form = TicketForm(can_set_ticket_owner_blank=can_set_ticket_owner_blank, role_options=role_options, owner_options=owner_options,
                           role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket, current_user=current_user)
+
+        # Don't allow certain users to edit the Summary, Content or Tags
+        if not can_edit_text_fields:
+            form.fields['summary'].widget.attrs['disabled'] = True
+            form.fields['content'].widget.attrs['disabled'] = True
+            form.fields['tags'].widget.attrs['disabled'] = True
 
         context['form'] = form
         context['is_admin'] = is_admin
@@ -907,43 +921,53 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
         approved_request_form = TicketOpenRequestResponseForm(
             request.POST, instance=approved_request)
         if approved_request_form.is_valid():
-            # approve this request directly
-            approved_request = approved_request_form.save(commit=False)
-            approved_request.approval_status = 'approved'
-            approved_request.approver_denier = request.user
-            approved_request.date_handled = timezone.now()
-            approved_request.row_action = 'EDIT'
-            approved_request.save()
-            # open the ticket if it's not open.
-            if ticket.resolution_status != 'open':
-                ticket.last_edited_by = request.user
-                ticket.row_action = 'EDIT'
-                ticket.date = timezone.now()
-                ticket.resolution_status = 'open'
-                ticket.resolution_date = ''
-                ticket.save()
-            # indirectly resolve any other reopen requests on this ticket
-            other_pending = TicketOpenRequest.objects.filter(
-                approval_status='pending').filter(ticket_id=ticket.id)
-            other_pending_ids = list(
-                other_pending.values_list('pk', flat=True))
-            for pending_request_id in other_pending_ids:
-                pending_request = TicketOpenRequest.objects.get(
-                    pk=pending_request_id)
-                pending_request.approval_status = 'related request approved'
+            # The following tasks must succeed or fail together,
+            # so I'm using a transaction:
+            # 1) Approve this request directly
+            # 2) Reopen the ticket
+            # 3) Update any other *pending* requests to reopen
+            #    this ticket and indicate that another request
+            #    was approved.
 
-                # Uncomment this??? I'm inclined not to - since this request
-                # wasn't DIRECTLY approved. The approver of the approved request may
-                # never have even read the other requestor's reasons for requesting
-                # reopening. However, the did indirectly approve,  so there's two
-                # ways to look at it.
-                # approved_request.approver_denier = request.user
+            with transaction.atomic():
+                # approve this request directly
 
-                pending_request.date_handled = timezone.now()
-                pending_request.row_action = 'EDIT'
-                # link back to the request that caused this one to be resolved
-                pending_request.related_request_approved = approved_request
-                pending_request.save()
+                approved_request = approved_request_form.save(commit=False)
+                approved_request.approval_status = 'approved'
+                approved_request.approver_denier = request.user
+                approved_request.date_handled = timezone.now()
+                approved_request.row_action = 'EDIT'
+                approved_request.save()
+                # open the ticket if it's not open.
+                if ticket.resolution_status != 'open':
+                    ticket.last_edited_by = request.user
+                    ticket.row_action = 'EDIT'
+                    ticket.date = timezone.now()
+                    ticket.resolution_status = 'open'
+                    ticket.resolution_date = ''
+                    ticket.save()
+                # indirectly resolve any other reopen requests on this ticket
+                other_pending = TicketOpenRequest.objects.filter(
+                    approval_status='pending').filter(ticket_id=ticket.id)
+                other_pending_ids = list(
+                    other_pending.values_list('pk', flat=True))
+                for pending_request_id in other_pending_ids:
+                    pending_request = TicketOpenRequest.objects.get(
+                        pk=pending_request_id)
+                    pending_request.approval_status = 'related request approved'
+
+                    # Uncomment this??? I'm inclined not to - since this request
+                    # wasn't DIRECTLY approved. The approver of the approved request may
+                    # never have even read the other requestor's reasons for requesting
+                    # reopening. However, the did indirectly approve,  so there's two
+                    # ways to look at it.
+                    # approved_request.approver_denier = request.user
+
+                    pending_request.date_handled = timezone.now()
+                    pending_request.row_action = 'EDIT'
+                    # link back to the request that caused this one to be resolved
+                    pending_request.related_request_approved = approved_request
+                    pending_request.save()
 
             return HttpResponseRedirect(reverse_lazy('view_pending_reopen_requests', kwargs={'pk': ticket.id}))
 
@@ -990,23 +1014,6 @@ class DenyTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTes
         current_user = self.request.user
         reopen_request = self.get_object()
         return can_approve_this_reopen_request(current_user, reopen_request)
-
-
-# class TicketReOpenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, CreateView):
-#     model = TicketOpenRequest
-#     form_class = TicketOpenRequestForm
-#     template_name = 'ticket_reopen_request.html'
-
-#     def post(self, request, *args, **kwargs):
-#         ticket_id = self.kwargs.get('ticket_id')
-#         ticket = get_object_or_404(Ticket, ticket_id)
-#         reopen_form = TicketOpenRequestForm(request.POST)
-#         if reopen_form.is_valid():
-#             reopen_form.instance.ticket = ticket
-#             reopen_form.instance.author = request.user
-#             reopen_form.instance.row_action = 'CREATE'
-#             reopen_form.save()
-#         return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket_id}))
 
 
 ##                   ##

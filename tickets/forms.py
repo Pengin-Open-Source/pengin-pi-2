@@ -68,6 +68,12 @@ class TicketForm(forms.ModelForm):
         if self.instance and not self.instance._state.adding:
             ticket = self.instance
 
+            # Users who can edit Summary, Content, and Tags:
+            # Owner, Manager,  Staff, Author
+            can_edit_text_fields = False
+            if ticket.author == current_user:
+                can_edit_text_fields = True
+
             # Determines if the "no owner" option is
             # available to the user
             saved_ticket_owner = None
@@ -76,6 +82,8 @@ class TicketForm(forms.ModelForm):
             if ticket_has_owner:
                 # the owner that is saved
                 saved_ticket_owner = User.objects.filter(id=ticket.owner.id)
+                if current_user.id == ticket.owner.id:
+                    can_edit_text_fields = True
             else:
                 can_set_ticket_owner_blank = True
 
@@ -85,11 +93,13 @@ class TicketForm(forms.ModelForm):
 
             is_admin = current_user.is_staff
             if is_admin:
+                can_edit_text_fields = True
                 can_set_ticket_owner_blank = True
                 role_options = all_groups
                 owner_options = User.objects.filter(validated=True)
             elif is_manager_of_this_role(current_user, selected_role):
                 can_set_ticket_owner_blank = True
+                can_edit_text_fields = True
                 role_options = all_groups
                 if ticket_has_owner and selected_role == currently_saved_role:
                     # account for the case where a Staff member has
@@ -204,6 +214,12 @@ class TicketForm(forms.ModelForm):
                     role_options = Group.objects.filter(pk=default_role.pk)
 
             # stop this submit if the role or owner is not in the approved list
+
+            if not can_edit_text_fields:
+                # make sure the saved ticket items
+                if ticket.content != cleaned_data.get('content'):
+                    raise SuspiciousOperation(
+                        "Warning! You are not allowed Edit the Content!")
 
             if not selected_role in role_options:
                 raise SuspiciousOperation(
