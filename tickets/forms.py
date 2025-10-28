@@ -262,18 +262,35 @@ class TicketEditStatusForm(forms.ModelForm):
         model = Ticket
         fields = ['resolution_status']
 
-    def __init__(self, *args, restrict_choices=False, **kwargs):
+    def __init__(self, *args, can_open_ticket=True, **kwargs):
         # Always call the parent's init first
         super().__init__(*args, **kwargs)
 
-        if restrict_choices:
+        if not can_open_ticket:
             new_choices = (
                 ('resolved', 'Resolved'),
                 ('closed', 'Closed'),
             )
             self.fields['resolution_status'].choices = new_choices
 
+    def clean(self):
+        cleaned_data = super().clean()
 
+        current_user = self.current_user
+        # Ticket Status form should only every be called
+        # on an existing ticket, so this line should
+        # always work
+        ticket = self.instance
+        if not can_edit_ticket(current_user, ticket):
+            new_choices = (
+                ('resolved', 'Resolved'),
+                ('closed', 'Closed'),
+            )
+
+        return cleaned_data
+
+        
+ 
 class TicketCommentForm(forms.ModelForm):
     class Meta:
         model = TicketComment
