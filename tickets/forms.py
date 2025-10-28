@@ -166,6 +166,19 @@ class TicketForm(forms.ModelForm):
                 elif not can_set_ticket_owner_blank:
                     raise SuspiciousOperation(
                         "Warning! Empty Owner not allowed on this ticket!")
+
+            # Stop certain users from editing
+            # the content, even if they can see it.
+            if not can_edit_text_fields:
+                if ticket.content != cleaned_data.get('content'):
+                    raise SuspiciousOperation(
+                        "Warning! You are not allowed Edit the Content!")
+                if ticket.tags != cleaned_data.get('tags'):
+                    raise SuspiciousOperation(
+                        "Warning! You are not allowed Edit the Tags!")
+                if ticket.summary != cleaned_data.get('summary'):
+                    raise SuspiciousOperation(
+                        "Warning! You are not allowed Edit the Summary!")
         else:  # new Ticket
             can_set_ticket_owner_blank = True
             default_role = get_object_or_404(
@@ -214,12 +227,6 @@ class TicketForm(forms.ModelForm):
                     role_options = Group.objects.filter(pk=default_role.pk)
 
             # stop this submit if the role or owner is not in the approved list
-
-            if not can_edit_text_fields:
-                # make sure the saved ticket items
-                if ticket.content != cleaned_data.get('content'):
-                    raise SuspiciousOperation(
-                        "Warning! You are not allowed Edit the Content!")
 
             if not selected_role in role_options:
                 raise SuspiciousOperation(

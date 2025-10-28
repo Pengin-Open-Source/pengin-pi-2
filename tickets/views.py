@@ -591,10 +591,9 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
         # Don't allow certain users to edit the Summary, Content or Tags
         if not can_edit_text_fields:
-            form.fields['summary'].widget.attrs['disabled'] = True
-            form.fields['content'].widget.attrs['disabled'] = True
-            form.fields['tags'].widget.attrs['disabled'] = True
-
+            form.fields['summary'].widget.attrs['readonly'] = 'readonly'
+            form.fields['content'].widget.attrs['readonly'] = 'readonly'
+            form.fields['tags'].widget.attrs['readonly'] = 'readonly'
         context['form'] = form
         context['is_admin'] = is_admin
         context['primary_title'] = self.object.summary
