@@ -12,7 +12,7 @@ from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
+from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_close_ticket, can_comment_on_ticket, can_edit_ticket_privileged, can_edit_ticket_status, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
 
 
@@ -238,7 +238,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         #### HANDLE COMENTS #######
 
         # don't allow comments if user can't edit the ticket
-        can_comment = can_edit_ticket(self.request.user, ticket)
+        can_comment = can_comment_on_ticket(self.request.user, ticket)
         context['can_comment'] = can_comment
         if can_comment:
             comment_form = TicketCommentForm()
@@ -285,7 +285,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
     def post(self, request, *args, **kwargs):
         ticket = self.get_object()
         # don't allow comments if user can't edit the ticket
-        if can_edit_ticket(self.request.user, ticket):
+        if can_comment_on_ticket(self.request.user, ticket):
             comment_form = TicketCommentForm(request.POST)
             if comment_form.is_valid():
                 comment_form.instance.ticket = ticket
@@ -488,14 +488,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Users who can edit Summary, Content, and Tags:
-        # Owner, Manager,  Staff, Author
-        can_edit_text_fields = False
+
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
 
         current_user = self.request.user
-        if ticket.author == current_user:
-            can_edit_text_fields = True
 
         # May the User see the option to set Owner to empty?
         can_set_ticket_owner_blank = False
@@ -508,8 +504,6 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
         if ticket_has_owner:
             ticket_owner = User.objects.filter(id=ticket.owner.id).distinct()
-            if current_user.id == ticket.owner.id:
-                can_edit_text_fields = True
         else:
             can_set_ticket_owner_blank = True
 
@@ -522,7 +516,6 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
         is_admin = current_user.is_staff
         if is_admin:
-            can_edit_text_fields = True
             can_set_ticket_owner_blank = True
             role_options = all_groups
             show_all_owner_options = self.request.session.get(
@@ -538,7 +531,6 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     owner_options = users_in_currently_saved_role
 
         elif is_manager_of_this_role(current_user, ticket.role):
-            can_edit_text_fields = True
             can_set_ticket_owner_blank = True
             role_options = all_groups
             if ticket_has_owner:
@@ -589,8 +581,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         form = TicketForm(can_set_ticket_owner_blank=can_set_ticket_owner_blank, role_options=role_options, owner_options=owner_options,
                           role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket, current_user=current_user)
 
-        # Don't allow certain users to edit the Summary, Content or Tags
-        if not can_edit_text_fields:
+        # Users who can edit Summary, Content, and Tags:
+        # Owner, Manager,  Staff, Author
+        # (Check method for changes to this list)
+        if not can_edit_ticket_privileged(current_user, ticket):
             form.fields['summary'].widget.attrs['readonly'] = 'readonly'
             form.fields['content'].widget.attrs['readonly'] = 'readonly'
             form.fields['tags'].widget.attrs['readonly'] = 'readonly'
@@ -648,12 +642,8 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         context = super().get_context_data(**kwargs)
         # perhaps should be refactored to use self.object?
         ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        can_open_ticket = True
         current_user = self.request.user
-        if not can_edit_ticket(current_user, ticket):
-            can_open_ticket = False
-        form = TicketEditStatusForm(
-            can_open_ticket=can_open_ticket, instance=ticket)
+        form = TicketEditStatusForm(instance=ticket, current_user=current_user)
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
         context['primary_title'] = self.object.summary
@@ -692,14 +682,9 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
-        if self.request.user.is_staff:
-            return True
-
+        current_user = self.request.user
         ticket = self.get_object()
-        # may eventually change this to be more restrictive
-        # right now, anyone who can see it could have a valid
-        # reason change the ticket status.
-        if can_see_ticket(self.request.user, ticket):
+        if can_edit_ticket_status(current_user, ticket):
             return True
         return False
 

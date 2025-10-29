@@ -3,6 +3,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.shortcuts import get_object_or_404
 from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest
+from tickets.permissions import can_edit_ticket_privileged, can_open_ticket, can_close_ticket
 from django.db.models import QuerySet
 from django.contrib.auth.models import Group
 from util.forms.fields import UserModelChoiceField
@@ -68,22 +69,14 @@ class TicketForm(forms.ModelForm):
         if self.instance and not self.instance._state.adding:
             ticket = self.instance
 
-            # Users who can edit Summary, Content, and Tags:
-            # Owner, Manager,  Staff, Author
-            can_edit_text_fields = False
-            if ticket.author == current_user:
-                can_edit_text_fields = True
-
-            # Determines if the "no owner" option is
-            # available to the user
+            # Determines if the "no owner" 
+            # option is available to the user
             saved_ticket_owner = None
             ticket_has_owner = ticket.owner is not None
 
             if ticket_has_owner:
                 # the owner that is saved
                 saved_ticket_owner = User.objects.filter(id=ticket.owner.id)
-                if current_user.id == ticket.owner.id:
-                    can_edit_text_fields = True
             else:
                 can_set_ticket_owner_blank = True
 
@@ -93,13 +86,11 @@ class TicketForm(forms.ModelForm):
 
             is_admin = current_user.is_staff
             if is_admin:
-                can_edit_text_fields = True
                 can_set_ticket_owner_blank = True
                 role_options = all_groups
                 owner_options = User.objects.filter(validated=True)
             elif is_manager_of_this_role(current_user, selected_role):
                 can_set_ticket_owner_blank = True
-                can_edit_text_fields = True
                 role_options = all_groups
                 if ticket_has_owner and selected_role == currently_saved_role:
                     # account for the case where a Staff member has
@@ -169,7 +160,10 @@ class TicketForm(forms.ModelForm):
 
             # Stop certain users from editing
             # the content, even if they can see it.
-            if not can_edit_text_fields:
+
+            # Users who can edit Summary, Content, and Tags:
+            # Owner, Manager, Staff, Author
+            if not can_edit_ticket_privileged(current_user, ticket):
                 if ticket.content != cleaned_data.get('content'):
                     raise SuspiciousOperation(
                         "Warning! You are not allowed Edit the Content!")
@@ -247,8 +241,8 @@ class TicketForm(forms.ModelForm):
 
 
 class TicketEditStatusForm(forms.ModelForm):
-   # I decided to put the selection choices in the form itself.
-   # Gemini's suggestion on how:
+   # I decided to put the selection choices in
+   # the form itself. Gemini's suggestion on how:
     resolution_status = forms.ChoiceField(
         choices=(
                 ('open', 'Open'),
@@ -262,35 +256,42 @@ class TicketEditStatusForm(forms.ModelForm):
         model = Ticket
         fields = ['resolution_status']
 
-    def __init__(self, *args, can_open_ticket=True, **kwargs):
-        # Always call the parent's init first
+    def __init__(self, *args, **kwargs):
+        self.current_user = kwargs.pop('current_user', None)
         super().__init__(*args, **kwargs)
+        ticket = self.instance
+        status_options_list = [('resolved', 'Resolved'),]
 
-        if not can_open_ticket:
-            new_choices = (
-                ('resolved', 'Resolved'),
-                ('closed', 'Closed'),
-            )
-            self.fields['resolution_status'].choices = new_choices
+        if can_close_ticket(self.current_user, ticket):
+            status_options_list.append(('closed', 'Closed'))
+        if can_open_ticket(self.current_user, ticket):
+            status_options_list.append(('open', 'Open'))
+
+        new_choices = tuple(status_options_list)
+
+        self.fields['resolution_status'].choices = new_choices
 
     def clean(self):
         cleaned_data = super().clean()
-
+        selected_status = cleaned_data.get('resolution_status')
+        valid_choices = ('closed', 'resolved', 'open')
         current_user = self.current_user
         # Ticket Status form should only every be called
         # on an existing ticket, so this line should
         # always work
         ticket = self.instance
-        if not can_edit_ticket(current_user, ticket):
-            new_choices = (
-                ('resolved', 'Resolved'),
-                ('closed', 'Closed'),
-            )
 
+        # Blocking closing tickets without authorization and
+        # "nonsense" Statuses. Any other unauthorized status
+        #  move *should* be blocked by test_func
+        if selected_status == 'closed' and not can_close_ticket(current_user, ticket):
+            raise SuspiciousOperation(
+                "Warning! You do not have permission to close Ticket!")
+        if not ticket.resolution_status in valid_choices:
+            raise SuspiciousOperation("Warning! Invalid Status!")
         return cleaned_data
 
-        
- 
+
 class TicketCommentForm(forms.ModelForm):
     class Meta:
         model = TicketComment
