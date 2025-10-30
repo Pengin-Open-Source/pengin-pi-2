@@ -72,7 +72,7 @@ def can_open_ticket(current_user, ticket):
 
 
 def can_close_ticket(current_user, ticket):
-    if current_user.is_admin:
+    if current_user.is_staff:
         return True
     if is_ticket_manager(current_user, ticket):
         return False

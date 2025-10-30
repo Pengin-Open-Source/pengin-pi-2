@@ -638,6 +638,24 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
     template_name = 'ticket_edit_status.html'
     context_object_name = 'ticket'
 
+    # Gemini's suggestion for how to fix a bug occuring on an implicit form
+    # load,  that happens before the form call in get_context_data method
+    # I want current_user for permission checks to filter the available
+    # statuses.
+
+    def get_form_kwargs(self):
+        """
+        Injects the 'current_user' argument into the form's __init__ method
+        before the form is instantiated.
+        """
+        # Get the standard kwargs (instance, data, initial, etc.)
+        kwargs = super().get_form_kwargs()
+
+        # Add the custom argument that your form's __init__ needs
+        kwargs['current_user'] = self.request.user
+
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # perhaps should be refactored to use self.object?
@@ -654,7 +672,9 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         ticket_id = self.kwargs.get('pk')
         ticket = get_object_or_404(
             Ticket, id=ticket_id)
-        ticket_form = TicketEditStatusForm(request.POST, instance=ticket)
+        current_user = self.request.user
+        ticket_form = TicketEditStatusForm(
+            request.POST, instance=ticket, current_user=current_user)
         # what was the resolution status and date before now?
         if ticket.resolution_status == 'open':
             resolve_date = ''

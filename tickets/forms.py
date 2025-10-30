@@ -69,7 +69,7 @@ class TicketForm(forms.ModelForm):
         if self.instance and not self.instance._state.adding:
             ticket = self.instance
 
-            # Determines if the "no owner" 
+            # Determines if the "no owner"
             # option is available to the user
             saved_ticket_owner = None
             ticket_has_owner = ticket.owner is not None
@@ -262,10 +262,14 @@ class TicketEditStatusForm(forms.ModelForm):
         ticket = self.instance
         status_options_list = [('resolved', 'Resolved'),]
 
-        if can_close_ticket(self.current_user, ticket):
-            status_options_list.append(('closed', 'Closed'))
-        if can_open_ticket(self.current_user, ticket):
-            status_options_list.append(('open', 'Open'))
+        if self.current_user:
+            if can_close_ticket(self.current_user, ticket):
+                status_options_list.append(('closed', 'Closed'))
+            if can_open_ticket(self.current_user, ticket):
+                status_options_list.append(('open', 'Open'))
+        else:
+            raise ValueError(
+                "WARNING: Current User missing. User needed to check for allowable Status change options")
 
         new_choices = tuple(status_options_list)
 
