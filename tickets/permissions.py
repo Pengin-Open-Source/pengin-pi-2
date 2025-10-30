@@ -1,4 +1,4 @@
-from tickets.models import TicketHistory
+from django.apps import apps
 from util.security.group_access import is_manager_of_this_role, is_a_manager,  can_access_group
 
 
@@ -87,7 +87,7 @@ def can_edit_ticket_status(current_user, ticket):
         # to move an Open ticket to Resolved.
         return True
 
-    #.... but if the Status is Resolved, some users
+    # .... but if the Status is Resolved, some users
     # will not be able to change the Status directly.
     # (They may be able to Open it again by taking
     # ownership of the Ticket)
@@ -153,6 +153,8 @@ def is_user_who_resolved_ticket(current_user, ticket):
 
     if ticket.resolution_status != 'resolved' or ticket.last_edited_by != current_user:
         return False
+
+    TicketHistory = apps.get_model('tickets', 'TicketHistory')
 
     ticket_history = TicketHistory.objects.filter(
         ticket_id=ticket.id)
