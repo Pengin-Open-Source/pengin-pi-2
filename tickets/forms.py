@@ -109,6 +109,8 @@ class TicketForm(forms.ModelForm):
                 if is_a_manager(current_user):
                     # A manager can change the ticket to any role
                     role_options = all_groups
+                    if not (ticket_has_owner and selected_role == currently_saved_role):
+                        can_set_ticket_owner_blank = True
                 else:
                     # If I am not a privileged user,
                     # I must leave the ticket
