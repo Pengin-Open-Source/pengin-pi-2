@@ -608,9 +608,14 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             ticket_to_be_edited = ticket_form.instance
             ticket_to_be_edited.last_edited_by = request.user
             ticket_to_be_edited.row_action = 'EDIT'
+
+            # did the user actually change anything before
+            # hitting Save?
+            user_made_real_change = ticket_form.has_changed()
+
             # If *CURRENT* resolution_status is NOT Open,
-            # Reopen this ticket.
-            if ticket.resolution_status != 'open':
+            # and the user has made a REAL change, Reopen this ticket.
+            if ticket.resolution_status != 'open' and user_made_real_change:
                 ticket.last_edited_by = request.user
                 ticket.row_action = 'EDIT'
                 ticket.resolution_status = 'open'
