@@ -9,13 +9,12 @@ def can_see_ticket(current_user, ticket):
     else:
         return can_access_group(current_user, ticket.role.id)
 
-# only certain users can edit ALL the fields
-
 
 def can_edit_ticket_privileged(current_user, ticket):
+    # only certain users can edit ALL the fields
     if current_user.is_staff:
         return True
-    if is_a_manager(current_user):
+    if is_ticket_manager(current_user, ticket):
         return True
     if current_user == ticket.owner:
         return True
@@ -33,6 +32,9 @@ def can_edit_ticket(current_user, ticket):
     # can edit in the same way - see forms.py.
 
     if can_edit_ticket_privileged(current_user, ticket):
+        return True
+
+    if is_a_manager(current_user):
         return True
 
     # We might change this in the future if
@@ -75,7 +77,9 @@ def can_close_ticket(current_user, ticket):
     if current_user.is_staff:
         return True
     if is_ticket_manager(current_user, ticket):
-        return False
+        return True
+
+    return False
 
 
 def can_edit_ticket_status(current_user, ticket):

@@ -271,13 +271,14 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
             reopen_request_form = TicketCreateOpenRequestForm()
             context['reopen_request_form'] = reopen_request_form
             context["can_ask_to_reopen"] = True
-
         ##########################################################
 
         context['is_ticket_manager'] = manages_ticket
         is_admin = self.request.user.is_staff
         context['is_admin'] = is_admin
         context['can_edit_ticket'] = can_edit_ticket(self.request.user, ticket)
+        context['can_edit_ticket_status'] = can_edit_ticket_status(
+            self.request.user, ticket)
         context['primary_title'] = self.object.summary + \
             " | Status: " + self.object.resolution_status.upper()
         return context
