@@ -12,7 +12,7 @@ from .models import Event, EventParticipant, EventHistory
 from main.models.users import User
 from .calendar import EventCalendar
 from .forms import EventForm, CalendarSettingsForm
-from .permissions import can_create_or_see_event, can_change_event
+from .permissions import can_create_or_see_all_event_details, can_change_event, can_see_public_event
 
 # Credit to Google Gemini for some coding assistence in this file.
 
@@ -102,8 +102,27 @@ class CalendarMonth(LoginAndValidationRequiredMixin, View):
 class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_detail.html"
 
+    # by default a user can NOT see
+    # all details of an event.
+    # (This helps distinguish
+    # between unauthorized or unaffilited
+    # users, who can some event details
+    # and logged in users who are connected
+    # to the event and can see the participant
+    # list)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.can_see_all_details = False
+
     def test_func(self):
-        return can_create_or_see_event(self.request.user, self.kwargs.get("event_id"))
+        event_id = self.kwargs.get("event_id")
+        event = get_object_or_404(Event, id=event_id)
+        if not self.request.user:
+            self.can_see_all_details = False
+        else:
+            self.can_see_all_details = can_create_or_see_all_event_details(
+                self.request.user, event_id)
+        return can_see_public_event(event) or self.can_see_all_details
 
     def get(self, request, event_id):
 
@@ -136,6 +155,7 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         context["primary_title"] = event.title
         context["event"] = event
         context["can_change"] = can_change_event(request, event_id)
+        context["can_see_all_details"] = self.can_see_all_details
         context["role_page_obj"] = role_page_obj
         context["event_roles"] = role_page_obj.object_list
         context["primary_title"] = event.title
@@ -151,7 +171,7 @@ class EventParticipantsDetailView(LoginAndValidationRequiredMixin, UserPassesTes
     template_name = "calendar/event_participants.html"
 
     def test_func(self):
-        return can_create_or_see_event(self.request.user, self.kwargs.get("event_id"))
+        return can_create_or_see_all_event_details(self.request.user, self.kwargs.get("event_id"))
 
     def get(self, request, event_id):
 
@@ -185,7 +205,7 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_form.html"
 
     def test_func(self):
-        return can_create_or_see_event(self.request.user, self.kwargs.get("event_id"))
+        return can_create_or_see_all_event_details(self.request.user, self.kwargs.get("event_id"))
 
     def get(self, request, *args, **kwargs):
         if "event_id" in self.kwargs:

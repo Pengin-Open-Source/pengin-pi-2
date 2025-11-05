@@ -36,7 +36,11 @@ class EventForm(forms.ModelForm):
             "organizer",
             "participants",
             "roles",
+            "is_public",
         ]
+        labels = {
+            'is_public': 'Public Event?',
+        }
         widgets = {
             "start_datetime": DateTimePickerInput(),
             "end_datetime": DateTimePickerInput(),

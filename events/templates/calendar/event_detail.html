@@ -4,9 +4,11 @@
 {% loadmacros "macros/pagination.html"%}
 
 {% block pageDropDowns %}
-    <a href="{% url "calendar:calendar" %}">Back To Calendar</a>
-    <a href="{% url "calendar:copy-event" event.id %}">Duplicate Event</a>
-    <a href="{% url "calendar:display_event_participants" event.id %}">View Event Participants</a>
+    <a href="{% url "calendar:calendar" %}">Back To Calendar</a>  
+    {% if can_see_all_details %}
+      <a href="{% url "calendar:copy-event" event.id %}">Duplicate Event</a>
+      <a href="{% url "calendar:display_event_participants" event.id %}">View Event Participants</a>
+    {% endif %}
     {% if can_change %}
         <a href="{% url "calendar:edit-event" event.id %}">Edit Event</a>
         <a href="{% url "calendar:delete-event" event.id %}">Delete Event</a>
@@ -92,9 +94,11 @@
     </div>
     <div>
           <hr>
+          {% if can_see_all_details %}
             <a href="{% url "calendar:display_event_participants" event.id %}">
               <button class="primary-button" type="button">View Event Participants</button>
             </a>
+          {% endif %}
           <hr>
           
     </div>

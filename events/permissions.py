@@ -2,12 +2,18 @@ from django.shortcuts import get_object_or_404
 
 from .models import Event
 from django.db.models import OuterRef
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 from main.models.users import SubGroup, GroupSpecialAccess
 from util.security.group_access import get_cross_group_access, get_subgroups
 SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
 
-def can_create_or_see_event(current_user, event_id=None):
+# Allows duplication of an event, creation of a new event,
+# and seeing all details of an event.
+# A public event will hide the participant list from
+# unauthorized users.
+def can_create_or_see_all_event_details(current_user, event_id=None):
 
     if event_id is None:
         return True
@@ -42,8 +48,38 @@ def can_create_or_see_event(current_user, event_id=None):
 
     return (current_user.is_staff or matching_role or current_user.id in participant_ids or current_user in [event.author,  event.organizer])
 
+# Anyone who does can NOT see all the details of an
+# event,  can still see an event if it is:
+# a) public
+# b) within a year of today
+
+
+def can_see_public_event(event):
+    # Anyone can see public events that start or end
+    # up to a year before or after now.
+    if event.is_public:
+        right_now = timezone.now()
+        start_datetime = event.start_datetime
+        end_datetime = event.end_datetime
+
+        if not time_difference_over_a_year(right_now, start_datetime):
+            return True
+        if not time_difference_over_a_year(right_now, end_datetime):
+            return True
+
+    return False
+
 
 def can_change_event(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     # Only the author or organizer, or staff can change an event
     return request.user.is_staff or request.user in [event.author, event.organizer]
+
+
+########## UTILITY METHODS ##################
+
+def time_difference_over_a_year(date1, date2):
+    earlier = min(date1, date2)
+    later = max(date1, date2)
+
+    return later > earlier + relativedelta(years=1)

@@ -22,6 +22,7 @@ class Event(models.Model):
         User,  on_delete=models.SET_NULL,  null=True)
     roles = models.ManyToManyField(Group, related_name='events', blank=True)
     row_action = models.CharField(max_length=10, default='ERROR')
+    is_public = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title + " at " + self.location

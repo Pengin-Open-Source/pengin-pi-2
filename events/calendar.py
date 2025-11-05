@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 # from django.db.models import Q
 from django.shortcuts import reverse
 import calendar
-from .permissions import can_create_or_see_event
+from .permissions import can_create_or_see_all_event_details, can_see_public_event
 
 from events.models import Event
 
@@ -161,11 +161,13 @@ class EventCalendar(calendar.HTMLCalendar):
 #             filtered_objects.append(obj)
 #     return filtered_objects
 
+# ETA. Show public events
 
-def filter_events(events, conditions, current_user):
+
+def filter_events(events, conditions, current_user=None):
     filtered_events = []
     for event in events:
-        if any(condition(event) for condition in conditions) and can_create_or_see_event(current_user, event.id):
+        if any(condition(event) for condition in conditions) and (can_see_public_event(event) or can_create_or_see_all_event_details(current_user, event.id)):
             filtered_events.append(event)
 
     return filtered_events
