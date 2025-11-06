@@ -161,7 +161,7 @@ class EventCalendar(calendar.HTMLCalendar):
 #             filtered_objects.append(obj)
 #     return filtered_objects
 
-# ETA. Show public events
+# ETA. Show public events also
 
 
 def filter_events(events, conditions, current_user=None):

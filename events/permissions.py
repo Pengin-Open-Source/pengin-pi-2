@@ -14,6 +14,8 @@ SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 # A public event will hide the participant list from
 # unauthorized users.
 def can_create_or_see_all_event_details(current_user, event_id=None):
+    if not current_user.is_authenticated:
+        return False
 
     if event_id is None:
         return True
@@ -65,6 +67,8 @@ def can_see_public_event(event):
         if not time_difference_over_a_year(right_now, start_datetime):
             return True
         if not time_difference_over_a_year(right_now, end_datetime):
+            return True
+        if right_now > start_datetime and right_now < end_datetime:
             return True
 
     return False
