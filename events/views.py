@@ -8,6 +8,7 @@ from django.shortcuts import render, reverse, get_object_or_404, redirect
 from django.views import View
 from django.db import transaction
 from main.mixins import LoginAndValidationRequiredMixin
+from .mixins import PublicEventsOrLoggedInMixin
 from .models import Event, EventParticipant, EventHistory
 from main.models.users import User
 from .calendar import EventCalendar
@@ -19,7 +20,7 @@ from .permissions import can_create_or_see_all_event_details, can_change_event, 
 myCal = EventCalendar()
 
 
-class CalendarMonth(LoginAndValidationRequiredMixin, View):
+class CalendarMonth(PublicEventsOrLoggedInMixin, View):
     template_name = "calendar/calendar_month.html"
 
     def get(self, request, year=None, month=None):
@@ -99,7 +100,7 @@ class CalendarMonth(LoginAndValidationRequiredMixin, View):
         )
 
 
-class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
+class DetailEvent(PublicEventsOrLoggedInMixin, UserPassesTestMixin, View):
     template_name = "calendar/event_detail.html"
 
     # by default a user can NOT see
@@ -117,7 +118,7 @@ class DetailEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     def test_func(self):
         event_id = self.kwargs.get("event_id")
         event = get_object_or_404(Event, id=event_id)
-        if not self.request.user:
+        if not (self.request.user.is_authenticated and self.request.user.validated):
             self.can_see_all_details = False
         else:
             self.can_see_all_details = can_create_or_see_all_event_details(

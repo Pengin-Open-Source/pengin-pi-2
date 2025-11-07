@@ -1,8 +1,10 @@
 {% extends "layout/fullPageScroll.html" %}
 
 {% block pageDropDowns%}
-  <a href="{% url "calendar:create-event" %}">Create Event</a>
-  <a href="{% url "calendar:calendar-settings" %}">Calendar Settings</a>
+  {% if user.is_authenticated and user.validated %}
+    <a href="{% url "calendar:create-event" %}">Create Event</a>
+    <a href="{% url "calendar:calendar-settings" %}">Calendar Settings</a>
+  {% endif %}
 {% endblock %}
 
 {#{% block content %}#}

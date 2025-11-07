@@ -58,7 +58,9 @@ def can_create_or_see_all_event_details(current_user, event_id=None):
 
 def can_see_public_event(event):
     # Anyone can see public events that start or end
-    # up to a year before or after now.
+    # up to a year before or after now
+    # credit to Gemini for help
+    # with these calculations
     if event.is_public:
         right_now = timezone.now()
         start_datetime = event.start_datetime
@@ -74,6 +76,42 @@ def can_see_public_event(event):
     return False
 
 
+def is_month_too_far_away(selected_year,  selected_month):
+
+    # Gemini code snipet for getting the month, year
+    # of the date a year ago & a year from now.
+    # 1. Get the current, timezone-aware UTC datetime
+    ################################################
+    right_now = timezone.now()
+
+    # 2. Calculate one year from now using relativedelta
+    one_year_from_now = right_now + relativedelta(years=1)
+
+    # 3. Calculate one year ago using relativedelta
+    one_year_ago = right_now - relativedelta(years=1)
+
+    # --- ONE YEAR FROM NOW ---
+    future_month = one_year_from_now.month  # e.g., 11 (for November)
+    future_year = one_year_from_now.year    # e.g., 2026
+
+    # --- ONE YEAR AGO ---
+    past_month = one_year_ago.month        # e.g., 11 (for November)
+    past_year = one_year_ago.year          # e.g., 2024
+
+    #############################################
+
+    # is the calendar month selected too far away
+    # to allow unauthorized users to see it?
+    if selected_year > future_year or selected_year < past_year:
+        return True
+    elif selected_year == future_year and selected_month > future_month:
+        return True
+    elif selected_year == past_year and selected_month < past_month:
+        return True
+    
+    return False
+
+
 def can_change_event(request, event_id):
     event = get_object_or_404(Event, id=event_id)
     # Only the author or organizer, or staff can change an event
@@ -81,7 +119,7 @@ def can_change_event(request, event_id):
 
 
 ########## UTILITY METHODS ##################
-
+# credit to Gemini for help with these calculations
 def time_difference_over_a_year(date1, date2):
     earlier = min(date1, date2)
     later = max(date1, date2)
