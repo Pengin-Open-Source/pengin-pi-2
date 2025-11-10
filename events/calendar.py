@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 # from django.db.models import Q
 from django.shortcuts import reverse
 import calendar
-from .permissions import can_create_or_see_all_event_details, can_see_public_event
+from .permissions import can_create_or_see_all_event_details, can_see_public_event, is_month_too_far_away
 
 from events.models import Event
 
@@ -132,7 +132,7 @@ class EventCalendar(calendar.HTMLCalendar):
                            )
         ]
         events_in_month = filter_events(
-            events_local_time_zone, conditions, current_user)
+            events_local_time_zone, year, month, conditions, current_user)
 
         for day in self.itermonthdays(year, month):
             if day > 0:
@@ -164,11 +164,18 @@ class EventCalendar(calendar.HTMLCalendar):
 # ETA. Show public events also
 
 
-def filter_events(events, conditions, current_user=None):
+def filter_events(events, year, month, conditions,  current_user=None):
     filtered_events = []
 
-    for event in events:
-        if any(condition(event) for condition in conditions) and (can_see_public_event(event) or can_create_or_see_all_event_details(current_user, event.id)):
-            filtered_events.append(event)
+    if is_month_too_far_away(year, month):
+        # don't look for public events
+        for event in events:
+            if any(condition(event) for condition in conditions) and can_create_or_see_all_event_details(current_user, event.id):
+                filtered_events.append(event)
+    else:
+        # include public events
+        for event in events:
+            if any(condition(event) for condition in conditions) and (can_see_public_event(event) or can_create_or_see_all_event_details(current_user, event.id)):
+                filtered_events.append(event)
 
     return filtered_events
