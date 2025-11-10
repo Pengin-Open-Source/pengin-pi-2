@@ -5,9 +5,8 @@ from django.urls import reverse
 from django.contrib.auth.mixins import AccessMixin
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
-from .permissions import is_month_too_far_away
+from .permissions import is_month_too_far_away, is_any_public_event_available, can_see_public_event
 from events.models import Event
-from .calendar import filter_events
 
 
 class PublicEventsOrLoggedInMixin(AccessMixin):
@@ -30,16 +29,22 @@ class PublicEventsOrLoggedInMixin(AccessMixin):
             # if we passed the validated user check, the only events
             # available are public events within a year of today.
 
-        public_events_within_a_year = filter_events(
-            Event.objects.filter(is_public=True), [])
-        if public_events_within_a_year:
+        event_id = self.kwargs.get("event_id")
+        # if the user is trying to access a specific event:
+        if event_id:
+            selected_event = Event.objects.filter(id=event_id)
+            # is this a public event,  and
+            # is it within a year from now?
+            if can_see_public_event(selected_event):
+                return super().dispatch(request, *args, **kwargs)
+            else:
+                return HttpResponseForbidden("<h1> <center> Event Not Available </center> </h1>")
+
+        # User isn't logged in, but is trying to see the calendar
+        # Are there ANY public events within a year from now,
+        # (year past or year in future)? If not,  don't let this
+        # user see the calendar
+        if is_any_public_event_available(Event.objects.filter(is_public=True)):
             return super().dispatch(request, *args, **kwargs)
         else:
-            selected_event = self.kwargs.get("event_id")
-
-            # trying to access a specific event, or the calendar?
-            if selected_event:
-                error_message = "<h1> <center> Event Not Available </center> </h1>"
-            else:
-                error_message = "<h1> <center> No Public Events Available At This Time </center> </h1>"
-            return HttpResponseForbidden(error_message)
+            return HttpResponseForbidden("<h1> <center> No Public Events Available At This Time </center> </h1>")

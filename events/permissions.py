@@ -76,6 +76,18 @@ def can_see_public_event(event):
     return False
 
 
+def is_any_public_event_available(events):
+    # are there *any* public events within 
+    # a year of "right now?"
+    # Used to determine if anonymous users
+    # can access the calendar *at all*
+    for event in events:
+        if can_see_public_event(event):
+            return True
+        
+    return False
+
+
 def is_month_too_far_away(selected_year,  selected_month):
 
     # Gemini code snipet for getting the month, year
@@ -108,7 +120,7 @@ def is_month_too_far_away(selected_year,  selected_month):
         return True
     elif selected_year == past_year and selected_month < past_month:
         return True
-    
+
     return False
 
 

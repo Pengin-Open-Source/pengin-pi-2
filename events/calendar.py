@@ -166,10 +166,6 @@ class EventCalendar(calendar.HTMLCalendar):
 
 def filter_events(events, conditions, current_user=None):
     filtered_events = []
-    if conditions == []:
-        for event in events:
-            if can_see_public_event(event):
-                filtered_events.append(event)
 
     for event in events:
         if any(condition(event) for condition in conditions) and (can_see_public_event(event) or can_create_or_see_all_event_details(current_user, event.id)):
