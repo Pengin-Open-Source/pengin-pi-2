@@ -16,7 +16,7 @@ class PublicEventsOrLoggedInMixin(AccessMixin):
         selected_year = self.kwargs.get("year")
         selected_month = self.kwargs.get("month")
 
-        # is the the Calendar View? Ff so, find out if
+        # is the the Calendar View? If so, find out if
         # we're trying to look too far into the future
         # or past for an Anonymous User.
 

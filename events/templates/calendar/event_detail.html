@@ -81,16 +81,26 @@
         <p class="post-info"><b> Location:  </b> {{ event.location }}</p>
     {% endif %}
     <div>
-        {% if event_roles.all|length > 0 %}
-          <hr>
-            <p> <b> Roles: </b> </p>
-          <hr>
-            {% for role in event_roles.all %}
-                <p class="post-info">{{ role.name }}</p>
-            {% endfor %}
-         {% endif %}
-         <!-- Pagination -->
-         {% use_macro render_pagination role_page_obj %} 
+      <p class="post-info"> <b> This Event Is
+
+        {% if event.is_public %}
+          Public </b> </p>
+        {% else %}
+          For These Roles & Participants: </b> </p>
+        {% endif %}
+        {% if can_see_all_details %}
+
+          {% if event_roles.all|length > 0 %}
+            <hr>
+              <p> <b> Roles: </b> </p>
+            <hr>
+              {% for role in event_roles.all %}
+                  <p class="post-info">{{ role.name }}</p>
+              {% endfor %}
+          {% endif %}
+          <!-- Pagination -->
+          {% use_macro render_pagination role_page_obj %} 
+        {% endif %}
     </div>
     <div>
           <hr>
