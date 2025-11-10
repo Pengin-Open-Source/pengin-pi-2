@@ -35,5 +35,11 @@ class PublicEventsOrLoggedInMixin(AccessMixin):
         if public_events_within_a_year:
             return super().dispatch(request, *args, **kwargs)
         else:
-            return HttpResponseForbidden(
-                "<h1> <center> No Public Available Events At This Time </center> </h1>")
+            selected_event = self.kwargs.get("event_id")
+
+            # trying to access a specific event, or the calendar?
+            if selected_event:
+                error_message = "<h1> <center> Event Not Available </center> </h1>"
+            else:
+                error_message = "<h1> <center> No Public Events Available At This Time </center> </h1>"
+            return HttpResponseForbidden(error_message)
