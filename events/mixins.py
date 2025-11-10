@@ -32,7 +32,7 @@ class PublicEventsOrLoggedInMixin(AccessMixin):
         event_id = self.kwargs.get("event_id")
         # if the user is trying to access a specific event:
         if event_id:
-            selected_event = Event.objects.filter(id=event_id)
+            selected_event = Event.objects.get(id=event_id)
             # is this a public event,  and
             # is it within a year from now?
             if can_see_public_event(selected_event):
