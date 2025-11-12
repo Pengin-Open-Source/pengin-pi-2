@@ -1,5 +1,8 @@
 {% extends "layout/fullPageScroll.html" %}
 {% load static %}  
+{% block page_head_assets %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock page_head_assets %}
 {% block pageDropDowns %}
     {%  if action == "update" %}
         <a href="{% url "calendar:detail-event" event.id %}">Cancel</a>
@@ -9,6 +12,7 @@
 {% endblock %}
 
 {% block pageContent %}
+    
     <form class="event-form-class" method="POST">
         {% if form_errors %}
             <div class="alert alert-danger">
@@ -22,6 +26,8 @@
         {% csrf_token %}
         {{ form.media }} 
         {{ form }}
+        <input type="text" id="myDateTimePicker">
+        <input type="hidden" name="custom_data" id="hidden-custom-data" value="">
 
            
         {% if action == "update" %}
@@ -42,6 +48,31 @@
    <script src="{% static 'javascript/jquery/1.12.4/jquery.min.js' %}"></script>
    <script src="{% static 'javascript/scripts.js' %}"></script>
    <script src="{% static 'javascript/calendarEvents.js' %}"></script> 
+   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+   <script>
+    flatpickr("#myDateTimePicker", {
+      enableTime: true,
+      dateFormat: "Y-m-d\\TH:i:S\\Z",  // ISO 8601 UTC,
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const customField = document.getElementById('myDatePicker');
+        const hiddenField = document.getElementById('hidden-custom-data');
+    
+        form.addEventListener('submit', function(event) {
+            // 1. Get the value from the custom field
+            const customValue = customField.value; 
+    
+            // 2. Set the value of the hidden input field
+            hiddenField.value = customValue; 
+    
+            // The form will now proceed with submission, 
+            // including the new 'custom_data' field.
+        });
+    });
+
+  </script>
 
     
 {% endblock %}

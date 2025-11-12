@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+from django.conf.locale.en import formats as en_formats
 from pathlib import Path
 from dotenv import load_dotenv
 from decouple import config
@@ -175,3 +176,15 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # Use for deployment
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# First, import the default settings to ensure you don't overwrite them
+
+# Get the existing default list (which includes the space-separated one)
+# Use a copy to modify it safely
+DEFAULT_DATETIME_FORMATS = list(en_formats.DATETIME_INPUT_FORMATS)
+
+# Add your ISO 8601 UTC format to the beginning (for highest priority)
+DATETIME_INPUT_FORMATS = [
+    '%Y-%m-%dT%H:%M:%SZ',  # <--- YOUR FLATICKR FORMAT
+] + DEFAULT_DATETIME_FORMATS

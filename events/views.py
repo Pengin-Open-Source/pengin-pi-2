@@ -259,10 +259,12 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
             # See EditEvent's post method for details
             user_time_zone_str = request.COOKIES.get('time_zone')
+            custom_data_value = request.POST.get('custom_data')
             event_to_be_saved.start_datetime = convert_to_utc(
                 event_to_be_saved.start_datetime, user_time_zone_str)
             event_to_be_saved.end_datetime = convert_to_utc(
                 event_to_be_saved.end_datetime, user_time_zone_str)
+            event_to_be_saved.test_datetime = custom_data_value
 
             # event.save()
             form.instance = event_to_be_saved
