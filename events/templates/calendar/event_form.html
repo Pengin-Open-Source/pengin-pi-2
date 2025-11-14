@@ -13,7 +13,7 @@
 
 {% block pageContent %}
     
-    <form class="event-form-class" method="POST">
+    <form class="event-form-class"id="eventCreateForm" method="POST">
         {% if form_errors %}
             <div class="alert alert-danger">
                 {% for error in form_errors %}
@@ -52,12 +52,15 @@
    <script>
     flatpickr("#myDateTimePicker", {
       enableTime: true,
-      dateFormat: "Y-m-d\\TH:i:S\\Z",  // ISO 8601 UTC,
+      // 'K' outputs a local ISO 8601 string including the offset (e.g., -05:00)
+      dateFormat: "Y-m-d H:i",
+      time_24hr: true,
     });
 
 
     document.addEventListener('DOMContentLoaded', function() {
-        const customField = document.getElementById('myDatePicker');
+        const form = document.getElementById('eventCreateForm');
+        const customField = document.getElementById('myDateTimePicker');
         const hiddenField = document.getElementById('hidden-custom-data');
     
         form.addEventListener('submit', function(event) {

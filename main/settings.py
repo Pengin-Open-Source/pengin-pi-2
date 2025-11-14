@@ -186,5 +186,5 @@ DEFAULT_DATETIME_FORMATS = list(en_formats.DATETIME_INPUT_FORMATS)
 
 # Add your ISO 8601 UTC format to the beginning (for highest priority)
 DATETIME_INPUT_FORMATS = [
-    '%Y-%m-%dT%H:%M:%SZ',  # <--- YOUR FLATICKR FORMAT
+    '%Y-%m-%dT%H:%M:%S%z',  # <--- FLATICKR FORMAT
 ] + DEFAULT_DATETIME_FORMATS
