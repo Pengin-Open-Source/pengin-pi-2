@@ -62,14 +62,18 @@
         const form = document.getElementById('eventCreateForm');
         const customField = document.getElementById('myDateTimePicker');
         const hiddenField = document.getElementById('hidden-custom-data');
-    
+        const flatpickrInstance = document.querySelector("#myDateTimePicker")._flatpickr;
+        
         form.addEventListener('submit', function(event) {
             // 1. Get the value from the custom field
-            const customValue = customField.value; 
+            //const customValue = customField.value; 
     
             // 2. Set the value of the hidden input field
-            hiddenField.value = customValue; 
-    
+           // hiddenField.value = customValue; 
+           const flatpickrInstance = document.querySelector("#myDateTimePicker")._flatpickr;
+           const selectedLocalDate = flatpickrInstance.selectedDates[0];
+           const utcDateString = selectedLocalDate.toISOString();
+           hiddenField.value = utcDateString; 
             // The form will now proceed with submission, 
             // including the new 'custom_data' field.
         });
