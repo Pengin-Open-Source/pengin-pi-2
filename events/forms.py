@@ -25,25 +25,35 @@ class EventForm(forms.ModelForm):
     organizer = UserModelChoiceField(
         queryset=User.objects.filter(validated=True))
 
+    start_datetime = forms.CharField(
+        # The value is set by JavaScript, so we tell Django to render it as hidden.
+        label='',
+        widget=forms.HiddenInput(),
+        required=True
+    )
+
+    end_datetime = forms.CharField(
+        # The value is set by JavaScript, so we tell Django to render it as hidden.
+        label='',
+        widget=forms.HiddenInput(),
+        required=True
+    )
+
     class Meta:
         model = Event
         fields = [
             "title",
             "description",
             "location",
+            "is_public",
             "start_datetime",
             "end_datetime",
             "organizer",
             "participants",
             "roles",
-            "is_public",
         ]
         labels = {
             'is_public': 'Public Event?',
-        }
-        widgets = {
-            "start_datetime": DateTimePickerInput(),
-            "end_datetime": DateTimePickerInput(),
         }
 
     # Handles getting the currently selected participants to load in the Edit view

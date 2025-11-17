@@ -72,9 +72,19 @@
      {% endif %}
 
     <p class="post-info"> <b> Organizer : </b>  {{ event.organizer.name }}</p>
-    <p class="post-info"> <b> Start time: </b> {{ event.start_date }} @ {{ event.start_time }}</p>
-    <p class="post-info"> <b> End time: </b> {{ event.end_date }} @ {{ event.end_time }}</p>
-    <p class="post-info"> <b> Test Time: </b> {{ event.test_date }} @ {{ event.test_time }}</p>
+    <p class="post-info"> <b> Start time: </b> <span id="event-start-time"></span></p>
+    <script>
+      var utcTime = new Date('{{ event.start_datetime|date:"c" }}');
+      var localTime = convertUTCToLocal(utcTime);
+      document.getElementById('event-start-time').textContent = localTime;
+    </script>
+    <p class="post-info"> <b> End time: </b> <span id="event-end-time"></span></p>
+    <script>
+      var utcTime = new Date('{{ event.end_datetime|date:"c" }}');
+      var localTime = convertUTCToLocal(utcTime);
+      document.getElementById('event-end-time').textContent = localTime;
+    </script>
+    
     {% if event.description %}
         <p class="post-info"> <b> Description </b> : {{ event.description }}</p>
     {% endif %}

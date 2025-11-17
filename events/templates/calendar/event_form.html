@@ -26,8 +26,10 @@
         {% csrf_token %}
         {{ form.media }} 
         {{ form }}
-        <input type="text" id="myDateTimePicker">
-        <input type="hidden" name="custom_data" id="hidden-custom-data" value="">
+
+        <p> Start Time: <input type="text" id="startDateTimePicker">  </p>
+
+        <p> End Time: <input type="text" id="endDateTimePicker">  </p> 
 
            
         {% if action == "update" %}
@@ -50,32 +52,51 @@
    <script src="{% static 'javascript/calendarEvents.js' %}"></script> 
    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
    <script>
-    flatpickr("#myDateTimePicker", {
-      enableTime: true,
-      // 'K' outputs a local ISO 8601 string including the offset (e.g., -05:00)
-      dateFormat: "Y-m-d H:i",
-      time_24hr: true,
+
+    flatpickr("#startDateTimePicker", {
+        enableTime: true,
+        dateFormat: "F j, Y h:i K",
     });
+
+    flatpickr("#endDateTimePicker", {
+        enableTime: true,
+        dateFormat: "F j, Y h:i K",
+    });
+
 
 
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('eventCreateForm');
-        const customField = document.getElementById('myDateTimePicker');
-        const hiddenField = document.getElementById('hidden-custom-data');
-        const flatpickrInstance = document.querySelector("#myDateTimePicker")._flatpickr;
+
+        // get the local timezone Start DateTime
+        const startField = document.getElementById('startDateTimePicker');
+        const hiddenStartField = document.getElementById('id_start_datetime');
+        const startFlatpickr = document.querySelector("#startDateTimePicker")._flatpickr;
+
+        // get the local timezone End DateTime
+        const endField = document.getElementById('endDateTimePicker');
+        const hiddenEndField = document.getElementById('id_end_datetime');
+        const endFlatpickr = document.querySelector("#endDateTimePicker")._flatpickr;
         
+
+
+
         form.addEventListener('submit', function(event) {
-            // 1. Get the value from the custom field
-            //const customValue = customField.value; 
-    
-            // 2. Set the value of the hidden input field
-           // hiddenField.value = customValue; 
-           const flatpickrInstance = document.querySelector("#myDateTimePicker")._flatpickr;
-           const selectedLocalDate = flatpickrInstance.selectedDates[0];
-           const utcDateString = selectedLocalDate.toISOString();
-           hiddenField.value = utcDateString; 
-            // The form will now proceed with submission, 
-            // including the new 'custom_data' field.
+         
+
+           // make the Start DateTime UTC before handing to backend
+           const localStartDate = startFlatpickr.selectedDates[0];
+           const utcStartDate = localStartDate.toISOString();
+           hiddenStartField.value = utcStartDate; 
+
+
+          // make the End DateTime UTC before handing to backend
+          const localEndDate = endFlatpickr.selectedDates[0];
+          const utcEndDate = localEndDate.toISOString();
+          hiddenEndField.value = utcEndDate; 
+
+
+
         });
     });
 

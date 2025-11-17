@@ -11,7 +11,6 @@ class Event(models.Model):
     date = models.DateTimeField(default=timezone.now)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
-    test_datetime = models.DateTimeField()
     title = models.CharField(max_length=50)
     description = models.TextField()
     location = models.CharField(max_length=100)
@@ -28,17 +27,11 @@ class Event(models.Model):
     def __str__(self):
         return self.title + " at " + self.location
 
-    def test_date(self):
-        return self.test_datetime.date()
-
     def start_date(self):
         return self.start_datetime.date()
 
     def end_date(self):
         return self.end_datetime.date()
-
-    def test_time(self):
-        return self.test_datetime.time().strftime("%I:%M %p")
 
     def start_time(self):
         return self.start_datetime.time().strftime("%I:%M %p")
@@ -107,7 +100,6 @@ class EventHistory(models.Model):
     date = models.DateTimeField()
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
-    test_datetime = models.DateTimeField()
     title = models.CharField(max_length=50)
     description = models.TextField()
     location = models.CharField(max_length=100)

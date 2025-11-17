@@ -32,11 +32,10 @@ class CalendarMonth(PublicEventsOrLoggedInMixin, View):
         myCal.set_time_zone(user_time_zone_str)
 
         present_datetime = datetime.now()
-        # Using local present time for the calendar month
-        # becomes relevant on the first and last days of months
-        # and years
+        # Using local present time for the calendar month.
+        # This becomes relevant on the first and last days
+        # of months and years.
         present_local_time = convert_to_local(
-            # - * actual local time, not another masquerade for flatpickr
             present_datetime, user_time_zone_str)
         present_year = present_local_time.year
         present_month = present_local_time.month
@@ -130,13 +129,6 @@ class DetailEvent(PublicEventsOrLoggedInMixin, UserPassesTestMixin, View):
         event = get_object_or_404(Event, id=event_id)
         page_number = self.request.GET.get('page', 1)
 
-        # - turn the event's utc datetime into a local datetime
-        user_time_zone_str = self.request.COOKIES.get('time_zone')
-        event.start_datetime = convert_to_masquerade_local(
-            event.start_datetime, user_time_zone_str)
-        event.end_datetime = convert_to_masquerade_local(
-            event.end_datetime, user_time_zone_str)
-
         # Get date the event was originally created, if that is available,
         # along with the flag that tells you if it is available
         if event.row_action == 'CREATE':
@@ -212,11 +204,6 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         if "event_id" in self.kwargs:
             initial = self.get_initial()
             form = EventForm(initial)
-            user_time_zone_str = self.request.COOKIES.get('time_zone')
-            initial["start_datetime"] = convert_to_masquerade_local(
-                initial.get("start_datetime"), user_time_zone_str)
-            initial["end_datetime"] = convert_to_masquerade_local(
-                initial.get("end_datetime"), user_time_zone_str)
             primary_title = "Duplicate Event: " + initial.get("title")
         else:
             form = EventForm()
@@ -253,22 +240,9 @@ class CreateEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
         form = EventForm(request.POST)
         if form.is_valid():
             event_to_be_saved = form.instance
-            # event = form.save(commit=False)
             event_to_be_saved.author = request.user
             event_to_be_saved.row_action = 'CREATE'
 
-            # See EditEvent's post method for details
-            user_time_zone_str = request.COOKIES.get('time_zone')
-            custom_data_value = request.POST.get('custom_data')
-            print('custom_data_value')
-            print(custom_data_value)
-            event_to_be_saved.start_datetime = convert_to_utc(
-                event_to_be_saved.start_datetime, user_time_zone_str)
-            event_to_be_saved.end_datetime = convert_to_utc(
-                event_to_be_saved.end_datetime, user_time_zone_str)
-            event_to_be_saved.test_datetime = custom_data_value
-
-            # event.save()
             form.instance = event_to_be_saved
             event = form.save()
 
@@ -305,13 +279,6 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
 
     def get_context_data(self):
         event = get_object_or_404(Event, id=self.kwargs["event_id"])
-        # reverse of what we do in post method
-        # - turn the event's utc datetime into a local datetime
-        user_time_zone_str = self.request.COOKIES.get('time_zone')
-        event.start_datetime = convert_to_masquerade_local(
-            event.start_datetime, user_time_zone_str)
-        event.end_datetime = convert_to_masquerade_local(
-            event.end_datetime, user_time_zone_str)
 
         form = EventForm(instance=event)
 
@@ -342,17 +309,6 @@ class EditEvent(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
             event_to_be_edited.row_action = 'EDIT'
             event_to_be_edited.date = dj_util_timezone.now()
 
-            # Working with Google's AI and also referring to Flask version for this)
-            # - Grab the timezone that was stored as a cookie in layout.html,  convert
-            # the time into the correct UTC time.
-            # The reason we are converting a date that is already utc into utc,
-            # is because the user THINKS they entered the date time in their own timezone.
-            # We need to do some tweaks to get the transformation right.
-            user_time_zone_str = request.COOKIES.get('time_zone')
-            event_to_be_edited.start_datetime = convert_to_utc(
-                event_to_be_edited.start_datetime, user_time_zone_str)
-            event_to_be_edited.end_datetime = convert_to_utc(
-                event_to_be_edited.end_datetime, user_time_zone_str)
             form.instance = event_to_be_edited
 
             attendees_to_delete = EventParticipant.objects.filter(
@@ -434,23 +390,8 @@ class CalendarSettings(LoginAndValidationRequiredMixin, View):
 
 ################### UTILITY METHODS #########################
 
-    ###########  DATETIME CONVERSION METHODS ########
 
-def convert_to_utc(event_datetime,  time_zone_str):
-    """Converts a local datetime object to UTC."""
-    # IMPORTANT - the User THINKS the date is in their time zone, but it's actually UTC
-    # Therefore,  we must replace (not convert) the date's timezone to be whatever timezone
-    # the user is in.  Then we can convert to the real Universal Time equivalent
-    # So, if the user selects a start date of 10:00 AM,  they may THINK
-    # that the chose 10:00 AM EST or EDT - but it's actually UTC.  In order to put the real UTC time
-    # that would actually equate to 10:00 AM EST or EDT in the database,  we need to first
-    # change the time to 10:00 AM America/New York, and then convert that time to UTC
-
-    user_time_zone = ZoneInfo(time_zone_str)
-    local_time = event_datetime.replace(tzinfo=user_time_zone)
-
-    return local_time.astimezone(dt_timezone.utc)
-
+###########  DATETIME CONVERSION METHODS ########
 
 def convert_to_local(event_datetime, time_zone_str):
     """ Convert utc datetime to local datetime """
@@ -461,26 +402,7 @@ def convert_to_local(event_datetime, time_zone_str):
     return local_time
 
 
-def convert_to_masquerade_local(event_datetime, time_zone_str):
-    """ Make a fake UTC time masquerade as local time - it will have the correct numeric time,  but needs
-     to have tzinfo UTC for flatpickr datetimes.  The user will mentally interpret the datetime- correctly- as a datetime
-     in their own time zone """
-
-    # TODO - For visually impaired customers,  find out if screen readers will state the timezone to the user-
-    # - or if they will simply say the datetime.  If the latter,  then a blind user will likely interpret
-    # the datetime the same as a sighted user would. If the former,  we will either need to scrap this workaround
-    # or add in some kind of screen reader tags to notify the blind user of the real timezone
-
-    local_time = convert_to_local(event_datetime, time_zone_str)
-    # (Assuming local is EST, for example)  - Convert a "10:00 AM EST" time to "10:00 AM UTC."
-    # The date in the form will technically be a false UTC.
-    # (10:00 AM EST would really be 3 PM UTC the database)
-    #  but the User will interpret the datetime as 10 AM EST
-    utc_masquerade_local_time = local_time.replace(tzinfo=dt_timezone.utc)
-
-    return utc_masquerade_local_time
-
-    ###########  Deletion and Record Creation Information Methods ########
+###########  Deletion and Record Creation Information Methods ########
 
 
 # Used to get original date of an edited event
