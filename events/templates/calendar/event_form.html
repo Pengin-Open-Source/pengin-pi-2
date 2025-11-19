@@ -80,12 +80,14 @@
         const endFlatpickr = document.querySelector("#endDateTimePicker")._flatpickr;
         
         if (initialEndValue) {
-            var localDate = new Date(initialEndValue)
+            var safeSafariEndString  = initialEndValue.replace(' ', 'T');
+            var localDate = new Date(safeSafariEndString )
             endFlatpickr.setDate(localDate);
         }
 
         if (initialStartValue) {
-            var localDate = new Date(initialStartValue)
+            var safeSafariStartString = initialStartValue.replace(' ', 'T');
+            var localDate = new Date(safeSafariStartString )
             startFlatpickr.setDate(localDate);
         }
     
