@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 
 from .models import Event
-from django.db.models import OuterRef
+from django.db.models import OuterRef, Q
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from main.models.users import SubGroup, GroupSpecialAccess
@@ -76,20 +76,7 @@ def can_see_public_event(event):
     return False
 
 
-def is_any_public_event_available(events):
-    # are there *any* public events within 
-    # a year of "right now?"
-    # Used to determine if anonymous users
-    # can access the calendar *at all*
-    for event in events:
-        if can_see_public_event(event):
-            return True
-        
-    return False
-
-
-def is_month_too_far_away(selected_year,  selected_month):
-
+def getYearAwayValues():
     # Gemini code snipet for getting the month, year
     # of the date a year ago & a year from now.
     # 1. Get the current, timezone-aware UTC datetime
@@ -112,8 +99,51 @@ def is_month_too_far_away(selected_year,  selected_month):
 
     #############################################
 
+    year_away_values = {
+        "past_year": past_year,
+        "past_month": past_month,
+        "future_year": future_year,
+        "future_month": future_month
+    }
+
+    return year_away_values
+
+
+def is_any_public_event_available(events):
+    # are there *any* public events within
+    # a year of "right now?"
+    # Used to determine if anonymous users
+    # can access the calendar *at all
+
+    right_now = timezone.now()
+
+    yearAway = getYearAwayValues()
+    future_year = yearAway["future_year"]
+    past_year = yearAway["past_year"]
+    future_month = yearAway["future_month"]
+    past_month = yearAway["past_month"]
+
+    # time_conditions = Q(start_datetime__year = future_year, start_datetime__month <= future_month) | Q(start_datetime__year = past_year, start_datetime__month <= future_month)
+
+    # public_events_in_month = Event.objects.filter(is_public=True,  time_conditions)
+
+    for event in events:
+        if can_see_public_event(event):
+            return True
+
+    return False
+
+
+def is_month_too_far_away(selected_year,  selected_month):
+
     # is the calendar month selected too far away
     # to allow unauthorized users to see it?
+
+    yearAway = getYearAwayValues()
+    future_year = yearAway["future_year"]
+    past_year = yearAway["past_year"]
+    future_month = yearAway["future_month"]
+    past_month = yearAway["past_month"]
     if selected_year > future_year or selected_year < past_year:
         return True
     elif selected_year == future_year and selected_month > future_month:
