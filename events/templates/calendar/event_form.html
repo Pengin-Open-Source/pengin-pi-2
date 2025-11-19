@@ -64,23 +64,31 @@
     });
 
 
-
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('eventCreateForm');
 
         // get the local timezone Start DateTime
         const startField = document.getElementById('startDateTimePicker');
         const hiddenStartField = document.getElementById('id_start_datetime');
+        const initialStartValue = hiddenStartField.value
         const startFlatpickr = document.querySelector("#startDateTimePicker")._flatpickr;
 
         // get the local timezone End DateTime
         const endField = document.getElementById('endDateTimePicker');
         const hiddenEndField = document.getElementById('id_end_datetime');
+        const initialEndValue = hiddenEndField.value
         const endFlatpickr = document.querySelector("#endDateTimePicker")._flatpickr;
         
+        if (initialEndValue) {
+            var localDate = new Date(initialEndValue)
+            endFlatpickr.setDate(localDate);
+        }
 
-
-
+        if (initialStartValue) {
+            var localDate = new Date(initialStartValue)
+            startFlatpickr.setDate(localDate);
+        }
+    
         form.addEventListener('submit', function(event) {
          
 

@@ -20,6 +20,13 @@
  {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
  <script>
     function convertUTCToLocal(utcTime) {
+      // ETA: I know these looks like redundant new Date()'s, 
+      // but I think I've had a problem in the past 
+      // without the first line. Discussing with Gemini
+      // again, it thinks this might be good defensive 
+      // progamming that will accept either a string 
+      // or a date object. Leave as-is per 
+      // "Chesterton's Fence" rule.
       const utcMillis = new Date(utcTime).getTime();
       const localDate = new Date(utcMillis);
       return localDate.toLocaleString('en-US', {
