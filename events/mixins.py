@@ -44,7 +44,7 @@ class PublicEventsOrLoggedInMixin(AccessMixin):
         # Are there ANY public events within a year from now,
         # (year past or year in future)? If not,  don't let this
         # user see the calendar
-        if is_any_public_event_available(Event.objects.filter(is_public=True)):
+        if is_any_public_event_available():
             return super().dispatch(request, *args, **kwargs)
         else:
             return HttpResponseForbidden("<h1> <center> No Public Events Available At This Time </center> </h1>")

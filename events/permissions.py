@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from .models import Event
 from django.db.models import OuterRef, Q
 from django.utils import timezone
+from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from main.models.users import SubGroup, GroupSpecialAccess
 from util.security.group_access import get_cross_group_access, get_subgroups
@@ -109,27 +110,28 @@ def getYearAwayValues():
     return year_away_values
 
 
-def is_any_public_event_available(events):
+def is_any_public_event_available():
     # are there *any* public events within
     # a year of "right now?"
     # Used to determine if anonymous users
     # can access the calendar *at all
 
     right_now = timezone.now()
+    one_year_from_now = right_now + relativedelta(years=1)
+    one_year_ago = right_now - relativedelta(years=1)
 
-    yearAway = getYearAwayValues()
-    future_year = yearAway["future_year"]
-    past_year = yearAway["past_year"]
-    future_month = yearAway["future_month"]
-    past_month = yearAway["past_month"]
+    time_conditions = Q(start_datetime__gte=one_year_ago, start_datetime__lte=one_year_from_now) | Q(
+        end_datetime__gte=one_year_ago, end_datetime__lte=one_year_from_now) | Q(start_datetime__lte=one_year_ago, end_datetime__gte=one_year_from_now)
 
-    # time_conditions = Q(start_datetime__year = future_year, start_datetime__month <= future_month) | Q(start_datetime__year = past_year, start_datetime__month <= future_month)
+    public_events_in_month = Event.objects.filter(
+        Q(is_public=True) & time_conditions
+    )
+    if public_events_in_month.count() > 0:
+        return True
 
-    # public_events_in_month = Event.objects.filter(is_public=True,  time_conditions)
-
-    for event in events:
-        if can_see_public_event(event):
-            return True
+    # for event in events:
+    #     if can_see_public_event(event):
+    #         return True
 
     return False
 

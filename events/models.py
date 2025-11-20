@@ -24,6 +24,22 @@ class Event(models.Model):
     row_action = models.CharField(max_length=10, default='ERROR')
     is_public = models.BooleanField(default=False)
 
+    class Meta:
+        # Gemini suggested using these indexes to aid my
+        # Q filter search for public events withn a certain range.
+        # And also keeing in mind queries for non-public events.
+        indexes = [
+            # 1. BEST for your public-facing query
+            models.Index(fields=['is_public', 'start_datetime'],
+                         name='public_start_date_idx'),
+
+            # 2. BEST for the new logged-in query's time check
+            models.Index(fields=['start_datetime'], name='start_date_idx'),
+
+            # 3. ESSENTIAL for any end_datetime lookups
+            models.Index(fields=['end_datetime'], name='end_date_idx'),
+        ]
+
     def __str__(self):
         return self.title + " at " + self.location
 
