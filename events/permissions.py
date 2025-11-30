@@ -123,10 +123,10 @@ def is_any_public_event_available():
     time_conditions = Q(start_datetime__gte=one_year_ago, start_datetime__lte=one_year_from_now) | Q(
         end_datetime__gte=one_year_ago, end_datetime__lte=one_year_from_now) | Q(start_datetime__lte=one_year_ago, end_datetime__gte=one_year_from_now)
 
-    public_events_in_month = Event.objects.filter(
+    public_events_in_range = Event.objects.filter(
         Q(is_public=True) & time_conditions
     )
-    if public_events_in_month.count() > 0:
+    if public_events_in_range.count() > 0:
         return True
 
     # for event in events:
