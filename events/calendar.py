@@ -99,23 +99,29 @@ class EventCalendar(calendar.HTMLCalendar):
             next_month_year = year + 1
         month_end = get_local_time_beginning_of_month_in_utc(
             next_month_year, next_month, self.user_time_zone)
-        print("Month End")
-        print(month_end)
-        print("Month Start")
-        print(month_start)
         time_conditions = Q(start_datetime__gte=month_start, start_datetime__lt=month_end) | Q(
             end_datetime__gte=month_start, end_datetime__lt=month_end) | Q(start_datetime__lt=month_start, end_datetime__gte=month_end)
 
         # Regardless of other filters, get only the events this month.
         events_local_time_zone = Event.objects.filter(time_conditions)
 
-        # notice these are two differant data structures - one's a list and can't use order_by
-        # I don't *think* this will make a difference for the loop picking out the events.
+        # notice these are two differant data structures - one's a list and 
+        # can't use order_by, so I use sort(). Both should work for the loop 
+        # picking out events.
         if current_user.is_staff:
             events_in_month = events_local_time_zone.order_by("start_datetime")
         else:
             events_in_month = filter_events(
                 events_local_time_zone, year, month, current_user)
+            events_in_month.sort(key=lambda event: event.start_datetime)
+
+        for event in events_in_month:
+            # Moving this conversion here, after we have filtered
+            # down WHICH events we need in this month
+            event.start_datetime = event.start_datetime.astimezone(
+                self.user_time_zone)
+            event.end_datetime = event.end_datetime.astimezone(
+                self.user_time_zone)
 
         for day in self.itermonthdays(year, month):
             if day > 0:
@@ -127,13 +133,6 @@ class EventCalendar(calendar.HTMLCalendar):
                 )
 
                 for event in events_in_month:
-                    # Moving this conversion here, after we have filtered 
-                    # down WHICH events we need in this month
-                    event.start_datetime = event.start_datetime.astimezone(
-                        self.user_time_zone)
-                    event.end_datetime = event.end_datetime.astimezone(
-                        self.user_time_zone)
-
                     # Check if event is happening during day and not already saved
                     if (
                         event.start_date() <= day_date <= event.end_date()
