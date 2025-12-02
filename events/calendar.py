@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
-# from django.db.models import Q
+from django.db.models import Q
 from django.shortcuts import reverse
 import calendar
 from .permissions import can_create_or_see_all_event_details, can_see_public_event, is_month_too_far_away
@@ -70,6 +70,10 @@ class EventCalendar(calendar.HTMLCalendar):
             return cell_html
 
     def formatmonth(self, year, month, *args, **kwargs):
+
+        # To handle year and month-end edge cases,
+        # the year and month passed in from the view
+        # will be from the local timezone
         self.year = year
         self.month = month
         self.cssclass_month += " calendar-month"
@@ -80,59 +84,38 @@ class EventCalendar(calendar.HTMLCalendar):
         # displaying the calendar. Events at 8 PM Dec 31, 2025 should
         # show up in December's calendar for New York users,  and in
         # January's calendar month for London users
-        events_local_time_zone = Event.objects.all()
-        for event in events_local_time_zone:
-            event.start_datetime = event.start_datetime.astimezone(
-                self.user_time_zone)
-            event.end_datetime = event.end_datetime.astimezone(
-                self.user_time_zone)
-        # CANNOT USE ANYMORE.  I am changing in-memory objects (to use local time),
-        # and filter apparently filters on the original (UTC) values in the database
-        # if current_user.is_staff:
-        #     events_in_month = events_local_time_zone.filter(
-        #         # Filter events that are happening during the month
-        #         Q(start_datetime__year=year, start_datetime__month=month)
-        #         | Q(end_datetime__year=year, end_datetime__month=month)
-        #     ).order_by("start_datetime")
-        # else:
-        #     events_in_month = events_local_time_zone.filter(
-        #         # Filter events that are happening during the month
-        #         Q(start_datetime__year=year, start_datetime__month=month)
-        #         | Q(end_datetime__year=year, end_datetime__month=month),
-        #         # Filter events that current user is involved in
-        #         Q(author=current_user)
-        #         | Q(organizer=current_user)
-        #         | Q(participants=current_user)
-        #     ).order_by("start_datetime")
 
-        # GEMINI's suggestion to replace the filter with Q
-        # conditions = [
-        #     lambda obj: obj.field1 > 10,
-        #     lambda obj: obj.other_field == 'some_value'
-        # ]
-        # filtered_objects = filter_objects(objects, conditions)
+        # To manage this with UTC database times and local front-end
+        # times,  we get the local beginning and ending midnights
+        # of this month
+        month_start = get_local_time_beginning_of_month_in_utc(
+            year, month, self.user_time_zone)
 
-        conditions = [
+        if month < 12:
+            next_month = month + 1
+            next_month_year = year
+        else:
+            next_month = 1
+            next_month_year = year + 1
+        month_end = get_local_time_beginning_of_month_in_utc(
+            next_month_year, next_month, self.user_time_zone)
+        print("Month End")
+        print(month_end)
+        print("Month Start")
+        print(month_start)
+        time_conditions = Q(start_datetime__gte=month_start, start_datetime__lt=month_end) | Q(
+            end_datetime__gte=month_start, end_datetime__lt=month_end) | Q(start_datetime__lt=month_start, end_datetime__gte=month_end)
 
-            lambda event: event.start_datetime.year == year and event.start_datetime.month == month,
-            # Event Starts during this month
-            lambda event: event.start_datetime.year == year and event.start_datetime.month == month,
-            # Event Ends during this month
-            lambda event: event.end_datetime.year == year and event.end_datetime.month == month,
+        # Regardless of other filters, get only the events this month.
+        events_local_time_zone = Event.objects.filter(time_conditions)
 
-            lambda event: ((event.start_datetime.year == year and event.start_datetime.month < month)
-                           or
-                           # event started before this month
-                           (event.start_datetime.year < year))
-            and
-                          ((event.end_datetime.year == year and event.end_datetime.month > month)
-                              or
-                              # event ends after this month
-                              (event.end_datetime.year > year)
-                           )
-        ]
-        events_in_month = filter_events(
-            events_local_time_zone, year, month, conditions, current_user)
+        # notice these are two differant data structures - one's a list and can't use order_by
+        # I don't *think* this will make a difference for the loop picking out the events.
+        if current_user.is_staff:
+            events_in_month = events_local_time_zone.order_by("start_datetime")
+        else:
+            events_in_month = filter_events(
+                events_local_time_zone, year, month, current_user)
 
         for day in self.itermonthdays(year, month):
             if day > 0:
@@ -164,18 +147,54 @@ class EventCalendar(calendar.HTMLCalendar):
 # ETA. Show public events also
 
 
-def filter_events(events, year, month, conditions,  current_user=None):
+def filter_events(events, year, month, current_user=None):
     filtered_events = []
 
     if is_month_too_far_away(year, month):
         # don't look for public events
         for event in events:
-            if any(condition(event) for condition in conditions) and can_create_or_see_all_event_details(current_user, event.id):
+            if can_create_or_see_all_event_details(current_user, event.id):
                 filtered_events.append(event)
     else:
         # include public events
         for event in events:
-            if any(condition(event) for condition in conditions) and (can_see_public_event(event) or can_create_or_see_all_event_details(current_user, event.id)):
+            if (can_see_public_event(event) or can_create_or_see_all_event_details(current_user, event.id)):
                 filtered_events.append(event)
 
     return filtered_events
+
+
+# Slight tweak of Gemini's solution for getting the UTC equivalent of whatever
+# time the user's "local midnight" of the first day of the month is.
+# Since Event dates are stored as UTC,  but displayed as local times,
+# getting a month's dates to display in LOCAL time requires
+# care when dealing with the beginning/end of months
+def get_local_time_beginning_of_month_in_utc(year: int, month: int, user_time_zone: ZoneInfo) -> datetime:
+    """
+    Returns a datetime object representing midnight (00:00:00) on the 
+    first day of the specified month and year, converted to UTC.
+
+    Args:
+        year (int): The calendar year (e.g., 2026).
+        month (int): The calendar month (1 for January, 12 for December).
+        time_zone_str (str): The string identifier for the local time zone 
+                             (e.g., 'America/New_York').
+
+    Returns:
+        datetime: A timezone-aware datetime object in UTC.
+    """
+
+    # 1. Define UTC time zone
+    utc_zone = ZoneInfo('UTC')
+
+    # 2. Create a naive datetime object for the first day at midnight
+    naive_dt = datetime(year, month, 1, 0, 0, 0)
+
+    # 3. Localize the naive datetime object (Local Midnight)
+    local_midnight_dt = naive_dt.replace(tzinfo=user_time_zone)
+
+    # 4. Convert the local time to UTC
+    # The .astimezone() method handles the shift based on the time zone info.
+    utc_dt = local_midnight_dt.astimezone(utc_zone)
+
+    return utc_dt
