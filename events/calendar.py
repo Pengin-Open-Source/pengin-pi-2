@@ -125,7 +125,15 @@ class EventCalendar(calendar.HTMLCalendar):
                     .setdefault(month, {})
                     .setdefault(day, [])
                 )
+
                 for event in events_in_month:
+                    # Moving this conversion here, after we have filtered 
+                    # down WHICH events we need in this month
+                    event.start_datetime = event.start_datetime.astimezone(
+                        self.user_time_zone)
+                    event.end_datetime = event.end_datetime.astimezone(
+                        self.user_time_zone)
+
                     # Check if event is happening during day and not already saved
                     if (
                         event.start_date() <= day_date <= event.end_date()
