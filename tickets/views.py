@@ -293,7 +293,8 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
                 comment_form.instance.author = request.user
                 comment_form.instance.row_action = 'CREATE'
                 comment_form.save()
-                if ticket.resolution_status != 'open':
+                # don't allow commenting to reopen resolved tickets
+                if ticket.resolution_status != 'open'  and ticket.resolution_status != 'resolved' :
                     ticket.last_edited_by = request.user
                     ticket.row_action = 'EDIT'
                     ticket.date = timezone.now()
