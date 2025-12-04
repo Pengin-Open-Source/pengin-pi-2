@@ -103,10 +103,10 @@ def can_edit_ticket_status(current_user, ticket):
 
 
 def can_comment_on_ticket(current_user, ticket):
-    # currently whoever can edit the ticket can comment on it.
-    # so this is redundant right now.
-    # But if that changes,  we just have to change the logic here
-    return can_edit_ticket(current_user, ticket)
+    if ticket.resolution_status == 'closed':
+        return can_edit_ticket_privileged(current_user, ticket)
+    else:
+        return can_edit_ticket(current_user, ticket)
 
 
 def can_request_reopen(current_user, ticket):

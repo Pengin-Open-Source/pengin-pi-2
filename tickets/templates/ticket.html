@@ -56,7 +56,7 @@
 {% url 'ticket' ticket.id as ticket_url %} 
 {% if can_comment %}
   {% use_macro render_comment_form ticket ticket_url comment_form %}
-{% else %}
+{% elif can_ask_to_reopen %}
 <p style="color:gray; text-transform:uppercase;"> <b><i> TICKET IS {{ ticket.resolution_status }}. NEW COMMENTS ARE DISABLED. </i> </b> </p> 
    {% use_macro render_reopen_ticket_form ticket ticket_url reopen_request_form %} 
 {% endif %}
