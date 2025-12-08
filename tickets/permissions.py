@@ -111,7 +111,15 @@ def can_comment_on_ticket(current_user, ticket):
 
 def can_request_reopen(current_user, ticket):
     is_open_ticket = ticket.resolution_status == 'open'
-    return (not is_open_ticket) and not can_edit_ticket(current_user, ticket) and can_see_ticket(current_user, ticket)
+    if is_open_ticket:
+        return False
+
+    user_has_pending_requests = current_user.reopen_ticket_requests.filter(
+        approval_status='pending').exists()
+    if user_has_pending_requests:
+        return False
+
+    return (not can_edit_ticket(current_user, ticket)) and can_see_ticket(current_user, ticket)
 
 
 def is_ticket_manager(current_user, ticket):
