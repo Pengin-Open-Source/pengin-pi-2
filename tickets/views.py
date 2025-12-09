@@ -948,6 +948,7 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
                 # open the ticket if it's not open.
                 if ticket.resolution_status != 'open':
                     ticket.last_edited_by = request.user
+                    ticket.owner = approved_request.author
                     ticket.row_action = 'EDIT'
                     ticket.date = timezone.now()
                     ticket.resolution_status = 'open'

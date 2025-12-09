@@ -115,10 +115,10 @@ def can_request_reopen(current_user, ticket):
         return False
 
     user_has_pending_requests = current_user.reopen_ticket_requests.filter(
-        approval_status='pending').exists()
+        approval_status='pending').filter(ticket=ticket)
+
     if user_has_pending_requests:
         return False
-
     return (not can_edit_ticket(current_user, ticket)) and can_see_ticket(current_user, ticket)
 
 
