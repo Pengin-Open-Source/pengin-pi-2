@@ -4,7 +4,7 @@
 <form class="form" method="POST" action="{% url 'approve_reopen_request' reopen_request.id %}">
   {% csrf_token %}
   {{ form.as_p }}
-  <button class="primary-button" type="submit" name="action">Approve Request & Assign to {% reopen_request.author.name  %} </button>
+  <button class="primary-button" type="submit" name="action">Approve Request and Assign to {{ reopen_request.author.name }} </button>
 </form>
 
 {% endblock %}
