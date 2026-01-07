@@ -300,7 +300,27 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
                     ticket.date = timezone.now()
                     ticket.resolution_status = 'open'
                     ticket.resolution_date = ''
-                    ticket.save()
+                    reopen_requests_pending = ticket.reopen_requests.filter(
+                        approval_status='pending')
+                    if reopen_requests_pending.exists():
+                        with transaction.atomic():
+                            # we indirectly resolved reopen requests on this ticket
+                            reopen_requests_pending = ticket.reopen_requests.filter(
+                                approval_status='pending')
+                            reopen_requests_pending_ids = list(
+                                reopen_requests_pending.values_list('pk', flat=True))
+                            for pending_request_id in reopen_requests_pending_ids:
+                                pending_request = TicketOpenRequest.objects.get(
+                                    pk=pending_request_id)
+                                pending_request.approval_status = 'manually reopened'
+
+                                pending_request.date_handled = timezone.now()
+                                pending_request.row_action = 'EDIT'
+                                # link back to the request that caused this one to be resolved
+                                pending_request.bypass_initiated_by = request.user
+                                pending_request.save()
+                            ticket.save()
+
         elif can_request_reopen(self.request.user, ticket):
             reopen_form = TicketCreateOpenRequestForm(request.POST)
             if reopen_form.is_valid():
@@ -616,14 +636,43 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
 
             # If *CURRENT* resolution_status is NOT Open,
             # and the user has made a REAL change, Reopen this ticket.
+            handle_requests = False
+            reopen_requests_pending = None
             if ticket.resolution_status != 'open' and user_made_real_change:
                 ticket.last_edited_by = request.user
                 ticket.row_action = 'EDIT'
                 ticket.resolution_status = 'open'
                 ticket.resolution_date = ''
+                # are there any outstanding re-open requests?
+                # they need to be marked as handled
+                reopen_requests_pending = ticket.reopen_requests.filter(
+                    approval_status='pending')
+                if reopen_requests_pending.exists():
+                    handle_requests = True
+
             ticket_to_be_edited.date = timezone.now()
             ticket_form.instance = ticket_to_be_edited
-            ticket = ticket_form.save()
+            
+            if handle_requests:
+                with transaction.atomic():
+                    # we indirectly resolved reopen requests on this ticket
+                    reopen_requests_pending = ticket.reopen_requests.filter(
+                        approval_status='pending')
+                    reopen_requests_pending_ids = list(
+                        reopen_requests_pending.values_list('pk', flat=True))
+                    for pending_request_id in reopen_requests_pending_ids:
+                        pending_request = TicketOpenRequest.objects.get(
+                            pk=pending_request_id)
+                        pending_request.approval_status = 'manually reopened'
+
+                        pending_request.date_handled = timezone.now()
+                        pending_request.row_action = 'EDIT'
+                        # link back to the request that caused this one to be resolved
+                        pending_request.bypass_initiated_by = request.user
+                        pending_request.save()
+                    ticket = ticket_form.save()
+            else:
+                ticket = ticket_form.save()
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
         else:
             context = {}
@@ -695,17 +744,40 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
             ticket.last_edited_by = request.user
             ticket.row_action = 'EDIT'
             ticket.date = timezone.now()
-
+            reopen_requests_pending = None
+            handle_requests = False
             if ticket.resolution_status == 'resolved' and not ticket.resolution_date:
                 ticket.resolution_date = timezone.now()
             # if we are CHANGING the status to open, blank out the date.
             elif ticket.resolution_status == 'open':
                 ticket.resolution_date = ''
+                reopen_requests_pending = ticket.reopen_requests.filter(
+                    approval_status='pending')
+                if reopen_requests_pending.exists():
+                    handle_requests = True
+                # bypass_initiated_by
             # otherwise just keep the current resolution date.
             else:
                 ticket.resolution_date = resolve_date
 
-            ticket.save()
+            if handle_requests:
+                with transaction.atomic():
+                    # we indirectly resolved reopen requests on this ticket
+                    reopen_requests_pending_ids = list(
+                        reopen_requests_pending.values_list('pk', flat=True))
+                    for pending_request_id in reopen_requests_pending_ids:
+                        pending_request = TicketOpenRequest.objects.get(
+                            pk=pending_request_id)
+                        pending_request.approval_status = 'manually reopened'
+
+                        pending_request.date_handled = timezone.now()
+                        pending_request.row_action = 'EDIT'
+                        # link back to the request that caused this one to be resolved
+                        pending_request.bypass_initiated_by = current_user
+                        pending_request.save()
+                        ticket.save()
+            else:
+                ticket.save()
             return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
 
     def test_func(self):
@@ -941,7 +1013,7 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
 
                 approved_request = approved_request_form.save(commit=False)
                 approved_request.approval_status = 'approved'
-                approved_request.approver_denier = request.user
+                approved_request.reviewer = request.user
                 approved_request.date_handled = timezone.now()
                 approved_request.row_action = 'EDIT'
                 approved_request.save()
@@ -965,11 +1037,11 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
                     pending_request.approval_status = 'related request approved'
 
                     # Uncomment this??? I'm inclined not to - since this request
-                    # wasn't DIRECTLY approved. The approver of the approved request may
-                    # never have even read the other requestor's reasons for requesting
-                    # reopening. However, the did indirectly approve,  so there's two
-                    # ways to look at it.
-                    # approved_request.approver_denier = request.user
+                    # wasn't DIRECTLY approved. The reviewer of the approved request
+                    # may never have even read the other requests' reasons for
+                    # reopening. However, he/she did indirectly approve, so there's
+                    # two ways to look at it.
+                    # approved_request.reviewer = request.user
 
                     pending_request.date_handled = timezone.now()
                     pending_request.row_action = 'EDIT'
@@ -1012,7 +1084,7 @@ class DenyTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTes
         if denied_request_form.is_valid():
             denied_request = denied_request_form.save(commit=False)
             denied_request.approval_status = 'denied'
-            denied_request.approver_denier = request.user
+            denied_request.reviewer = request.user
             denied_request.date_handled = timezone.now()
             denied_request.row_action = 'EDIT'
             denied_request.save()

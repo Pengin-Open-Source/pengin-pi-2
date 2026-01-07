@@ -337,7 +337,7 @@ class TicketPendingOpenRequestForm(forms.ModelForm):
 class TicketOpenRequestResponseForm(forms.ModelForm):
     class Meta:
         model = TicketOpenRequest
-        fields = ['handler_comment']
+        fields = ['reviewer_comment']
 
 
 class TicketSettingsForm(forms.Form):

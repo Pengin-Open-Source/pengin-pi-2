@@ -223,17 +223,17 @@ class TicketOpenRequest(models.Model):
         Ticket, on_delete=models.CASCADE, related_name='reopen_requests')
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reopen_ticket_requests')
-    approver_denier = models.ForeignKey(
+    reviewer = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reopen_ticket_requests_handled', null=True, blank=True)
     # CREATE, EDIT DELETE - which put the row in this state?)
     # (DELETE is used for TicketOpenRequestHistory. )
-    # Edit will at least be used by the Approver.
+    # Edit will at least be used by the reviewer.
     # At the moment,  Author is not allowed to edit, so as to
     # prevent changing of the reason for the re-open request.
     row_action = models.CharField(max_length=10, default='ERROR')
     # 'pending' 'approved' 'denied 'reopened by other user'
     approval_status = models.CharField(max_length=100, default='pending')
-    handler_comment = models.TextField(null=True,  blank=True)
+    reviewer_comment = models.TextField(null=True,  blank=True)
     date_handled = models.CharField(
         max_length=100, null=True, blank=True)
     # if some other request resulted in a reopen,  making this request obsolete/de facto granted.
@@ -245,6 +245,16 @@ class TicketOpenRequest(models.Model):
         blank=True,
         related_name='side_effect_approved_requests'
     )
+    # TODO:  Find out what should happen if a ticket status is changed 
+    # to a value that is Neither Open nor Closed (Like "Resolved")
+    # If a user 1) Directly changed the status of the Ticket to Open.
+    #           2) Edited the ticket and caused a side-effect reopen
+    #           3) Commented on the ticket and caused a side-effect reopen
+    # ... then NO user actually directly approved a request to reopen the 
+    # ticket;  the approval process was bypassed.
+    bypass_initiated_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='bypassed_reopen_requests', null=True, blank=True)
+ 
 
     def __str__(self):
         return "Reopen Request From: " + self.author.name + " " + str(self.reason)[:20]
