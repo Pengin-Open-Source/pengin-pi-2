@@ -19,8 +19,12 @@
 </form> 
 {% endif %}
 
-{% if can_approve_reopen_request  %}
+{% if can_approve_reopen_request %}
 <a href="{% url 'view_pending_reopen_requests' ticket.id %}">View Requests To Reopen</a>
+{% endif %}
+
+{% if has_made_pending_requests %}
+  <a href="{% url 'view_my_pending_request' reopen_request.id %}">See My Pending Reopen Request</a>
 {% endif %}
 
 
