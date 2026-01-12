@@ -329,7 +329,8 @@ class TicketPendingOpenRequestForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         # Always call the parent's init first
         super().__init__(*args, **kwargs)
-
+        self.fields['author'].queryset = User.objects.filter(
+            id=self.instance.author.id)
         self.fields['author'].initial = User.objects.filter(
             id=self.instance.author.id)
 
