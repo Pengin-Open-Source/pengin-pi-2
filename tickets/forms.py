@@ -316,10 +316,6 @@ class TicketCreateOpenRequestForm(forms.ModelForm):
 class TicketPendingOpenRequestForm(forms.ModelForm):
     author = UserModelChoiceField(
         queryset=User.objects.filter(validated=True),
-        required=False,
-        error_messages={
-            'not_valid': "Invalid Owner Selection",
-        }
     )
 
     class Meta:
@@ -333,6 +329,42 @@ class TicketPendingOpenRequestForm(forms.ModelForm):
             id=self.instance.author.id)
         self.fields['author'].initial = User.objects.filter(
             id=self.instance.author.id)
+
+
+class PastTicketOpenRequestForm(forms.ModelForm):
+    author = UserModelChoiceField(
+        queryset=User.objects.filter(validated=True),
+    )
+
+    bypass_initiated_by = UserModelChoiceField(
+        queryset=User.objects.filter(validated=True),
+        required=False,
+        error_messages={
+            'not_valid': "Invalid Owner Selection",
+        }
+    )
+
+    class Meta:
+        model = TicketOpenRequest
+        fields = ['author', 'reason', 'approval_status', 'reviewer',
+                  'reviewer_comment', 'related_request_approved', 'bypass_initiated_by']
+
+        labels = {
+            'bypass_initiated_by ': 'Ticket Manually Reopened By',
+        }
+
+    def __init__(self, *args, **kwargs):
+        # Always call the parent's init first
+        super().__init__(*args, **kwargs)
+        self.fields['author'].queryset = User.objects.filter(
+            id=self.instance.author.id)
+        self.fields['author'].initial = User.objects.filter(
+            id=self.instance.author.id)
+        if self.instance.bypass_initiated_by:
+            self.fields['bypass_initiated_by'].queryset = User.objects.filter(
+                id=self.instance.bypass_initiated_by.id)
+            self.fields['bypass_initiated_by'].initial = User.objects.filter(
+                id=self.instance.bypass_initiated_by.id)
 
 
 class TicketOpenRequestResponseForm(forms.ModelForm):

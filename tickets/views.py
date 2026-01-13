@@ -950,6 +950,35 @@ class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPass
         return can_approve_reopen_requests_for_ticket(current_user, ticket)
 
 
+class ResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
+    template_name = 'all_resolved_reopen_requests.html'
+    model = Ticket
+    context_object_name = 'ticket'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
+        context['primary_title'] = 'Resolved Requests to Open Ticket: ' + \
+            requested_ticket.summary
+
+        requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).exclude(
+            approval_status="pending").order_by('date_handled')
+
+        # Similar to what Sincere is using for companies
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(requests, 10)
+        page_obj = paginator.get_page(page_number)
+        context['page_obj'] = page_obj
+
+        return context
+
+    def test_func(self):
+        current_user = self.request.user
+        ticket = self.get_object()
+        return can_approve_reopen_requests_for_ticket(current_user, ticket)
+
+
 class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     template_name = "reopen_request.html"
     model = TicketOpenRequest
@@ -980,16 +1009,12 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
         return can_approve_reopen_requests_for_ticket(current_user, reopen_request.ticket)
 
 
-
-
-
 class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
-    
-   
-    # Pending Reopen request for a specific ticket from the current user. There is no "list page" for this, 
+
+    # Pending Reopen request for a specific ticket from the current user. There is no "list page" for this,
     # for this view,  since the rule is a user may not have more than one pending reopen request
-    # per ticket. They must wait for the current pending request to be handled; then they can make 
-    # a new request as needed. 
+    # per ticket. They must wait for the current pending request to be handled; then they can make
+    # a new request as needed.
 
     template_name = "my_pending_reopen_request.html"
     model = TicketOpenRequest

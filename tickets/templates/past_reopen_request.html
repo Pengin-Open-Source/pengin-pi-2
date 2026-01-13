@@ -1,0 +1,61 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{%comment %}
+   View a specific, resolved Reopen Request for a particular Ticket
+   If someone who can Review Requests for this ticket brings up this 
+   page, it will have a few more fields then when brought up by 
+   a user reviewing their own personal past reopen request.
+{% endcomment %}
+
+{% block pageDropDowns %}
+   <a href="{% url 'ticket' ticket_id %}"> Return to Ticket Details </a>
+{% endblock %}
+
+{% block pageContent %}
+<p> 
+    {% for field in form %}
+      <div class="fieldWrapper">
+          <p>{{ field.label_tag }}</p>
+          <p> {{ field }}</span> <p>
+      </div>
+    {% endfor %} 
+    <div><b> Requested on <span id="request-time"></span> </b> </div>
+    <script>
+      function convertUTCToLocal(utcTime) {
+              const utcMillis = new Date(utcTime).getTime();
+              const localDate = new Date(utcMillis);
+              return localDate.toLocaleString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+          });
+            
+        }
+        var utcTime = new Date('{{ reopen_request.request_date|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('request-time').textContent = localTime;
+    </script>
+    <div><b> Request Handled On <span id="review-time"></span> </b> </div>
+    <script>
+      function convertUTCToLocal(utcTime) {
+              const utcMillis = new Date(utcTime).getTime();
+              const localDate = new Date(utcMillis);
+              return localDate.toLocaleString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true
+          });
+            
+        }
+        var utcTime = new Date('{{ reopen_request.date_handled|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('review-time').textContent = localTime;
+    </script>
+</p>
+{% endblock %}
