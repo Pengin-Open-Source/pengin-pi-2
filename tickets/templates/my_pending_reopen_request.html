@@ -1,5 +1,12 @@
 {% extends "layout/fullPageScroll.html" %}
 
+{%comment %}
+   Pending Reopen request for a specific ticket from the current user. There is no "list page" for this, 
+   for this view,  since the rule is a user may not have more than one pending reopen request
+   per ticket. They must wait for the current pending request to be handled; then they can make 
+   a new request as needed.
+{% endcomment %}
+
 {% block pageDropDowns %}
    <a href="{% url 'ticket' ticket_id %}"> Return to Ticket Details </a>
 {% endblock %}

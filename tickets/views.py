@@ -980,7 +980,17 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
         return can_approve_reopen_requests_for_ticket(current_user, reopen_request.ticket)
 
 
+
+
+
 class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+    
+   
+    # Pending Reopen request for a specific ticket from the current user. There is no "list page" for this, 
+    # for this view,  since the rule is a user may not have more than one pending reopen request
+    # per ticket. They must wait for the current pending request to be handled; then they can make 
+    # a new request as needed. 
+
     template_name = "my_pending_reopen_request.html"
     model = TicketOpenRequest
     context_object_name = 'request'
