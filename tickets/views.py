@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
-from tickets.forms import TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
+from tickets.forms import PastTicketOpenRequestForm, TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_close_ticket, can_comment_on_ticket, can_edit_ticket_privileged, can_edit_ticket_status, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
@@ -961,6 +961,11 @@ class ResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPas
         context['primary_title'] = 'Resolved Requests to Open Ticket: ' + \
             requested_ticket.summary
 
+        # Currently treating everything not pending as resolved
+        # Not currently excluding anything created with the error status,
+        # in the name of letting such errors bubble up to the surface
+        # TODO - figure out how to handle OpenRequests with Error status's
+        # in the GUI
         requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).exclude(
             approval_status="pending").order_by('date_handled')
 
@@ -1043,6 +1048,37 @@ class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserP
         current_user = self.request.user
         reopen_request = self.get_object()
         return reopen_request.author == current_user
+
+
+class ExtendedResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+    template_name = "past_reopen_request.html"
+    model = TicketOpenRequest
+    context_object_name = 'request'
+    form_class = PastTicketOpenRequestForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reopen_request = get_object_or_404(
+            TicketOpenRequest, id=self.kwargs.get('pk'))
+        requested_ticket = reopen_request.ticket
+        form = PastTicketOpenRequestForm(instance=reopen_request)
+
+        form_fields = list(form.fields)
+        for field in form_fields[:-2]:
+            form.fields[field].widget.attrs['disabled'] = True
+        context['form'] = form
+
+        context["reopen_request"] = reopen_request
+        context["ticket_id"] = requested_ticket.id
+        context["primary_title"] = "RESOLVED Request to Reopen Ticket: " + \
+            requested_ticket.summary
+
+        return context
+
+    def test_func(self):
+        current_user = self.request.user
+        reopen_request = self.get_object()
+        return can_approve_reopen_requests_for_ticket(current_user, reopen_request.ticket)
 
 
 class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):

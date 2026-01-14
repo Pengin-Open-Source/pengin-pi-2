@@ -12,6 +12,21 @@
 {% endblock %}
 
 {% block pageContent %}
+<script>
+  function convertUTCToLocal(utcTime) {
+    const utcMillis = new Date(utcTime).getTime();
+    const localDate = new Date(utcMillis);
+    return localDate.toLocaleString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    });
+  
+  }
+</script>
 <p> 
     {% for field in form %}
       <div class="fieldWrapper">
@@ -21,38 +36,12 @@
     {% endfor %} 
     <div><b> Requested on <span id="request-time"></span> </b> </div>
     <script>
-      function convertUTCToLocal(utcTime) {
-              const utcMillis = new Date(utcTime).getTime();
-              const localDate = new Date(utcMillis);
-              return localDate.toLocaleString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true
-          });
-            
-        }
         var utcTime = new Date('{{ reopen_request.request_date|date:"c" }}');
         var localTime = convertUTCToLocal(utcTime);
         document.getElementById('request-time').textContent = localTime;
     </script>
     <div><b> Request Handled On <span id="review-time"></span> </b> </div>
     <script>
-      function convertUTCToLocal(utcTime) {
-              const utcMillis = new Date(utcTime).getTime();
-              const localDate = new Date(utcMillis);
-              return localDate.toLocaleString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true
-          });
-            
-        }
         var utcTime = new Date('{{ reopen_request.date_handled|date:"c" }}');
         var localTime = convertUTCToLocal(utcTime);
         document.getElementById('review-time').textContent = localTime;

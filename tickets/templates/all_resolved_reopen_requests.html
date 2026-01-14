@@ -31,7 +31,7 @@
 </script>
   {% for reopen_request in page_obj %}
   <tr><td class="post-container">
-    <a class="alternating-colors-table-links"href="{% url 'view_pending_request_details' reopen_request.id %} ">{{ reopen_request.reason|escape }}</a>
+    <a class="alternating-colors-table-links"href="{% url 'view_extended_resolved_request_details' reopen_request.id %} ">{{ reopen_request.reason|escape }}</a>
     <div class="comment-title-underline">
       <div><b> Requested by {{reopen_request.author.name|escape}}  on  <span id="request-time-{{forloop.counter}}"></span> </b> </div>
       <script>

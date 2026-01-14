@@ -1,6 +1,8 @@
 from django import forms
 from django.core.exceptions import SuspiciousOperation
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest
 from tickets.permissions import can_edit_ticket_privileged, can_open_ticket, can_close_ticket
@@ -344,6 +346,14 @@ class PastTicketOpenRequestForm(forms.ModelForm):
         }
     )
 
+    reviewer = UserModelChoiceField(
+        queryset=User.objects.filter(validated=True),
+        required=False,
+        error_messages={
+            'not_valid': "Invalid Owner Selection",
+        }
+    )
+
     class Meta:
         model = TicketOpenRequest
         fields = ['author', 'reason', 'approval_status', 'reviewer',
@@ -365,6 +375,16 @@ class PastTicketOpenRequestForm(forms.ModelForm):
                 id=self.instance.bypass_initiated_by.id)
             self.fields['bypass_initiated_by'].initial = User.objects.filter(
                 id=self.instance.bypass_initiated_by.id)
+        if self.instance.related_request_approved:
+            url = reverse('view_extended_resolved_request_details', args=[
+                          self.instance.related_request_approved.id])
+            # Append a link to the help_text so it's clickable
+            self.fields['related_request_approved'].help_text = mark_safe(
+                f'<a href="{url}" target="_blank">View Related Request Details</a>'
+            )
+
+            # Optional: Disable the field if you don't want them editing the link
+            # self.fields['related_request_approved'].disabled = True
 
 
 class TicketOpenRequestResponseForm(forms.ModelForm):
