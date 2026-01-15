@@ -1063,8 +1063,7 @@ class ExtendedResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin
         requested_ticket = reopen_request.ticket
         form = PastTicketOpenRequestForm(instance=reopen_request)
 
-        form_fields = list(form.fields)
-        for field in form_fields[:-2]:
+        for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
 

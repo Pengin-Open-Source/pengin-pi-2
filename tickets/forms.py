@@ -8,7 +8,7 @@ from tickets.models import Ticket, TicketComment, TicketOpenRequest
 from tickets.permissions import can_edit_ticket_privileged, can_open_ticket, can_close_ticket
 from django.db.models import QuerySet
 from django.contrib.auth.models import Group
-from util.forms.fields import UserModelChoiceField
+from util.forms.fields import OpenRequestModelChoiceField, UserModelChoiceField
 from util.security.group_access import can_access_group, get_all_groups_for_user_with_extended_rbac, get_users_with_extended_rbac_to_group, is_a_manager, is_manager_of_this_role
 
 
@@ -341,17 +341,16 @@ class PastTicketOpenRequestForm(forms.ModelForm):
     bypass_initiated_by = UserModelChoiceField(
         queryset=User.objects.filter(validated=True),
         required=False,
-        error_messages={
-            'not_valid': "Invalid Owner Selection",
-        }
     )
 
     reviewer = UserModelChoiceField(
         queryset=User.objects.filter(validated=True),
         required=False,
-        error_messages={
-            'not_valid': "Invalid Owner Selection",
-        }
+    )
+
+    related_request_approved = OpenRequestModelChoiceField(
+        queryset=TicketOpenRequest.objects.all(),
+        required=False,
     )
 
     class Meta:
@@ -370,21 +369,30 @@ class PastTicketOpenRequestForm(forms.ModelForm):
             id=self.instance.author.id)
         self.fields['author'].initial = User.objects.filter(
             id=self.instance.author.id)
+        self.fields['reviewer'].queryset = User.objects.filter(
+            id=self.instance.author.id)
+        self.fields['reviewer'].initial = User.objects.filter(
+            id=self.instance.author.id)
         if self.instance.bypass_initiated_by:
             self.fields['bypass_initiated_by'].queryset = User.objects.filter(
                 id=self.instance.bypass_initiated_by.id)
             self.fields['bypass_initiated_by'].initial = User.objects.filter(
                 id=self.instance.bypass_initiated_by.id)
+        else:
+            self.fields['bypass_initiated_by'].queryset = User.objects.none()
+
         if self.instance.related_request_approved:
+            self.fields['related_request_approved'].queryset = TicketOpenRequest.objects.filter(
+                id=self.instance.related_request_approved.id)
+            self.fields['related_request_approved'].initial = TicketOpenRequest.objects.filter(
+                id=self.instance.related_request_approved.id)
             url = reverse('view_extended_resolved_request_details', args=[
                           self.instance.related_request_approved.id])
-            # Append a link to the help_text so it's clickable
-            self.fields['related_request_approved'].help_text = mark_safe(
-                f'<a href="{url}" target="_blank">View Related Request Details</a>'
+            self.fields['related_request_approved'].label = mark_safe(
+                f'<a class="text-button" style="color:purple;" href="{url}" target="_blank">Related Request Approved - Click for Details</a>'
             )
-
-            # Optional: Disable the field if you don't want them editing the link
-            # self.fields['related_request_approved'].disabled = True
+        else:
+            self.fields['related_request_approved'].queryset = TicketOpenRequest.objects.none()
 
 
 class TicketOpenRequestResponseForm(forms.ModelForm):

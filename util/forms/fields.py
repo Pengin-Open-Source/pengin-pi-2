@@ -11,3 +11,8 @@ class UserModelChoiceField(forms.ModelChoiceField):
 class UserModelMultipleChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, obj):
         return obj.name
+
+
+class OpenRequestModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.reason
