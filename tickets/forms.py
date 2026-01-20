@@ -369,10 +369,11 @@ class ResolvedTicketOpenRequestForm(forms.ModelForm):
             id=self.instance.author.id)
         self.fields['author'].initial = User.objects.filter(
             id=self.instance.author.id)
-        self.fields['reviewer'].queryset = User.objects.filter(
-            id=self.instance.reviewer.id)
-        self.fields['reviewer'].initial = User.objects.filter(
-            id=self.instance.reviewer.id)
+        if self.instance.reviewer:
+            self.fields['reviewer'].queryset = User.objects.filter(
+                id=self.instance.reviewer.id)
+            self.fields['reviewer'].initial = User.objects.filter(
+                id=self.instance.reviewer.id)
         if self.instance.bypass_initiated_by:
             self.fields['bypass_initiated_by'].queryset = User.objects.filter(
                 id=self.instance.bypass_initiated_by.id)

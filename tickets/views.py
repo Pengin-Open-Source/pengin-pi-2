@@ -1,5 +1,4 @@
 from django.http import HttpResponseRedirect, JsonResponse, Http404
-
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy
 from django.core.paginator import Paginator
@@ -21,7 +20,6 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
     queryset = Ticket.objects.all()
     template_name = 'tickets.html'
     model = Ticket
-
     context_object_name = 'tickets'
 
     def get_context_data(self, **kwargs):
@@ -1041,6 +1039,13 @@ class AllResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  User
     context_object_name = 'ticket'
 
     def get_context_data(self, **kwargs):
+        status = self.kwargs.get('status')
+
+        # circumvent pending status being used here.
+        if status is None or status.lower() == 'pending':
+            status = 'all'
+        status = status.lower()
+
         context = super().get_context_data(**kwargs)
         requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
         context['primary_title'] = 'Resolved Requests to Open Ticket: ' + \
@@ -1051,10 +1056,15 @@ class AllResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  User
         # in the name of letting such errors bubble up to the surface
         # TODO - figure out how to handle OpenRequests with Error status
         # in the GUI
-        requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).exclude(
-            approval_status="pending").order_by('date_handled')
+        if status == 'all':
+            # all means "all handled requests" in this context. ALWAYS exclude pending.
+            requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).exclude(
+                approval_status="pending").order_by('date_handled')
+        else:
+            requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
+                approval_status=status).order_by('date_handled')
 
-        # Similar to what Sincere is using for companies
+            # Similar to what Sincere is using for companies
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(requests, 10)
@@ -1075,6 +1085,14 @@ class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMix
     context_object_name = 'ticket'
 
     def get_context_data(self, **kwargs):
+
+        status = self.kwargs.get('status')
+
+        # circumvent pending status being used here.
+        if status is None or status.lower() == 'pending':
+            status = 'all'
+        status = status.lower()
+
         context = super().get_context_data(**kwargs)
         requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
         context['primary_title'] = self.request.user.name + "'s Resolved Requests to Open Ticket: " + \
@@ -1085,9 +1103,13 @@ class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMix
         # in the name of letting such errors bubble up to the surface
         # TODO - figure out how to handle OpenRequests with Error status
         # in the GUI
-        requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(author=self.request.user).exclude(
-            approval_status="pending").order_by('date_handled')
-
+        if status == 'all':
+            # all means "all handled requests" in this context. ALWAYS exclude pending.
+            requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
+                author=self.request.user).exclude(approval_status="pending").order_by('date_handled')
+        else:
+            requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
+                author=self.request.user).filter(approval_status=status).order_by('date_handled')
         context["ticket_id"] = requested_ticket.id
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
