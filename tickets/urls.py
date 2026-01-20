@@ -3,8 +3,9 @@ from django.urls import path
 from tickets.views import (
     TicketSettings, TicketsListView, TicketCreateView, TicketDetailView, TicketDeleteView,
     TicketCommentEditView, TicketEditView, TicketCommentDeleteView, TicketEditStatusView,
-    TicketPendingReopenRequestsView, ResolvedTicketReopenRequestsView, ExtendedResolvedTicketReopenRequestDetails, TicketReopenRequestDetails, MyPendingTicketReopenRequestDetails, ApproveTicketReopenRequestView,
-    DenyTicketReopenRequestView
+    TicketPendingReopenRequestsView, AllResolvedTicketReopenRequestsView, ExtendedResolvedTicketReopenRequestDetails,
+    TicketReopenRequestDetails, MyPendingTicketReopenRequestDetails, ApproveTicketReopenRequestView,
+    DenyTicketReopenRequestView, SpecificUserResolvedTicketReopenRequestsView, SpecificUserResolvedTicketReopenRequestDetails
 )
 
 urlpatterns = [
@@ -26,13 +27,17 @@ urlpatterns = [
     path('<uuid:pk>/view-pending-reopen-requests/',
          TicketPendingReopenRequestsView.as_view(), name='view_pending_reopen_requests'),
     path('<uuid:pk>/view-all-resolved-reopen-requests/',
-         ResolvedTicketReopenRequestsView.as_view(), name='view_all_resolved_reopen_requests'),
+         AllResolvedTicketReopenRequestsView.as_view(), name='view_all_resolved_reopen_requests'),
+    path('<uuid:pk>/view-resolved-reopen-requests-for-specific-user/',
+         SpecificUserResolvedTicketReopenRequestsView.as_view(), name='view_resolved_reopen_requests_for_specific_user'),
     path('<uuid:pk>/view-pending-reopen-request-details/',
          TicketReopenRequestDetails.as_view(), name='view_pending_request_details'),
     path('<uuid:pk>/view-my-pending-request/',
          MyPendingTicketReopenRequestDetails.as_view(), name='view_my_pending_request'),
     path('<uuid:pk>/view-extended-resolved-request-details/',
          ExtendedResolvedTicketReopenRequestDetails.as_view(), name='view_extended_resolved_request_details'),
+    path('<uuid:pk>/view-resolved-request-details-for-specific-user/',
+         SpecificUserResolvedTicketReopenRequestDetails.as_view(), name='view_resolved_request_details_for_specific_user'),
     path('<uuid:pk>/approve-reopen-request/',
          ApproveTicketReopenRequestView.as_view(), name='approve_reopen_request'),
     path('<uuid:pk>/deny-reopen-request/',

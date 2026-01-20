@@ -20,12 +20,19 @@
 {% endif %}
 
 {% if can_approve_reopen_request %}
-<a href="{% url 'view_pending_reopen_requests' ticket.id %}">View Pending Requests To Reopen</a>
-<a href="{% url 'view_all_resolved_reopen_requests' ticket.id %}">View Resolved Requests To Reopen</a>
+  <a href="{% url 'view_pending_reopen_requests' ticket.id %}">View Pending Requests To Reopen</a>
+  {% if ticket_has_resolved_requests %}
+    <a href="{% url 'view_all_resolved_reopen_requests' ticket.id %}">View Resolved Requests To Reopen</a>
+  {% endif %}
 {% endif %}
+
 
 {% if has_made_pending_requests %}
   <a href="{% url 'view_my_pending_request' reopen_request.id %}">See My Pending Reopen Request</a>
+{% endif %}
+
+{% if user_has_resolved_requests %}
+  <a href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket.id %}">See Resolved Reopen Requests</a>
 {% endif %}
 
 

@@ -333,7 +333,7 @@ class TicketPendingOpenRequestForm(forms.ModelForm):
             id=self.instance.author.id)
 
 
-class PastTicketOpenRequestForm(forms.ModelForm):
+class ResolvedTicketOpenRequestForm(forms.ModelForm):
     author = UserModelChoiceField(
         queryset=User.objects.filter(validated=True),
     )
@@ -393,6 +393,25 @@ class PastTicketOpenRequestForm(forms.ModelForm):
             )
         else:
             self.fields['related_request_approved'].queryset = TicketOpenRequest.objects.none()
+
+
+class SpecificUserResolvedTicketOpenRequestForm(forms.ModelForm):
+    author = UserModelChoiceField(
+        queryset=User.objects.filter(validated=True),
+    )
+
+    class Meta:
+        model = TicketOpenRequest
+        fields = ['author', 'reason', 'approval_status',
+                  'reviewer_comment', ]
+
+    def __init__(self, *args, **kwargs):
+        # Always call the parent's init first
+        super().__init__(*args, **kwargs)
+        self.fields['author'].queryset = User.objects.filter(
+            id=self.instance.author.id)
+        self.fields['author'].initial = User.objects.filter(
+            id=self.instance.author.id)
 
 
 class TicketOpenRequestResponseForm(forms.ModelForm):
