@@ -1242,7 +1242,7 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
                     ticket.row_action = 'EDIT'
                     ticket.date = timezone.now()
                     ticket.resolution_status = 'open'
-                    ticket.resolution_date = ''
+                    ticket.resolution_date = None
                     ticket.save()
                 # indirectly resolve any other reopen requests on this ticket
                 other_pending = TicketOpenRequest.objects.filter(
