@@ -974,7 +974,6 @@ class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPass
 class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     template_name = "reopen_request.html"
     model = TicketOpenRequest
-    context_object_name = 'request'
     form_class = TicketPendingOpenRequestForm
 
     def get_context_data(self, **kwargs):
@@ -1010,7 +1009,6 @@ class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserP
 
     template_name = "my_pending_reopen_request.html"
     model = TicketOpenRequest
-    context_object_name = 'request'
     form_class = TicketPendingOpenRequestForm
 
     def get_context_data(self, **kwargs):
@@ -1111,7 +1109,7 @@ class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMix
 class ExtendedResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     template_name = "past_reopen_request.html"
     model = TicketOpenRequest
-    context_object_name = 'request'
+
     form_class = ResolvedTicketOpenRequestForm
 
     def get_context_data(self, **kwargs):
@@ -1142,9 +1140,9 @@ class SpecificUserResolvedTicketReopenRequestDetails(LoginAndValidationRequiredM
     # Notice how we use the same template for both Specific Users
     # viewing their own requests, & Ticket Reopen Request Reviewers
     # looking at ALL past reopen requests.
-    template_name = "my_resolved_reopen_requests.html"
+    template_name = "past_reopen_request.html"
     model = TicketOpenRequest
-    context_object_name = 'request'
+
     form_class = SpecificUserResolvedTicketOpenRequestForm
 
     def get_context_data(self, **kwargs):
@@ -1152,7 +1150,8 @@ class SpecificUserResolvedTicketReopenRequestDetails(LoginAndValidationRequiredM
         reopen_request = get_object_or_404(
             TicketOpenRequest, id=self.kwargs.get('pk'))
         requested_ticket = reopen_request.ticket
-        form = ResolvedTicketOpenRequestForm(instance=reopen_request)
+        form = SpecificUserResolvedTicketOpenRequestForm(
+            instance=reopen_request)
 
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
