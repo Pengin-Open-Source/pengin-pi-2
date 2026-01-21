@@ -324,7 +324,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
                     ticket.row_action = 'EDIT'
                     ticket.date = timezone.now()
                     ticket.resolution_status = 'open'
-                    ticket.resolution_date = ''
+                    ticket.resolution_date = None
                     reopen_requests_pending = ticket.reopen_requests.filter(
                         approval_status='pending')
                     if reopen_requests_pending.exists():
@@ -667,7 +667,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 ticket.last_edited_by = request.user
                 ticket.row_action = 'EDIT'
                 ticket.resolution_status = 'open'
-                ticket.resolution_date = ''
+                ticket.resolution_date = None
                 # are there any outstanding re-open requests?
                 # they need to be marked as handled
                 reopen_requests_pending = ticket.reopen_requests.filter(
@@ -758,7 +758,7 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
             request.POST, instance=ticket, current_user=current_user)
         # what was the resolution status and date before now?
         if ticket.resolution_status == 'open':
-            resolve_date = ''
+            resolve_date = None
         else:
             # grab the resolution date that existed before this
             # post
@@ -775,7 +775,7 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
                 ticket.resolution_date = timezone.now()
             # if we are CHANGING the status to open, blank out the date.
             elif ticket.resolution_status == 'open':
-                ticket.resolution_date = ''
+                ticket.resolution_date = None
                 reopen_requests_pending = ticket.reopen_requests.filter(
                     approval_status='pending')
                 if reopen_requests_pending.exists():
