@@ -305,6 +305,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         context['can_edit_ticket_status'] = can_edit_ticket_status(
             self.request.user, ticket)
         context['primary_title'] = self.object.summary + \
+            " |  Submitted by: " + self.object.author.name + \
             " | Status: " + self.object.resolution_status.upper()
         return context
 
@@ -345,6 +346,8 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
                                 pending_request.bypass_initiated_by = request.user
                                 pending_request.save()
                             ticket.save()
+                    else:
+                        ticket.save()
 
         elif can_request_reopen(self.request.user, ticket):
             reopen_form = TicketCreateOpenRequestForm(request.POST)
