@@ -14,6 +14,15 @@ from util.security.group_access import can_access_group, get_all_groups_for_user
 
 class TicketForm(forms.ModelForm):
 
+    priority = forms.ChoiceField(
+        choices=(
+                ('LOW', 'Low'),
+                ('MEDIUM', 'Medium'),
+                ('HIGH', 'High'),
+        ),
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
     owner = UserModelChoiceField(
         queryset=User.objects.filter(validated=True),
         required=False,
@@ -24,7 +33,7 @@ class TicketForm(forms.ModelForm):
 
     class Meta:
         model = Ticket
-        fields = ['summary', 'role', 'owner', 'content', 'tags']
+        fields = ['priority', 'summary', 'role', 'owner', 'content', 'tags']
 
     def __init__(self, *args, can_set_ticket_owner_blank=True, role_options=None, owner_options=None, role_default=None, owner_default=None, **kwargs):
         self.current_user = kwargs.pop('current_user', None)
@@ -240,6 +249,11 @@ class TicketForm(forms.ModelForm):
             elif not can_set_ticket_owner_blank:
                 raise SuspiciousOperation(
                     "Warning! Empty Owner not allowed on this ticket!")
+
+        valid_priorities = ('LOW', 'MEDIUM', 'HIGH')
+        selected_priority = cleaned_data.get('priority')
+        if not selected_priority in valid_priorities:
+            raise SuspiciousOperation("Warning! Invalid Priority")
 
         return cleaned_data
 

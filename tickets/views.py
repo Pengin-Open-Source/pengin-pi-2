@@ -49,17 +49,23 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
         if status != 'all':
             if is_admin:
                 tickets = self.queryset.filter(
-                    resolution_status=status).order_by('-date')
+                    resolution_status=status)
             else:
                 tickets = Ticket.objects.filter(
                     resolution_status=status).filter_by_can_see_ticket(
-                    self.request.user).order_by('-date')
+                    self.request.user)
         else:
             if is_admin:
                 tickets = self.queryset.order_by('-date')
             else:
                 tickets = Ticket.objects.filter_by_can_see_ticket(
-                    self.request.user).order_by('-date')
+                    self.request.user)
+
+        search_title_for = self.request.GET.get('q')
+        if search_title_for:
+            tickets = tickets.filter(summary__icontains=search_title_for)
+
+        tickets = tickets.order_by('-date')
 
         for ticket in tickets:
             if ticket.row_action == 'CREATE':
@@ -69,6 +75,8 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
                 ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
         # Similar to what Sincere is using for companies
+        context['available_ticket_titles'] = tickets.values_list(
+            'summary', flat=True)
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(tickets, 10)

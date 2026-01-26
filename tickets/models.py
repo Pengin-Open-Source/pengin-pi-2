@@ -56,6 +56,7 @@ class Ticket(models.Model):
         User, on_delete=models.SET_NULL,  null=True)
     row_action = models.CharField(max_length=10, default='ERROR')
     resolution_status = models.CharField(max_length=100)
+    priority = models.CharField(max_length=10, default='LOW')
     resolution_date = models.DateTimeField(null=True, blank=True)
     role = models.ForeignKey(
         Group, on_delete=models.RESTRICT, related_name='tickets')
