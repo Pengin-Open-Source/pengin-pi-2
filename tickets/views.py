@@ -4,66 +4,31 @@ from django.urls import reverse_lazy
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.views import View
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import DetailView, CreateView, UpdateView, DeleteView
+from django_filters.views import FilterView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import ResolvedTicketOpenRequestForm, SpecificUserResolvedTicketOpenRequestForm, TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
+from tickets.filters import TicketFilter
 from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_close_ticket, can_comment_on_ticket, can_edit_ticket_privileged, can_edit_ticket_status, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
+from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_comment_on_ticket, can_edit_ticket_privileged, can_edit_ticket_status, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
 
 
-class TicketsListView(LoginAndValidationRequiredMixin, ListView):
+class TicketsListView(LoginAndValidationRequiredMixin, FilterView):
 
-    queryset = Ticket.objects.all()
+    # queryset = Ticket.objects.all()
     template_name = 'tickets.html'
     model = Ticket
+    filterset_class = TicketFilter
     context_object_name = 'tickets'
 
     def get_context_data(self, **kwargs):
-        status = self.kwargs.get('status')
-
-        if status is None:
-            status = 'all'
         context = super().get_context_data(**kwargs)
-        is_admin = self.request.user.is_staff
-        # Using a session variable to keep track of whether this user can see all
-        # validated users in the Ticket Owner dropdown list
-        show_all_users = self.request.session.get(
-            'owner_displays_all_validated_users')
-        if show_all_users is None:
-            show_all_users = False
-        # here is where a change can take place....
-        show_all_users = show_all_users and is_admin
-        self.request.session['owner_displays_all_validated_users'] = show_all_users
 
-        context['is_admin'] = is_admin
-        context['primary_title'] = 'Tickets'
-
-        # If a staff user is requesting, get all tickets.
-        # Otherwise, get the tickets this particular user has
-        # permission to see
-
-        if status != 'all':
-            if is_admin:
-                tickets = self.queryset.filter(
-                    resolution_status=status)
-            else:
-                tickets = Ticket.objects.filter(
-                    resolution_status=status).filter_by_can_see_ticket(
-                    self.request.user)
-        else:
-            if is_admin:
-                tickets = self.queryset.order_by('-date')
-            else:
-                tickets = Ticket.objects.filter_by_can_see_ticket(
-                    self.request.user)
-
-        search_title_for = self.request.GET.get('q')
-        if search_title_for:
-            tickets = tickets.filter(summary__icontains=search_title_for)
+        tickets = self.object_list
 
         tickets = tickets.order_by('-date')
 
@@ -74,7 +39,6 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
                 ticket_creation_info = get_ticket_create_info(ticket)
                 ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
-        # Similar to what Sincere is using for companies
         context['available_ticket_titles'] = tickets.values_list(
             'summary', flat=True)
         page_number = self.request.POST.get(
@@ -83,7 +47,53 @@ class TicketsListView(LoginAndValidationRequiredMixin, ListView):
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
 
+        is_admin = self.request.user.is_staff
+        context['is_admin'] = is_admin
+
+        # Using a session variable to keep track of whether this user can see all
+        # validated users in the Ticket Owner dropdown list
+        show_all_users = self.request.session.get(
+            'owner_displays_all_validated_users')
+        if show_all_users is None:
+            show_all_users = False
+        # here is where a change can take place....
+        show_all_users = show_all_users and is_admin
+        self.request.session['owner_displays_all_validated_users'] = show_all_users
+
+        context['primary_title'] = 'Tickets'
+
         return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        status = self.kwargs.get('status', 'all')
+
+        is_admin = self.request.user.is_staff
+
+        # If a staff user is requesting, get all tickets.
+        # Otherwise, get the tickets this particular user has
+        # permission to see
+
+        if status != 'all':
+            if is_admin:
+                tickets = queryset.filter(
+                    resolution_status=status)
+            else:
+                tickets = Ticket.objects.filter(
+                    resolution_status=status).filter_by_can_see_ticket(
+                    self.request.user)
+        else:
+            if is_admin:
+                tickets = queryset.order_by('-date')
+            else:
+                tickets = Ticket.objects.filter_by_can_see_ticket(
+                    self.request.user)
+
+        # search_title_for = self.request.GET.get('q')
+        # if search_title_for:
+         #   tickets = tickets.filter(summary__icontains=search_title_for)
+
+        return tickets
 
 
 class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):

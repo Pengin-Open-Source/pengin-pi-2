@@ -20,17 +20,21 @@
     </div>
     
      
-    <form method="get" action="">
-    <label for="summary-search">Search Tickets:</label>
-    <input list="summary-options" id="summary-search" name="q">
+    <form method="get">
+      {{ filter.form.as_p }}
 
-    <datalist id="summary-options">
-    {% for ticket_title in available_ticket_titles %}
-      <option value="{{ ticket_title }}">
-    {% endfor %}
-   </datalist>
-   <button type="submit">Filter</button>
-  </form>
+
+      <datalist id="summary-options">
+        {% for ticket_title in available_ticket_titles %}
+          <option value="{{ ticket_title }}">
+        {% endfor %}
+       </datalist>
+      <button type="submit">Filter</button>
+    </form>
+
+    
+  
+  
 {% endblock %}
 
 
