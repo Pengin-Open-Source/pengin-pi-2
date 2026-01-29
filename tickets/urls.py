@@ -1,7 +1,7 @@
 # tickets/urls.py
 from django.urls import path
 from tickets.views import (
-    TicketSettings, TicketsListView, TicketCreateView, TicketDetailView, TicketDeleteView,
+    TicketSettings, TicketsFilterView, TicketCreateView, TicketDetailView, TicketDeleteView,
     TicketCommentEditView, TicketEditView, TicketCommentDeleteView, TicketEditStatusView,
     TicketPendingReopenRequestsView, AllResolvedTicketReopenRequestsView, ExtendedResolvedTicketReopenRequestDetails,
     TicketReopenRequestDetails, MyPendingTicketReopenRequestDetails, ApproveTicketReopenRequestView,
@@ -9,8 +9,8 @@ from tickets.views import (
 )
 
 urlpatterns = [
-    path('', TicketsListView.as_view(), name='tickets'),
-    path('<status>', TicketsListView.as_view(), name='tickets'),
+    path('', TicketsFilterView.as_view(), name='tickets'),
+    path('<status>', TicketsFilterView.as_view(), name='tickets'),
     path('create/', TicketCreateView.as_view(), name='create_ticket'),
     path('<uuid:pk>/', TicketDetailView.as_view(), name='ticket'),
     path('<uuid:pk>/edit/',

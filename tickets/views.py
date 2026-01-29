@@ -17,7 +17,7 @@ from tickets.permissions import can_approve_this_reopen_request, can_approve_reo
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
 
 
-class TicketsListView(LoginAndValidationRequiredMixin, FilterView):
+class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
 
     # queryset = Ticket.objects.all()
     template_name = 'tickets.html'
@@ -41,6 +41,10 @@ class TicketsListView(LoginAndValidationRequiredMixin, FilterView):
 
         context['available_ticket_titles'] = tickets.values_list(
             'summary', flat=True)
+
+        ticket_roles = sorted(list(set(tickets.values_list(
+            'role__name', flat=True))))
+        context['available_ticket_roles'] = ticket_roles
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(tickets, 10)
@@ -199,6 +203,7 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
                 # to the correct role and owner later in the Edit Ticket page.
                 role_options = Group.objects.filter(pk=default_role.pk)
 
+        role_options = role_options.order_by('name')
         form = TicketForm(role_options=role_options,
                           owner_options=owner_options, role_default=default_role, current_user=current_user)
         context = {'form': form}
@@ -646,6 +651,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         # Note that can_set_owner_blank = True EITHER means: 1) The Ticket has no owner
         # or 2) The user is a Group Manager or Staff member,  who has permission
         # to make an assigned Ticket "Unassigned" again.  (or both)
+        role_options = role_options.order_by('name')
         form = TicketForm(can_set_ticket_owner_blank=can_set_ticket_owner_blank, role_options=role_options, owner_options=owner_options,
                           role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket, current_user=current_user)
 

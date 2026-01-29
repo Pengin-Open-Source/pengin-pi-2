@@ -23,7 +23,8 @@ class TicketFilter(django_filters.FilterSet):
         lookup_expr='icontains', label='Search Ticket Contents....')
 
     role = django_filters.CharFilter(field_name='role__name',  # Actually searches the Group table's name field
-                                     lookup_expr='icontains', label='Search Ticket by Role....')
+                                     lookup_expr='icontains', label='Search Ticket by Role....',
+                                     widget=forms.TextInput(attrs={'list': 'role-options', 'class': 'form-control'}))
 
     class Meta:
         model = Ticket
