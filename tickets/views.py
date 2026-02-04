@@ -51,6 +51,15 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
 
+        # Preserve any search parameters the user chose,
+        # when we have moved to a new page in paginated results
+        # get rid of any prior page selection from query parameters
+        # This takes the current GET params and allows us to swap 'page' easily
+        query = self.request.GET.copy()
+        if 'page' in query:
+            del query['page']
+        context['query_parameters'] = query.urlencode()
+
         is_admin = self.request.user.is_staff
         context['is_admin'] = is_admin
 
