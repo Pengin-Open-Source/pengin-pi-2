@@ -112,10 +112,9 @@
     <p class="">Resolution Status: <b> {{ticket.resolution_status|upper|escape}} </b>  |  Owned by Group: <b> {{ ticket.role.name }} </b> </p>
   </td></tr>
   {% endfor %}
-  {% use_macro render_pagination page_obj %}
 
-
-
+  {% use_macro render_pagination page_obj page_range_with_ellipsis=page_range_with_ellipsis %}
+  
 
 {% endblock %}
 
