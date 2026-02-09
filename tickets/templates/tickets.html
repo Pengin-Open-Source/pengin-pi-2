@@ -114,8 +114,25 @@
   {% endfor %}
 
   {% use_macro render_pagination page_obj page_range_with_ellipsis=page_range_with_ellipsis %}
-  
+   
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+  <script>
+    // Using Vanilla JS to be safe
+    document.addEventListener("DOMContentLoaded", function() {
+        const settings = {
+            create: false,
+            // This ensures the dropdown doesn't get wider than your 6-column grid cell
+            dropdownParent: 'body', 
+            plugins: ['remove_button'], // Gives you that nice 'x' to clear the filter
+            persist: false,
+        };
 
+        // Targeting your specific filter fields
+        document.querySelectorAll('.tom-select-enabled').forEach((el) => {
+            new TomSelect(el, settings);
+        });
+    });
+</script>
 {% endblock %}
 
 
