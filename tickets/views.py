@@ -39,8 +39,8 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
                 ticket_creation_info = get_ticket_create_info(ticket)
                 ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
-        context['available_ticket_titles'] = tickets.values_list(
-            'summary', flat=True)
+        titles = tickets.order_by("summary").values_list('summary', flat=True)
+        context['available_ticket_titles'] = titles
 
         ticket_roles = sorted(list(set(tickets.values_list(
             'role__name', flat=True))))
