@@ -35,7 +35,7 @@ class TicketManager(models.Manager):
 
 class Ticket(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    summary = models.CharField(max_length=100)
+    summary = models.CharField(max_length=100, db_index=True)
     content = models.TextField()
     tags = models.CharField(max_length=150)
     date = models.DateTimeField(default=timezone.now)
