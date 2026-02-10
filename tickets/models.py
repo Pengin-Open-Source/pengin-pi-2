@@ -2,9 +2,11 @@ from django.db import models
 from django.db import models, transaction
 from django.contrib.auth.models import Group
 from main.models.users import User
+from django.db.models import Q
 from django.utils import timezone
 import uuid
 from tickets.permissions import can_see_ticket
+from util.security.group_access import get_all_groups_for_user_with_extended_rbac, is_a_manager
 
 
 class TicketQuerySet(models.QuerySet):
@@ -13,12 +15,17 @@ class TicketQuerySet(models.QuerySet):
     # when you need to filter using a custom function
 
     def filter_by_can_see_ticket(self, user):
-        results = []
-        for ticket in self:
-            if can_see_ticket(user, ticket):
-                results.append(ticket.id)
-        self.filter(id__in=results)
-        return self.filter(id__in=results)
+
+        if user.is_staff:
+            return self.all()
+        if is_a_manager(user):
+            return self.all()
+        user_group_set = get_all_groups_for_user_with_extended_rbac(user)
+
+        user_sees_ticket = Q(author=user) | Q(
+            owner=user) | Q(role_id__in=user_group_set)
+
+        return self.filter(user_sees_ticket).distinct()
 
 
 class TicketManager(models.Manager):
