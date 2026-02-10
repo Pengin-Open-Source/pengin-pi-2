@@ -39,8 +39,7 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
                 ticket_creation_info = get_ticket_create_info(ticket)
                 ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
-        context['available_ticket_titles'] = tickets.values_list(
-            'summary', flat=True)
+        available_ticket_titles = tickets.values_list('summary', flat=True)
 
         ticket_roles = sorted(list(set(tickets.values_list(
             'role__name', flat=True))))
@@ -50,15 +49,11 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         paginator = Paginator(tickets, 10)
         page_obj = paginator.get_page(page_number)
         context['page_obj'] = page_obj
-        print('page_obj')
-        print(page_obj)
 
         page_range_with_ellipsis = paginator.get_elided_page_range(
             page_obj.number, on_each_side=2, on_ends=1)
 
         context['page_range_with_ellipsis'] = page_range_with_ellipsis
-        print('page_range_with_ellipsis')
-        print(page_range_with_ellipsis)
 
         # Preserve any search parameters the user chose,
         # when we have moved to a new page in paginated results
@@ -83,7 +78,9 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         self.request.session['owner_displays_all_validated_users'] = show_all_users
 
         context['primary_title'] = 'Tickets'
-
+        filter_form = context['filter']
+        filter_form.form.fields['summary'].choices = [
+            ('', "All Ticket Titles")] + available_ticket_titles
         return context
 
     def get_queryset(self):
