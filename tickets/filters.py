@@ -14,7 +14,7 @@ class TicketFilter(django_filters.FilterSet):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-    summary = django_filters.CharFilter(
+    summary = django_filters.ChoiceFilter(
         lookup_expr='icontains', label='Search Ticket Summaries....',
         choices=[],
         widget=forms.TextInput(

@@ -76,11 +76,13 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         # here is where a change can take place....
         show_all_users = show_all_users and is_admin
         self.request.session['owner_displays_all_validated_users'] = show_all_users
-
+        title_choices = [('', "All Ticket Titles")] + \
+            list(available_ticket_titles)
         context['primary_title'] = 'Tickets'
         filter_form = context['filter']
-        filter_form.form.fields['summary'].choices = [
-            ('', "All Ticket Titles")] + available_ticket_titles
+        filter_form.form.fields['summary'].choices = title_choices
+
+        filter_form.filters['summary'].extra['choices'] = title_choices
         return context
 
     def get_queryset(self):
