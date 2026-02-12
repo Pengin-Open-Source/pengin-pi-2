@@ -116,12 +116,14 @@
   {% use_macro render_pagination page_obj page_range_with_ellipsis=page_range_with_ellipsis %}
    
 
-  {% comment %} Google Gemini's suggestion for adding in TomSelect to the Project. {% endcomment %}
+  {% comment %} Google Gemini's suggestions for implementing TomSelect for Search Options..... {% endcomment %}
   <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
   <script>
     // Using Vanilla JS to be safe
     document.addEventListener("DOMContentLoaded", function() {
         const settings = {
+            selectOnTab: true,
+            maxOptions: 50,
             create: false,
             // This ensures the dropdown doesn't get wider than your 6-column grid cell
             dropdownParent: 'body', 
@@ -131,7 +133,26 @@
 
         // Targeting your specific filter fields
         document.querySelectorAll('.tom-select-enabled').forEach((el) => {
-            new TomSelect(el, settings);
+            // Create the instance
+            const control = new TomSelect(el, settings);
+
+            // Access the dynamic total count for THIS specific field
+            const totalItems = el.options.length;
+            const dropdown = control.dropdown_content;
+
+
+            // Add the scroll listener specifically to this instance's dropdown
+            dropdown.addEventListener('scroll', function() {
+              // Check if user is near the bottom
+              if (dropdown.scrollTop + dropdown.clientHeight >= dropdown.scrollHeight - 100) {
+                 // Only bump if we haven't reached the end of this specific list
+                 if (control.settings.maxOptions < totalItems) {
+                    control.settings.maxOptions = Math.min(control.settings.maxOptions + 100, totalItems);
+                    control.refreshOptions(false); // Update UI without closing
+                  }
+              }
+            });
+  
         });
     });
 </script>
