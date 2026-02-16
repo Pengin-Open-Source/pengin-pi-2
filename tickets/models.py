@@ -1,10 +1,10 @@
-from django.db import models
+import uuid
 from django.db import models, transaction
 from django.contrib.auth.models import Group
-from main.models.users import User
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.utils import timezone
-import uuid
+from main.models.users import User
+
 from util.security.group_access import get_all_groups_for_user_with_extended_rbac, is_a_manager
 
 
@@ -40,6 +40,9 @@ class TicketManager(models.Manager):
 
 class Ticket(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # human-friendly id
+    ticket_number = models.PositiveIntegerField(
+        unique=True, editable=False, db_index=True)
     summary = models.CharField(max_length=100)
     content = models.TextField()
     tags = models.CharField(max_length=150)
@@ -101,10 +104,15 @@ class Ticket(models.Model):
                                               resolution_date=original_ticket.resolution_date, role=group_snapshot)
                 ticket_backup.save()
 
-            # else: this is a newly created Ticket don't save it to backup table yet
+            # this is a newly created Ticket don't save it to backup table yet
+            # We do need a new human-friendly ticket id number for the user.
+            else:
+                # Gemini snippet - gets new number.
+                last_number = Ticket.objects.aggregate(Max('ticket_number'))[
+                    'ticket_number__max']
+                self.ticket_number = (last_number or 0) + 1
 
-            # In any event (but a rollback),  save this new ticket or post ticket to the database.
-
+        # In any event (but a rollback),  save this new ticket or post ticket to the database.
         super().save(*args, **kwargs)
 
         # if this is a pre-delete save,  the ticket row will have been updated to contain
@@ -136,6 +144,8 @@ class Ticket(models.Model):
 class TicketHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ticket_id = models.UUIDField(db_index=True)
+    # human-friendly ticket id
+    ticket_number = models.PositiveIntegerField(editable=False, db_index=True)
     summary = models.CharField(max_length=100)
     content = models.TextField()
     tags = models.CharField(max_length=150)

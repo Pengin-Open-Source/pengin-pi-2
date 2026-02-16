@@ -344,7 +344,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         context['can_edit_ticket'] = can_edit_ticket(self.request.user, ticket)
         context['can_edit_ticket_status'] = can_edit_ticket_status(
             self.request.user, ticket)
-        context['primary_title'] = self.object.summary + \
+        context['primary_title'] = "Ticket#" + ticket.ticket_number + ": " + self.object.summary + \
             " |  Submitted by: " + self.object.author.name + \
             " | Status: " + self.object.resolution_status.upper()
         return context
@@ -681,7 +681,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             form.fields['tags'].widget.attrs['readonly'] = 'readonly'
         context['form'] = form
         context['is_admin'] = is_admin
-        context['primary_title'] = self.object.summary
+        context['primary_title'] = "Ticket#" + \
+            ticket.ticket_number + ": " + ticket.summary
         context['ticket_id'] = self.object.id
 
         return context
@@ -747,7 +748,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             context = {}
             context['form'] = ticket_form
             context['is_admin'] = self.request.user.is_staff
-            context['primary_title'] = ticket.summary
+            context['primary_title'] = "Ticket#" + \
+                ticket.ticket_number + ": " + ticket.summary
             context['ticket_id'] = ticket.id
             return render(request, self.template_name,  context)
 
@@ -992,8 +994,8 @@ class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPass
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        context['primary_title'] = 'Pending Requests to Open Ticket: ' + \
-            requested_ticket.summary
+        context['primary_title'] = 'Pending Requests to Open Ticket#' + \
+            requested_ticket.ticket_number
 
         requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
             approval_status="pending").order_by('-request_date')
@@ -1031,8 +1033,8 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
 
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
-        context["primary_title"] = "Request to Reopen Ticket: " + \
-            requested_ticket.summary
+        context["primary_title"] = "Request to Reopen Ticket#" + \
+            requested_ticket.ticket_number
 
         return context
 
@@ -1066,8 +1068,8 @@ class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserP
 
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
-        context["primary_title"] = "My Request to Reopen Ticket: " + \
-            requested_ticket.summary
+        context["primary_title"] = "My Request to Reopen Ticket#: " + \
+            requested_ticket.ticket_number
 
         return context
 
@@ -1092,8 +1094,8 @@ class AllResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  User
 
         context = super().get_context_data(**kwargs)
         requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        context['primary_title'] = 'Resolved Requests to Open Ticket: ' + \
-            requested_ticket.summary
+        context['primary_title'] = 'Resolved Requests to Open Ticket#' + \
+            requested_ticket.ticket_number + ": " + requested_ticket.summary
 
         # Currently treating everything not pending as resolved
         # Not currently excluding anything created with the error status,
@@ -1139,8 +1141,8 @@ class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMix
 
         context = super().get_context_data(**kwargs)
         requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        context['primary_title'] = self.request.user.name + "'s Resolved Requests to Open Ticket: " + \
-            requested_ticket.summary
+        context['primary_title'] = self.request.user.name + "'s Resolved Requests to Open Ticket#" + \
+            requested_ticket.ticket_number + ": " + requested_ticket.summary
 
         # Currently treating everything not pending as resolved
         # Not currently excluding anything created with the error status,
@@ -1191,8 +1193,8 @@ class ExtendedResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin
 
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
-        context["primary_title"] = "RESOLVED Request to Reopen Ticket: " + \
-            requested_ticket.summary
+        context["primary_title"] = "RESOLVED Request to Reopen Ticket#" + \
+            requested_ticket.ticket_number
 
         return context
 
@@ -1225,8 +1227,8 @@ class SpecificUserResolvedTicketReopenRequestDetails(LoginAndValidationRequiredM
 
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
-        context["primary_title"] = self.request.user.name + "'s RESOLVED Request to Reopen Ticket: " + \
-            requested_ticket.summary
+        context["primary_title"] = self.request.user.name + \
+            "'s RESOLVED Request to Reopen Ticket#" + requested_ticket.ticket_number
 
         return context
 
@@ -1251,7 +1253,7 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
         context["reopen_request"] = reopen_request
         context['ticket_id'] = self.object.ticket.id
         context['request_id'] = self.object.id
-        context["primary_title"] = "Approve Reopen of Ticket: " + \
+        context["primary_title"] = "Approve Reopen of Ticket#" + self.object.ticket_number + ": " + \
             self.object.ticket.summary
         return context
 
@@ -1333,7 +1335,7 @@ class DenyTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTes
         context["reopen_request"] = reopen_request
         context['ticket_id'] = self.object.ticket.id
         context['request_id'] = self.object.id
-        context["primary_title"] = "Deny Reopen of Ticket: " + \
+        context["primary_title"] = "Deny Reopen of Ticket#" + self.object.ticket_number + ": " + \
             self.object.ticket.summary
         return context
 
