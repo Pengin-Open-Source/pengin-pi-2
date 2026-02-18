@@ -3,6 +3,7 @@ from django.db import models, transaction
 from django.contrib.auth.models import Group
 from django.db.models import Q, Max
 from django.utils import timezone
+from main.models.sequence_counter import SequenceCounter
 from main.models.users import User
 
 from util.security.group_access import get_all_groups_for_user_with_extended_rbac, is_a_manager
@@ -99,7 +100,7 @@ class Ticket(models.Model):
                 else:
                     ticket_owner = None
 
-                ticket_backup = TicketHistory(ticket_id=original_ticket.id, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
+                ticket_backup = TicketHistory(ticket_id=original_ticket.id, ticket_number=original_ticket.ticket_number, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
                                               author=original_ticket.author.pk, owner=ticket_owner, last_edited_by=last_editor, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status,
                                               resolution_date=original_ticket.resolution_date, role=group_snapshot)
                 ticket_backup.save()
@@ -108,9 +109,7 @@ class Ticket(models.Model):
             # We do need a new human-friendly ticket id number for the user.
             else:
                 # Gemini snippet - gets new number.
-                last_number = Ticket.objects.aggregate(Max('ticket_number'))[
-                    'ticket_number__max']
-                self.ticket_number = (last_number or 0) + 1
+                self.ticket_number = SequenceCounter.get_next_id("ticket")
 
         # In any event (but a rollback),  save this new ticket or post ticket to the database.
         super().save(*args, **kwargs)
@@ -134,7 +133,7 @@ class Ticket(models.Model):
             deleted_ticket_owner = None
 
         if save_method == 'DELETE':
-            archived_ticket = TicketHistory(ticket_id=self.pk, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
+            archived_ticket = TicketHistory(ticket_id=self.pk, ticket_number=self.ticket_number, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
                                             author=self.author.pk, owner=deleted_ticket_owner,  last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
                                             resolution_date=self.resolution_date, role=group_snapshot)
 
