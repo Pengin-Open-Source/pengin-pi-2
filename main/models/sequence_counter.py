@@ -11,11 +11,11 @@ import uuid
 # but be seen by the user as Ticket #134.
 # By default,  each row in the database /
 # counter for a given kind of object,  starts
-# with 0, meaning the first object created will 
+# with 0, meaning the first object created will
 # be  given the next number, 1.
 # However,  if there is a migration
 # of existing items into the system, a script
-# or DBA may set the item Counter to whatever 
+# or DBA may set the item Counter to whatever
 # number is the highest id being used.
 
 
@@ -34,3 +34,14 @@ class SequenceCounter(models.Model):
             counter.highest_used_numeric_id += 1
             counter.save()
             return counter.highest_used_numeric_id
+
+    @classmethod
+    def set_next_id(cls, counting_this, new_id):
+        with transaction.atomic():
+            # Lock the specific row for 'ticket', 'group', etc.
+            counter, created = cls.objects.select_for_update().get_or_create(
+                counted_item=counting_this
+            )
+            counter.highest_used_numeric_id = new_id
+            counter.save()
+            return
