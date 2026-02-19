@@ -1300,6 +1300,8 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
                     ticket.save()
                 # indirectly resolve any other reopen requests on this ticket
                 other_pending = TicketOpenRequest.objects.filter(
+                    # very pendantic FYI :-) : ticket_id is the db field - not ORM - name,
+                    # and its actually cheaper to use.
                     approval_status='pending').filter(ticket_id=ticket.id)
                 other_pending_ids = list(
                     other_pending.values_list('pk', flat=True))
@@ -1381,7 +1383,7 @@ def get_ticket_create_info(ticket):
     is_create_missing = False
 
     ticket_history = TicketHistory.objects.filter(
-        ticket_id=ticket.id,  row_action="CREATE")
+        ticket=ticket.id,  row_action="CREATE")
 
     # there should be only one value.
     # we will set a flag if there is no row with method 'CREATE'  in TicketHistory

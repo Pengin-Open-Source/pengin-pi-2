@@ -100,7 +100,7 @@ class Ticket(models.Model):
                 else:
                     ticket_owner = None
 
-                ticket_backup = TicketHistory(ticket_id=original_ticket.id, ticket_number=original_ticket.ticket_number, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
+                ticket_backup = TicketHistory(ticket=original_ticket.id, ticket_number=original_ticket.ticket_number, summary=original_ticket.summary, content=original_ticket.content,  tags=original_ticket.tags, date=original_ticket.date,
                                               author=original_ticket.author.pk, owner=ticket_owner, last_edited_by=last_editor, row_action=original_ticket.row_action, resolution_status=original_ticket.resolution_status,
                                               resolution_date=original_ticket.resolution_date, role=group_snapshot)
                 ticket_backup.save()
@@ -133,7 +133,7 @@ class Ticket(models.Model):
             deleted_ticket_owner = None
 
         if save_method == 'DELETE':
-            archived_ticket = TicketHistory(ticket_id=self.pk, ticket_number=self.ticket_number, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
+            archived_ticket = TicketHistory(ticket=self.pk, ticket_number=self.ticket_number, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
                                             author=self.author.pk, owner=deleted_ticket_owner,  last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
                                             resolution_date=self.resolution_date, role=group_snapshot)
 
@@ -142,7 +142,7 @@ class Ticket(models.Model):
 
 class TicketHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    ticket_id = models.UUIDField(db_index=True)
+    ticket = models.UUIDField(db_index=True)
     # human-friendly ticket id
     ticket_number = models.PositiveIntegerField(editable=False, db_index=True)
     summary = models.CharField(max_length=100)
