@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from tickets.models import Ticket, TicketHistory
+from tickets.models import Ticket, TicketHistory, TicketCommentHistory, TicketOpenRequest
 from django.db import transaction
 from django.db.models import Max
 from main.models.sequence_counter import SequenceCounter
@@ -60,28 +60,34 @@ class Command(BaseCommand):
             self.stdout.write(
                 "Deleting existing auto-generated Test Tickets...")
             # ....To avoid a disaster, make sure to ONLY delete the tickets created for testing
-            Ticket.objects.filter(summary__startswith="Test Ticket").delete()
+
+            delete_these_tickets = Ticket.objects.filter(
+                summary__startswith="Test Ticket")
+            TicketHistory.objects.filter(
+                ticket__in=delete_these_tickets).delete()
+            # don't need TicketComment's here due to CASCADE delete.
+            TicketCommentHistory.objects.filter(
+                ticket__in=delete_these_tickets).delete()
+            TicketOpenRequest.objects.filter(
+                ticket__in=delete_these_tickets).delete()
+            delete_these_tickets.delete()
 
             # 4. Reset Sequence Counter:
             last_ticket_number = Ticket.objects.aggregate(
-                Max('ticket_number'))['ticket_number__max']
+                Max('ticket_number'))['ticket_number__max'] or 0
             last_ticket_history_number = TicketHistory.objects.aggregate(
-                Max('ticket_number'))['ticket_number__max']
-            last_number = max((last_ticket_number or 0)(
-                last_ticket_history_number or 0))
-            next_ticket_number = (last_number or 0) + 1
-
+                Max('ticket_number'))['ticket_number__max'] or 0
+            last_number = max(last_ticket_number, last_ticket_history_number)
+            next_ticket_number = last_number + 1
 
             for ticket in new_test_tickets:
                 ticket.ticket_number = next_ticket_number
                 next_ticket_number = next_ticket_number + 1
 
-          
-
             # 5. Create new tickets in database.
             Ticket.objects.bulk_create(new_test_tickets)
             self.stdout.write(self.style.SUCCESS(
                 f"Successfully created {total} test Tickets!"))
-            # 6. Update the Sequence Counter after purging old tests 
+            # 6. Update the Sequence Counter after purging old tests
             # and adding new ones.
             SequenceCounter.set_next_id("ticket", next_ticket_number)
