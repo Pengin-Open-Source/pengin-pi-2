@@ -39,11 +39,6 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
                 ticket_creation_info = get_ticket_create_info(ticket)
                 ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
-        # available_ticket_titles = tickets.values_list('summary', flat=True)
-
-        ticket_roles = sorted(list(set(tickets.values_list(
-            'role__name', flat=True))))
-        # context['available_ticket_roles'] = ticket_roles
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(tickets, 10)
@@ -76,13 +71,9 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         # here is where a change can take place....
         show_all_users = show_all_users and is_admin
         self.request.session['owner_displays_all_validated_users'] = show_all_users
-        # title_choices = [('', "All Ticket Titles")] + \
-        #    list(available_ticket_titles)
-        context['primary_title'] = 'Tickets'
-        # filter_form = context['filter']
-        # filter_form.form.fields['summary'].choices = title_choices
 
-        # filter_form.filters['summary'].extra['choices'] = title_choices
+      
+        context['primary_title'] = 'Tickets'
         return context
 
     def get_queryset(self):

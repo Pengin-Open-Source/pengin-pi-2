@@ -22,16 +22,6 @@
      
     <form method="get">
       {{ filter.form.as_p }}
-      <datalist id="summary-options">
-        {% for ticket_title in available_ticket_titles %}
-          <option value="{{ ticket_title }}">
-        {% endfor %}
-       </datalist>
-       <datalist id="role-options">
-        {% for ticket_role in available_ticket_roles %}
-          <option value="{{ ticket_role }}">
-        {% endfor %}
-       </datalist>
       <button type="submit">Filter</button>
     </form>
 

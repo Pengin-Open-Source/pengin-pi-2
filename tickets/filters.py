@@ -24,18 +24,24 @@ class TicketFilter(django_filters.FilterSet):
     content = django_filters.CharFilter(
         lookup_expr='icontains', label='Search Ticket Contents....')
 
-    role = django_filters.CharFilter(field_name='role__name',  # Actually searches the Group table's name field
-                                     lookup_expr='icontains', label='Search Ticket by Role....',
-                                     widget=forms.TextInput(attrs={'list': 'role-options', 'class': 'form-control'}))
+    role = django_filters.ChoiceFilter(field_name='role__name',  # Actually searches the Group table's name field
+                                       lookup_expr='icontains', label='Search Ticket by Role....',
+                                       choices=[],
+                                       widget=forms.Select(
+                                           attrs={'class': 'tom-select-enabled'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         visible_tickets = self.queryset
         title_options = visible_tickets.values_list(
             'summary', flat=True).distinct()
+
+        ticket_role_options = sorted(list(set(visible_tickets.values_list(
+            'role__name', flat=True))))
         self.filters['summary'].extra['choices'] = [
             (t, t) for t in title_options]
-        # self.filters['category'].extra['queryset'] = self.queryset
+        self.filters['role'].extra['choices'] = [
+            (t, t) for t in ticket_role_options]
 
     class Meta:
         model = Ticket
