@@ -21,8 +21,12 @@
     
      
     <form method="get">
+      
       {{ filter.form.as_p }}
-      <button type="submit">Filter</button>
+      <a href="{{ request.path }}" class="message-load-button"> Clear All Filters </a>
+      <br/>
+      <p> <button type="submit"> <i> Search Tickets... </i> </button> </p>
+
     </form>
 
     
@@ -114,11 +118,9 @@
         const settings = {
             selectOnTab: true,
             maxOptions: 50,
-            create: false,
+            create: true,
             // This ensures the dropdown doesn't get wider than your 6-column grid cell
             dropdownParent: 'body', 
-            plugins: ['remove_button'], // Gives you that nice 'x' to clear the filter
-            persist: false,
         };
 
         // Targeting your specific filter fields
