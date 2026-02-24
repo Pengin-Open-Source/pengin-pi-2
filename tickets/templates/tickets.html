@@ -25,7 +25,7 @@
       {{ filter.form.as_p }}
       <a href="{{ request.path }}" class="message-load-button"> Clear All Filters </a>
       <br/>
-      <p> <button type="submit"> <i> Search Tickets... </i> </button> </p>
+      <p> <button type="submit"> <i> Search {{ view.kwargs.status|default:"All"|title }} Tickets... </i> </button> </p>
 
     </form>
 
@@ -121,6 +121,7 @@
             create: true,
             // This ensures the dropdown doesn't get wider than your 6-column grid cell
             dropdownParent: 'body', 
+            persist: true,
         };
 
         // Targeting your specific filter fields
