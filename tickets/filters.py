@@ -17,21 +17,21 @@ class TicketFilter(django_filters.FilterSet):
     summary = django_filters.CharFilter(
         lookup_expr='icontains', label='Search Ticket Summaries....',
         widget=forms.Select(
-            attrs={'class': 'tom-select-enabled'},
+            attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'},
             choices=[])
     )
 
     content = django_filters.CharFilter(
         lookup_expr='icontains', label='Search Ticket Contents....',
         widget=forms.Select(
-            attrs={'class': 'tom-select-enabled'},
+            attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'},
             choices=[])
     )
 
     role = django_filters.CharFilter(field_name='role__name',  # Actually searches the Group table's name field
                                      lookup_expr='icontains', label='Search Ticket by Role....',
                                      widget=forms.Select(
-                                         attrs={'class': 'tom-select-enabled'}, choices=[],))
+                                         attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'}, choices=[],))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,7 +63,11 @@ class TicketFilter(django_filters.FilterSet):
         # including those that don't match one of
         # the current options.
         current_title = self.data.get('summary')
-        current_role = self.data.get('role')
+
+        # current_role = self.data.get('role')
+        current_roles = self.data.getlist('role')
+        # print("What is the role?")
+        # print(current_role)
 
         # check current options to see if
         # the search criteria is there.
@@ -73,8 +77,14 @@ class TicketFilter(django_filters.FilterSet):
         if current_title and current_title not in title_options:
             title_choices.insert(0, (current_title, current_title))
 
-        if current_role and current_role not in role_options:
-            role_choices.insert(0, (current_role, current_role))
+        for role in current_roles:
+            if role and role not in role_options:
+                # Add the missing pill to the dropdown choices
+                # so Django can mark it as "selected"
+                role_choices.insert(0, (role, role))
+                # Add to options too so we don't duplicate if the same
+                # pill is somehow in the list twice
+                role_options.add(role)
 
         # Add final set of choices to the search filter widgets
         self.filters['summary'].extra['widget'].choices = title_choices
