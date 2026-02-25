@@ -1,6 +1,7 @@
 import django_filters
 from tickets.models import Ticket
 from django import forms
+from django.db.models import Q
 
 
 class TicketFilter(django_filters.FilterSet):
@@ -15,23 +16,66 @@ class TicketFilter(django_filters.FilterSet):
     )
 
     summary = django_filters.CharFilter(
-        lookup_expr='icontains', label='Search Ticket Summaries....',
-        widget=forms.Select(
+        method='filter_multiple_search_phrases', label='Search Ticket Summaries....',
+        widget=forms.SelectMultiple(
             attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'},
             choices=[])
     )
 
     content = django_filters.CharFilter(
-        lookup_expr='icontains', label='Search Ticket Contents....',
-        widget=forms.Select(
+        method='filter_multiple_search_phrases', label='Search Ticket Contents....',
+        widget=forms.SelectMultiple(
             attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'},
             choices=[])
     )
 
     role = django_filters.CharFilter(field_name='role__name',  # Actually searches the Group table's name field
-                                     lookup_expr='icontains', label='Search Ticket by Role....',
-                                     widget=forms.Select(
+                                     method='filter_multiple_roles', label='Search Ticket by Role....',
+                                     widget=forms.SelectMultiple(
                                          attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'}, choices=[],))
+
+    # Gemini's suggestion for multiple terms selected for one search box,
+    # refactored,  and re-used to deal with the foreign key /getlist problem
+
+    # This version is generic. I use it for any field that's NOT
+    # a foreign key.
+    def filter_multiple_search_phrases(self, queryset, name, _value):
+        # 1. Django-filter might pass the values as a list or a comma-string
+        # Let's ensure we have a list of terms
+        values = self.data.getlist(name)
+
+        if not values:
+            return queryset
+
+        return self.filter_mulitple_values(queryset, name,  values)
+
+    # Also Generic, and called by all filter methods,
+    # once we get the right name and values
+
+    def filter_mulitple_values(self, queryset, name, values):
+        # Build a "Q object" for the OR search
+        # This creates: Q({field_name}__icontains=val1) | Q({field_name}__icontains=val2) ...
+        search_query = Q()
+        for val in values:
+            if val.strip():
+                search_query |= Q(**{f"{name}__icontains": val})
+
+        return queryset.filter(search_query).distinct()
+
+    # the foreign keys will be using their own methods,
+    # to get the values and set the name, because
+    # the 'name' field being used is NOT in getlist
+
+    def filter_multiple_roles(self, queryset, name, _value):
+        # search for multiple roles.  name is role__name,
+        # but getlist is going to be storing values in "role"
+
+        values = self.data.getlist('role')
+
+        if not values:
+            return queryset
+
+        return self.filter_mulitple_values(queryset, name,  values)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,39 +100,8 @@ class TicketFilter(django_filters.FilterSet):
         title_choices = [(t, t) for t in title_options]
         role_choices = [(t, t) for t in role_options]
 
-        title_choices.insert(0, ('', "{Any Title}"))
-        role_choices.insert(0, ('', "{Any Group/Role}"))
-
-        # Any search criteria from the the user -
-        # including those that don't match one of
-        # the current options.
-        current_title = self.data.get('summary')
-
-        # current_role = self.data.get('role')
-        current_roles = self.data.getlist('role')
-        # print("What is the role?")
-        # print(current_role)
-
-        # check current options to see if
-        # the search criteria is there.
-        title_options.add("{Any Title}")
-        role_options.add("{Any Group/Role}")
-
-        if current_title and current_title not in title_options:
-            title_choices.insert(0, (current_title, current_title))
-
-        for role in current_roles:
-            if role and role not in role_options:
-                # Add the missing pill to the dropdown choices
-                # so Django can mark it as "selected"
-                role_choices.insert(0, (role, role))
-                # Add to options too so we don't duplicate if the same
-                # pill is somehow in the list twice
-                role_options.add(role)
-
-        # Add final set of choices to the search filter widgets
-        self.filters['summary'].extra['widget'].choices = title_choices
-        self.filters['role'].extra['widget'].choices = role_choices
+        self.update_search_options("summary", title_options, title_choices)
+        self.update_search_options("role", role_options, role_choices)
 
         # NO TICKET DATA SECTION.
         # Fields that are NOT pre-loaded from the actual ticket data
@@ -99,16 +112,35 @@ class TicketFilter(django_filters.FilterSet):
 
         content_options = set()
         content_choices = []
-        content_choices.insert(0, ('', "{Any Content}"))
-        content_options.add("{Any Content}")
-        current_content = self.data.get('content')
-
-        if current_content and current_content not in content_options:
-            content_choices.insert(0, (current_content, current_content))
-        self.filters['content'].extra['widget'].choices = content_choices
+        self.update_search_options("content", content_options, content_choices)
 
         # Fields that don't use TomSelect, ie,  Dates.
         # #TODO Add date search ranges....
+
+    # refactor/tweak current code and Gemini suggestions - to get one method
+    # to help account for multiple selections chosen in any field,  including
+    # input from the user that doesn't match existing choices. (Adding it to the
+    # dropdown in that case)
+    def update_search_options(self, field_name, valid_options, dropdown_choices):
+        # Any search criteria from the the user -
+        # including those that don't match one of
+        # the current options.
+        current_selections_in_field = self.data.getlist(field_name)
+        empty_choice = "{Any " + field_name + "}"
+        dropdown_choices.insert(0, ('', empty_choice))
+
+        valid_options.add(empty_choice)
+
+        for choice_pill in current_selections_in_field:
+            if choice_pill and choice_pill not in valid_options:
+                # Add the missing pill to the dropdown choices
+                # so Django can mark it as "selected"
+                dropdown_choices.insert(0, (choice_pill, choice_pill))
+                # Add to options too so we don't duplicate if the same
+                # pill is somehow in the list twice
+                valid_options.add(choice_pill)
+
+        self.filters[field_name].extra['widget'].choices = dropdown_choices
 
     class Meta:
         model = Ticket
