@@ -96,8 +96,6 @@ class TicketFilter(django_filters.FilterSet):
             'summary', 'role__name', 'tags')
 
         title_options, role_options = set(), set()
-        title_choices = []
-        role_choices = []
 
         for row in ticket_column_data:
             # check these options later
@@ -105,17 +103,14 @@ class TicketFilter(django_filters.FilterSet):
             # to be added.
             title_options.add(row[0])
             role_options.add(row[1])
-            # choices to display to user
-            title_choices.insert(0, (row[0], row[0]))
-            role_choices.insert(0, (row[1], row[1]))
 
         tag_options = set([
             tag for row in ticket_column_data for tag in row[2].split()])
-        tag_choices = [(t, t) for t in tag_options]
+       
 
-        self.update_search_options("summary", title_options, title_choices)
-        self.update_search_options("role", role_options, role_choices)
-        self.update_search_options("tags", tag_options, tag_choices)
+        self.update_search_options("summary", title_options)
+        self.update_search_options("role", role_options)
+        self.update_search_options("tags", tag_options)
 
         # NO TICKET DATA SECTION.
         # Fields that are NOT pre-loaded from the actual ticket data
@@ -124,9 +119,7 @@ class TicketFilter(django_filters.FilterSet):
         # But content will still use TomSelect and allow
         # user to have a list of previously used search terms.
 
-        content_options = set()
-        content_choices = []
-        self.update_search_options("content", content_options, content_choices)
+        self.update_search_options("content", set())
 
         # Fields that don't use TomSelect, ie,  Dates.
         # #TODO Add date search ranges....
@@ -135,7 +128,7 @@ class TicketFilter(django_filters.FilterSet):
     # to help account for multiple selections chosen in any field,  including
     # input from the user that doesn't match existing choices. (Adding it to the
     # dropdown in that case)
-    def update_search_options(self, field_name, valid_options, dropdown_choices):
+    def update_search_options(self, field_name, valid_options):
         # Any search criteria from the the user -
         # including those that don't match one of
         # the current options.
@@ -144,11 +137,7 @@ class TicketFilter(django_filters.FilterSet):
 
         for choice_pill in current_selections_in_field:
             if choice_pill and choice_pill not in [valid_options, empty_choice]:
-                # Add the missing pill to the dropdown choices
-                # so Django can mark it as "selected"
-                dropdown_choices.insert(0, (choice_pill, choice_pill))
-                # Add to options too so we don't duplicate if the same
-                # pill is somehow in the list twice
+                # Add the choice to the options list.
                 valid_options.add(choice_pill)
 
         default_choice = [('', empty_choice)]
