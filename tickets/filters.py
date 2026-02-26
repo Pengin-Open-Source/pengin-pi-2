@@ -34,6 +34,11 @@ class TicketFilter(django_filters.FilterSet):
                                      widget=forms.SelectMultiple(
                                          attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'}, choices=[],))
 
+    tags = django_filters.CharFilter(field_name='tags',  # Actually searches the Group table's name field
+                                     method='filter_multiple_search_phrases', label='Search Ticket by Tags....',
+                                     widget=forms.SelectMultiple(
+                                         attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'}, choices=[],))
+
     # Gemini's suggestion for multiple terms selected for one search box,
     # refactored,  and re-used to deal with the foreign key /getlist problem
 
@@ -88,20 +93,29 @@ class TicketFilter(django_filters.FilterSet):
         visible_tickets = self.queryset
         # Get all needed column values from queryset
         ticket_column_data = visible_tickets.values_list(
-            'summary', 'role__name')
+            'summary', 'role__name', 'tags')
 
         title_options, role_options = set(), set()
+        title_choices = []
+        role_choices = []
 
         for row in ticket_column_data:
+            # check these options later
+            # to see if an option needs
+            # to be added.
             title_options.add(row[0])
             role_options.add(row[1])
+            # choices to display to user
+            title_choices.insert(0, (row[0], row[0]))
+            role_choices.insert(0, (row[1], row[1]))
 
-        # choices to display to user
-        title_choices = [(t, t) for t in title_options]
-        role_choices = [(t, t) for t in role_options]
+        tag_options = set([
+            tag for row in ticket_column_data for tag in row[2].split()])
+        tag_choices = [(t, t) for t in tag_options]
 
         self.update_search_options("summary", title_options, title_choices)
         self.update_search_options("role", role_options, role_choices)
+        self.update_search_options("tags", tag_options, tag_choices)
 
         # NO TICKET DATA SECTION.
         # Fields that are NOT pre-loaded from the actual ticket data
@@ -127,12 +141,9 @@ class TicketFilter(django_filters.FilterSet):
         # the current options.
         current_selections_in_field = self.data.getlist(field_name)
         empty_choice = "{Any " + field_name + "}"
-        dropdown_choices.insert(0, ('', empty_choice))
-
-        valid_options.add(empty_choice)
 
         for choice_pill in current_selections_in_field:
-            if choice_pill and choice_pill not in valid_options:
+            if choice_pill and choice_pill not in [valid_options, empty_choice]:
                 # Add the missing pill to the dropdown choices
                 # so Django can mark it as "selected"
                 dropdown_choices.insert(0, (choice_pill, choice_pill))
@@ -140,7 +151,11 @@ class TicketFilter(django_filters.FilterSet):
                 # pill is somehow in the list twice
                 valid_options.add(choice_pill)
 
-        self.filters[field_name].extra['widget'].choices = dropdown_choices
+        default_choice = [('', empty_choice)]
+        dropdown_choice_list = default_choice + [(choice, choice)
+                                                 for choice in sorted(valid_options, key=str.lower)]
+
+        self.filters[field_name].extra['widget'].choices = dropdown_choice_list
 
     class Meta:
         model = Ticket
