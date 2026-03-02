@@ -18,26 +18,33 @@ class TicketFilter(django_filters.FilterSet):
     summary = django_filters.CharFilter(
         method='filter_multiple_search_phrases', label='Search Ticket Summaries....',
         widget=forms.SelectMultiple(
-            attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'},
+            attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
+                   'data-default-empty-selection': '{Any Title/Summary}'},
             choices=[])
     )
 
     content = django_filters.CharFilter(
         method='filter_multiple_search_phrases', label='Search Ticket Contents....',
         widget=forms.SelectMultiple(
-            attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'},
+            attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
+                   'data-default-empty-selection': '{Any Content}'},
             choices=[])
     )
-
     role = django_filters.CharFilter(field_name='role__name',  # Actually searches the Group table's name field
                                      method='filter_multiple_roles', label='Search Ticket by Role....',
                                      widget=forms.SelectMultiple(
-                                         attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'}, choices=[],))
+                                         attrs={
+                                             'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                             'data-default-empty-selection': '{Any Group/Role}'},
+                                         choices=[],
+
+                                     ))
 
     tags = django_filters.CharFilter(field_name='tags',  # Actually searches the Group table's name field
                                      method='filter_multiple_search_phrases', label='Search Ticket by Tags....',
                                      widget=forms.SelectMultiple(
-                                         attrs={'class': 'tom-select-enabled', 'multiple': 'multiple'}, choices=[],))
+                                         attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                                'data-default-empty-selection': '{Any Tags}'}, choices=[],))
 
     # Gemini's suggestion for multiple terms selected for one search box,
     # refactored,  and re-used to deal with the foreign key /getlist problem
@@ -106,7 +113,6 @@ class TicketFilter(django_filters.FilterSet):
 
         tag_options = set([
             tag for row in ticket_column_data for tag in row[2].split()])
-       
 
         self.update_search_options("summary", title_options)
         self.update_search_options("role", role_options)
@@ -134,13 +140,18 @@ class TicketFilter(django_filters.FilterSet):
         # the current options.
         current_selections_in_field = self.data.getlist(field_name)
         empty_choice = "{Any " + field_name + "}"
+        additional_choice = "{Add Another....}"
+
+        if current_selections_in_field:
+            default_choice = [('', additional_choice)]
+        else:
+            default_choice = [('', empty_choice)]
 
         for choice_pill in current_selections_in_field:
-            if choice_pill and choice_pill not in [valid_options, empty_choice]:
+            if choice_pill and choice_pill not in [valid_options, empty_choice, additional_choice]:
                 # Add the choice to the options list.
                 valid_options.add(choice_pill)
 
-        default_choice = [('', empty_choice)]
         dropdown_choice_list = default_choice + [(choice, choice)
                                                  for choice in sorted(valid_options, key=str.lower)]
 

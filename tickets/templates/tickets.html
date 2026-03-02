@@ -129,6 +129,33 @@
         document.querySelectorAll('.tom-select-enabled').forEach((el) => {
             // Create the instance
             const control = new TomSelect(el, settings);
+      
+            const emptyOption = control.options[''];
+            const textInitial = el.dataset.defaultEmptySelection;
+            const TEXT_POPULATED = '{Add Another....}';
+
+            control.on('change', function() {
+              // If items.length > 0, the user has pills selected
+              const newLabel = this.items.length > 0 ? TEXT_POPULATED : textInitial;
+      
+              
+              this.settings.placeholder = newLabel;
+
+              this.updateOption('', { value: '', text: newLabel });
+
+              // FORCE the DOM attribute to update on the input field
+              // This is usually why it takes "two clicks" — the attribute isn't refreshing.
+              if (this.control_input) {
+                 this.control_input.setAttribute('placeholder', newLabel);
+              }
+
+              // 3. Force the UI to refresh the placeholder display
+              this.updatePlaceholder();
+  
+              // Refresh the dropdown UI without closing it
+              this.refreshOptions(false);
+          });
+
 
             // Access the dynamic total count for THIS specific field
             const totalItems = el.options.length;
