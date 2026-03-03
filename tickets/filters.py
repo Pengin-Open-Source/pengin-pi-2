@@ -16,7 +16,7 @@ class TicketFilter(django_filters.FilterSet):
     )
 
     ticket_number = django_filters.CharFilter(
-        method='filter_multiple_numbers', label='Search Ticket Summaries....',
+        method='filter_multiple_numbers', label='Search for Specific Ticket#....',
         widget=forms.SelectMultiple(
             attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
                    'data-default-empty-selection': '{Any Ticket #}'},
@@ -47,6 +47,16 @@ class TicketFilter(django_filters.FilterSet):
                                          choices=[],
 
                                      ))
+
+    author = django_filters.CharFilter(field_name='author__name',  # Actually searches the User table's name field
+                                       method='filter_multiple_authors', label='Search Ticket by Author....',
+                                       widget=forms.SelectMultiple(
+                                           attrs={
+                                               'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                               'data-default-empty-selection': '{Any Author}'},
+                                           choices=[],
+
+                                       ))
 
     tags = django_filters.CharFilter(field_name='tags',  # Actually searches the Group table's name field
                                      method='filter_multiple_search_phrases', label='Search Ticket by Tags....',
@@ -96,6 +106,17 @@ class TicketFilter(django_filters.FilterSet):
 
         return self.filter_mulitple_values(queryset, name,  values)
 
+    def filter_multiple_authors(self, queryset, name, _value):
+        # search for multiple roles.  name is role__name,
+        # but getlist is going to be storing values in "role"
+
+        values = self.data.getlist('author')
+
+        if not values:
+            return queryset
+
+        return self.filter_mulitple_values(queryset, name,  values)
+
     def filter_multiple_numbers(self, queryset, name, _value):
         # 1. Django-filter might pass the values as a list or a comma-string
         # Let's ensure we have a list of terms
@@ -122,9 +143,9 @@ class TicketFilter(django_filters.FilterSet):
         visible_tickets = self.queryset
         # Get all needed column values from queryset
         ticket_column_data = visible_tickets.values_list(
-            'ticket_number', 'summary', 'role__name', 'tags')
+            'ticket_number', 'summary', 'role__name', 'author__name', 'tags')
 
-        ticket_number_options, title_options, role_options = set(), set(), set()
+        ticket_number_options, title_options, role_options, author_options = set(), set(), set(), set()
 
         for row in ticket_column_data:
             # check these options later
@@ -135,13 +156,15 @@ class TicketFilter(django_filters.FilterSet):
                 ticket_number_options.add(row[0])
             title_options.add(row[1])
             role_options.add(row[2])
+            author_options.add(row[3])
 
         tag_options = set([
-            tag for row in ticket_column_data for tag in row[3].split()])
+            tag for row in ticket_column_data for tag in row[4].split()])
 
         self.update_search_options("ticket_number", ticket_number_options)
         self.update_search_options("summary", title_options)
         self.update_search_options("role", role_options)
+        self.update_search_options("author", author_options)
         self.update_search_options("tags", tag_options)
 
         # NO TICKET DATA SECTION.
@@ -201,14 +224,14 @@ class TicketFilter(django_filters.FilterSet):
                     # Add the choice to the options list.
                     valid_options.add(choice_pill)
 
-                sorted_options = sorted(valid_options, key=int)
-                dropdown_choice_list = default_choice + \
-                    [(choice, choice)
-                     for choice in sorted_options]
+            sorted_options = sorted(valid_options, key=int)
+            dropdown_choice_list = default_choice + \
+                [(choice, choice)
+                 for choice in sorted_options]
 
         self.filters[field_name].extra['widget'].choices = dropdown_choice_list
 
     class Meta:
         model = Ticket
         fields = ['priority', 'ticket_number',
-                  'summary', 'role', 'content', 'tags']
+                  'summary', 'role', 'content', 'author', 'tags']
