@@ -21,8 +21,13 @@
     
      
     <form method="get">
-      
-      {{ filter.form.as_p }}
+      {% for field in filter.form %}
+      <div class="fieldWrapper">
+          <p>{{ field.errors }}</p>
+          <p>{{ field.label_tag }}</p>
+          <p>{{ field }}</p>
+      </div>
+      {% endfor %}
       <a href="{{ request.path }}" class="message-load-button"> Clear All Filters </a>
       <br/>
       <p> <button type="submit"> <i> Search {{ view.kwargs.status|default:"All"|title }} Tickets... </i> </button> </p>
