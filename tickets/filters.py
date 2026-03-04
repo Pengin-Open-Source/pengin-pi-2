@@ -39,7 +39,7 @@ class TicketFilter(django_filters.FilterSet):
             choices=[])
     )
     role = django_filters.CharFilter(field_name='role__name',  # Actually searches the Group table's name field
-                                     method='filter_multiple_roles', label='Search Ticket by Role....',
+                                     method='filter_foreign_key_name_attribute', label='Search Tickets by Role....',
                                      widget=forms.SelectMultiple(
                                          attrs={
                                              'class': 'tom-select-enabled', 'multiple': 'multiple',
@@ -49,7 +49,7 @@ class TicketFilter(django_filters.FilterSet):
                                      ))
 
     author = django_filters.CharFilter(field_name='author__name',  # Actually searches the User table's name field
-                                       method='filter_multiple_authors', label='Search Ticket by Author....',
+                                       method='filter_foreign_key_name_attribute', label='Search Tickets by Author....',
                                        widget=forms.SelectMultiple(
                                            attrs={
                                                'class': 'tom-select-enabled', 'multiple': 'multiple',
@@ -57,6 +57,16 @@ class TicketFilter(django_filters.FilterSet):
                                            choices=[],
 
                                        ))
+
+    owner = django_filters.CharFilter(field_name='owner__name',  # Actually searches the User table's name field
+                                      method='filter_foreign_key_name_attribute', label='Search Tickets by Owner....',
+                                      widget=forms.SelectMultiple(
+                                          attrs={
+                                              'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                              'data-default-empty-selection': '{Any Owner}'},
+                                          choices=[],
+
+                                      ))
 
     tags = django_filters.CharFilter(field_name='tags',  # Actually searches the Group table's name field
                                      method='filter_multiple_search_phrases', label='Search Ticket by Tags....',
@@ -86,8 +96,10 @@ class TicketFilter(django_filters.FilterSet):
         # This creates: Q({field_name}__icontains=val1) | Q({field_name}__icontains=val2) ...
         search_query = Q()
         for val in values:
-            if val.strip():
+            if val.strip() and val != '{None}':
                 search_query |= Q(**{f"{name}__icontains": val})
+            elif val == '{None}':
+                search_query |= Q(**{f"{name}__isnull": True})
 
         return queryset.filter(search_query).distinct()
 
@@ -95,27 +107,22 @@ class TicketFilter(django_filters.FilterSet):
     # to get the values and set the name, because
     # the 'name' field being used is NOT in getlist
 
-    def filter_multiple_roles(self, queryset, name, _value):
-        # search for multiple roles.  name is role__name,
-        # but getlist is going to be storing values in "role"
+    def filter_foreign_key_name_attribute(self, queryset, name, _value):
+        # if we are filtering on the name attribute in
+        # the model of a foreign key field, call this.
+        # The reason is that the name parameter
+        # will be given the argument "{field_name}__name",
+        # while to extract the values from data, you will
+        # need the command self.data.getlist('{field_name}')
 
-        values = self.data.getlist('role')
-
-        if not values:
-            return queryset
-
-        return self.filter_mulitple_values(queryset, name,  values)
-
-    def filter_multiple_authors(self, queryset, name, _value):
-        # search for multiple roles.  name is role__name,
-        # but getlist is going to be storing values in "role"
-
-        values = self.data.getlist('author')
+        # strip off __name from field name
+        field_name = name[:-6]
+        values = self.data.getlist(field_name)
 
         if not values:
             return queryset
 
-        return self.filter_mulitple_values(queryset, name,  values)
+        return self.filter_mulitple_values(queryset, name, values)
 
     def filter_multiple_numbers(self, queryset, name, _value):
         # 1. Django-filter might pass the values as a list or a comma-string
@@ -143,28 +150,34 @@ class TicketFilter(django_filters.FilterSet):
         visible_tickets = self.queryset
         # Get all needed column values from queryset
         ticket_column_data = visible_tickets.values_list(
-            'ticket_number', 'summary', 'role__name', 'author__name', 'tags')
+            'ticket_number', 'summary', 'role__name', 'author__name', 'owner__name', 'tags')
 
-        ticket_number_options, title_options, role_options, author_options = set(), set(), set(), set()
+        ticket_number_options, title_options, role_options, author_options, owner_options = set(
+        ), set(), set(), set(), set()
 
         for row in ticket_column_data:
             # check these options later
             # to see if an option needs
             # to be added.
             if str(row[0]).isdigit():
-                print(row[0])
                 ticket_number_options.add(row[0])
             title_options.add(row[1])
             role_options.add(row[2])
             author_options.add(row[3])
+            ticket_owner = row[4]
+            if ticket_owner is not None:
+                owner_options.add(row[4])
+            else:
+                owner_options.add('{None}')
 
         tag_options = set([
-            tag for row in ticket_column_data for tag in row[4].split()])
+            tag for row in ticket_column_data for tag in row[5].split()])
 
         self.update_search_options("ticket_number", ticket_number_options)
         self.update_search_options("summary", title_options)
         self.update_search_options("role", role_options)
         self.update_search_options("author", author_options)
+        self.update_search_options("owner", owner_options)
         self.update_search_options("tags", tag_options)
 
         # NO TICKET DATA SECTION.
@@ -209,6 +222,8 @@ class TicketFilter(django_filters.FilterSet):
         else:
             default_choice = [('', empty_choice)]
 
+        # TODO use more generic code (not "hard-coded") for this
+        # condition check if we start using multiple numeric fields
         if (field_name != "ticket_number"):
             for choice_pill in current_selections_in_field:
                 if choice_pill and choice_pill not in [valid_options, empty_choice, additional_choice]:
@@ -234,4 +249,4 @@ class TicketFilter(django_filters.FilterSet):
     class Meta:
         model = Ticket
         fields = ['priority', 'ticket_number',
-                  'summary', 'role', 'content', 'author', 'tags']
+                  'summary', 'role', 'content', 'author', 'owner', 'tags']

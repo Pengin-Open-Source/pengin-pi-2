@@ -108,7 +108,7 @@
         </div>
       {% endif %} 
    
-    <p class="">Resolution Status: <b> {{ticket.resolution_status|upper|escape}} </b>  |  Owned by Group: <b> {{ ticket.role.name }} </b> </p>
+    <p class="">Resolution Status: <b> {{ticket.resolution_status|upper|escape}} </b>  |  Belongs to Group/Role: <b> {{ ticket.role.name }} </b> </p>
   </td></tr>
   {% endfor %}
 
