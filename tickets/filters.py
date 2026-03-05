@@ -1,4 +1,5 @@
 import django_filters
+from django_flatpickr.widgets import DateTimePickerInput
 from tickets.models import Ticket
 from django import forms
 from django.db.models import Q
@@ -83,6 +84,9 @@ class TicketFilter(django_filters.FilterSet):
                                      widget=forms.SelectMultiple(
                                          attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
                                                 'data-default-empty-selection': '{Any Tags}'}, choices=[],))
+
+    date_created_or_last_edited = django_filters.DateFilter(
+        field_name='date', label='Created/Edited On Or After....', lookup_expr='gte', widget=DateTimePickerInput())
 
     # Gemini's suggestion for multiple terms selected for one search box,
     # refactored,  and re-used to deal with the foreign key /getlist problem

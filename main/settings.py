@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django_redis',
     'markdownit',
     'macros',
+    "django_flatpickr",
     # Add your apps here
     # 'global_admin',
     'main',
