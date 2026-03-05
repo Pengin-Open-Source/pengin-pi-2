@@ -68,6 +68,16 @@ class TicketFilter(django_filters.FilterSet):
 
                                       ))
 
+    last_edited_by = django_filters.CharFilter(field_name='last_edited_by__name',  # Actually searches the User table's name field
+                                               method='filter_foreign_key_name_attribute', label='Search by Last User to Edit....',
+                                               widget=forms.SelectMultiple(
+                                                   attrs={
+                                                       'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                                       'data-default-empty-selection': '{Anyone}'},
+                                                   choices=[],
+
+                                               ))
+
     tags = django_filters.CharFilter(field_name='tags',  # Actually searches the Group table's name field
                                      method='filter_multiple_search_phrases', label='Search Ticket by Tags....',
                                      widget=forms.SelectMultiple(
@@ -150,10 +160,10 @@ class TicketFilter(django_filters.FilterSet):
         visible_tickets = self.queryset
         # Get all needed column values from queryset
         ticket_column_data = visible_tickets.values_list(
-            'ticket_number', 'summary', 'role__name', 'author__name', 'owner__name', 'tags')
+            'ticket_number', 'summary', 'role__name', 'author__name', 'owner__name', 'last_edited_by__name', 'tags')
 
-        ticket_number_options, title_options, role_options, author_options, owner_options = set(
-        ), set(), set(), set(), set()
+        ticket_number_options, title_options, role_options, author_options, owner_options, last_editor_options = set(
+        ), set(), set(), set(), set(), set()
 
         for row in ticket_column_data:
             # check these options later
@@ -170,14 +180,21 @@ class TicketFilter(django_filters.FilterSet):
             else:
                 owner_options.add('{None}')
 
+            ticket_editor = row[5]
+            if ticket_editor is not None:
+                last_editor_options.add(row[5])
+            else:
+                last_editor_options.add('{None}')
+
         tag_options = set([
-            tag for row in ticket_column_data for tag in row[5].split()])
+            tag for row in ticket_column_data for tag in row[6].split()])
 
         self.update_search_options("ticket_number", ticket_number_options)
         self.update_search_options("summary", title_options)
         self.update_search_options("role", role_options)
         self.update_search_options("author", author_options)
         self.update_search_options("owner", owner_options)
+        self.update_search_options("last_edited_by", last_editor_options)
         self.update_search_options("tags", tag_options)
 
         # NO TICKET DATA SECTION.
@@ -214,7 +231,9 @@ class TicketFilter(django_filters.FilterSet):
         # including those that don't match one of
         # the current options.
         current_selections_in_field = self.data.getlist(field_name)
-        empty_choice = "{Any " + field_name + "}"
+        search_field = self.filters[field_name]
+        empty_choice = search_field.extra.get(
+            'widget').attrs.get('data-default-empty-selection')
         additional_choice = "{Add Another....}"
 
         if current_selections_in_field:
@@ -249,4 +268,4 @@ class TicketFilter(django_filters.FilterSet):
     class Meta:
         model = Ticket
         fields = ['priority', 'ticket_number',
-                  'summary', 'role', 'content', 'author', 'owner', 'tags']
+                  'summary', 'role', 'content', 'author', 'owner', 'last_edited_by', 'tags']
