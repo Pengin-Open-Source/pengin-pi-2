@@ -60,14 +60,15 @@
   {% for ticket in page_obj %}
   <tr><td class="post-container">
     <b>
+     
     {% if ticket.priority == 'LOW' %}  
       <p style="color: green;"> 
     {% elif ticket.priority == 'MEDIUM' %}
-      <p style="color: orange;"> 
+      <p style="color: chocolate;"> 
     {% else %}
       <p style="color: red;"> 
     {% endif %} 
-       PRIORITY: {{ ticket.priority }}
+       TICKET #{{ ticket.ticket_number }} | PRIORITY: {{ ticket.priority }}
 
      </p>
    </b> 
@@ -89,7 +90,7 @@
                     <i> Ticket Creation Date / Original Author not found!</i>
                   </p>
                   {% else %}
-                      <p style="color: orange;" > 
+                      <p style="color: coral;" > 
                            Originally submitted by {{ticket.author.name |escape}} on  <span id="ticket-creation-time-{{forloop.counter}}"></span>
                      </p>
                      <script>
