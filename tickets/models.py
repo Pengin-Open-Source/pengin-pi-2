@@ -139,6 +139,9 @@ class Ticket(models.Model):
 
             archived_ticket.save()
 
+# class TicketLatestActivity:
+      # Obtain The
+
 
 class TicketHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -234,14 +237,19 @@ class TicketOpenRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reason = models.TextField()
     request_date = models.DateTimeField(default=timezone.now)
+    # If someone REALLY wants to delete a Ticket such requests, since we have no 
+    # TicketOpenRequestHistory,  force the direct deletion of TicketOpenRequests
+    # first.  Since this will have to be done programmatically or via SQL  
+    # it may prompt the DBA to store the old records in their own history table
+    # before deletion - or else confirm that they are appropriate to be deleted
+    # according the company's audit policy.
     ticket = models.ForeignKey(
-        Ticket, on_delete=models.CASCADE, related_name='reopen_requests')
+        Ticket, on_delete=models.PROTECT, related_name='reopen_requests')
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reopen_ticket_requests')
     reviewer = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reopen_ticket_requests_handled', null=True, blank=True)
-    # CREATE, EDIT DELETE - which put the row in this state?)
-    # (DELETE is used for TicketOpenRequestHistory. )
+    # CREATE, EDIT - which put the row in this state?)
     # Edit will at least be used by the reviewer.
     # At the moment,  Author is not allowed to edit, so as to
     # prevent changing of the reason for the re-open request.
@@ -261,6 +269,7 @@ class TicketOpenRequest(models.Model):
     )
     # TODO:  Find out what should happen if a ticket status is changed
     # to a value that is Neither Open nor Closed (Like "Resolved")
+    #################################################################
     # If a user 1) Directly changed the status of the Ticket to Open.
     #           2) Edited the ticket and caused a side-effect reopen
     #           3) Commented on the ticket and caused a side-effect reopen
