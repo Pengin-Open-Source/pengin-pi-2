@@ -139,9 +139,6 @@ class Ticket(models.Model):
 
             archived_ticket.save()
 
-# class TicketLatestActivity:
-      # Obtain The
-
 
 class TicketHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -237,9 +234,9 @@ class TicketOpenRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     reason = models.TextField()
     request_date = models.DateTimeField(default=timezone.now)
-    # If someone REALLY wants to delete a Ticket such requests, since we have no 
+    # If someone REALLY wants to delete a Ticket such requests, since we have no
     # TicketOpenRequestHistory,  force the direct deletion of TicketOpenRequests
-    # first.  Since this will have to be done programmatically or via SQL  
+    # first.  Since this will have to be done programmatically or via SQL
     # it may prompt the DBA to store the old records in their own history table
     # before deletion - or else confirm that they are appropriate to be deleted
     # according the company's audit policy.
@@ -280,3 +277,18 @@ class TicketOpenRequest(models.Model):
 
     def __str__(self):
         return "Reopen Request From: " + self.author.name + " " + str(self.reason)[:20]
+
+
+class TicketLatestActivity:
+    # The ticket whose activity we want to track
+    # Reason for Delete Policy - CASCADE,  because all fields except the
+    # ReopenRequests are logged in history. (And ReopenRequests block deletion)
+    ticket_id = ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    # Date of a Ticket Create,  or if it has any edits, the latest one:
+    ticket_action_date = models.DateTimeField()
+    # Date of this tick Ticket Reopen Request made by user - or date such
+    # a request is Approved or Denied by authorized personnel
+    reopen_request_action_date = models.DateTimeField(null=True, blank=True)
+    # Date of the last new comment or comment edit made on the Ticket
+    # (does not include DELETE actions at present)
+    last_comment_action = models.DateTimeField(null=True, blank=True)
