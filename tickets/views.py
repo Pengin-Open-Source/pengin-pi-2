@@ -1252,7 +1252,7 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
         context["reopen_request"] = reopen_request
         context['ticket_id'] = self.object.ticket.id
         context['request_id'] = self.object.id
-        context["primary_title"] = "Approve Reopen of Ticket #" + str(self.object.ticket_number) + ": " + \
+        context["primary_title"] = "Approve Reopen of Ticket #" + str(self.object.ticket.ticket_number) + ": " + \
             self.object.ticket.summary
         return context
 
@@ -1336,7 +1336,7 @@ class DenyTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTes
         context["reopen_request"] = reopen_request
         context['ticket_id'] = self.object.ticket.id
         context['request_id'] = self.object.id
-        context["primary_title"] = "Deny Reopen of Ticket #" + str(self.object.ticket_number) + ": " + \
+        context["primary_title"] = "Deny Reopen of Ticket #" + str(self.object.ticket.ticket_number) + ": " + \
             self.object.ticket.summary
         return context
 
