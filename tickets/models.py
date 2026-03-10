@@ -115,30 +115,32 @@ class Ticket(models.Model):
         # In any event (but a rollback),  save this new ticket or post ticket to the database.
         super().save(*args, **kwargs)
 
-        # if this is a pre-delete save,  the ticket row will have been updated to contain
-        # 1) The action/method: "DELETE"
-        # 2) The User who did the Delete
-        #    (saved in last_edited_by.  So I am not checking
-        #    since it SHOULD always be here)
-        # 3) The time of the deletion
-        # We need to make sure this information is copied into Ticket history
-        # before we delete the Ticket.
-        # (If Ticket history needs to be totally deleted, that should be done
-        # by a DBA)
-
-        # Make sure we handle the case where
-        # where the ticket was never assigned to anyone
-        if self.owner:
-            deleted_ticket_owner = self.owner.pk
-        else:
-            deleted_ticket_owner = None
-
         if save_method == 'DELETE':
+            # if this is a pre-delete save,  the ticket row will have been updated to contain
+            # 1) The action/method: "DELETE"
+            # 2) The User who did the Delete
+            #    (saved in last_edited_by.  So I am not checking
+            #    since it SHOULD always be here)
+            # 3) The time of the deletion
+            # We need to make sure this information is copied into Ticket history
+            # before we delete the Ticket.
+            # (If Ticket history needs to be totally deleted, that should be done
+            # by a DBA)
+
+            # Make sure we handle the case where
+            # where the ticket was never assigned to anyone
+            if self.owner:
+                deleted_ticket_owner = self.owner.pk
+            else:
+                deleted_ticket_owner = None
+
             archived_ticket = TicketHistory(ticket=self.pk, ticket_number=self.ticket_number, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
                                             author=self.author.pk, owner=deleted_ticket_owner,  last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
                                             resolution_date=self.resolution_date, role=group_snapshot)
 
             archived_ticket.save()
+        else:  # Any event but delete needs to update the last ticket action date.
+            TicketLatestActivity.set_ticket_action_date(self, self.date)
 
 
 class TicketHistory(models.Model):
@@ -216,6 +218,8 @@ class TicketComment(models.Model):
                 archived_comment = TicketCommentHistory(comment_id=self.id, content=self.content, date=self.date, ticket=self.ticket.pk,
                                                         author=self.author.pk, last_edited_by=self.last_edited_by.pk, row_action=self.row_action)
                 archived_comment.save()
+            else:  # Any event but delete needs to update the last comment action date.
+                TicketLatestActivity.set_latest_comment_action_date(self.ticket, self.date)
 
         super().save(*args, **kwargs)
 
@@ -279,6 +283,11 @@ class TicketOpenRequest(models.Model):
     def __str__(self):
         return "Reopen Request From: " + self.author.name + " " + str(self.reason)[:20]
 
+    def save(self, *args, **kwargs):
+        with transaction.atomic():
+            TicketLatestActivity.set_reopen_request_action_date(self.ticket, self.date)
+            super().save(*args, **kwargs)
+
 
 class TicketLatestActivity(models.Model):
     # Convenient columns for searching and sorting tickets
@@ -309,6 +318,39 @@ class TicketLatestActivity(models.Model):
         output_field=models.DateField(),
         db_persist=True
     )
+
+    @classmethod
+    def set_ticket_action_date(cls, ticket, ticket_date):
+        with transaction.atomic():
+            # Lock the row that tracks activity dates for this Ticket
+            # Creates it if necessary
+            activity_tracker, created = cls.objects.select_for_update().get_or_create(
+                ticket=ticket,
+                defaults={'ticket_action_date': ticket_date}
+            )
+
+            if not created:
+                activity_tracker.ticket_action_date = ticket_date
+                # supposed to be better than save  - more efficient and doesn't
+                # interfer with other attempted updates that actually WANT
+                # to update the other fields - which we do NOT want to do.
+                activity_tracker.save(update_fields=['ticket_action_date'])
+
+    @classmethod
+    def set_latest_comment_action_date(cls, ticket, comment_date):
+        with transaction.atomic():
+            # we should never have to create a record here.
+            activity_tracker = cls.objects.select_for_update().get(ticket=ticket)
+            activity_tracker.latest_comment_action_date = comment_date
+            activity_tracker.save(update_fields=['latest_comment_action_date'])
+
+    @classmethod
+    def set_reopen_request_action_date(cls, ticket, request_date):
+        with transaction.atomic():
+            # we should never have to create a record here
+            activity_tracker = cls.objects.select_for_update().get(ticket=ticket)
+            activity_tracker.reopen_request_action_date = request_date
+            activity_tracker.save(update_fields=['reopen_request_action_date'])
 
     class Meta:
         indexes = [
