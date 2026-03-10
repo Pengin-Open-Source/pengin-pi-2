@@ -8,8 +8,9 @@ from django.views.generic import DetailView, CreateView, UpdateView, DeleteView
 from django_filters.views import FilterView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
+from django.db.models import F
 from main.models.users import User
-from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
+from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory, TicketLatestActivity
 from tickets.forms import ResolvedTicketOpenRequestForm, SpecificUserResolvedTicketOpenRequestForm, TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
 from tickets.filters import TicketFilter
 from main.mixins import LoginAndValidationRequiredMixin
@@ -72,7 +73,6 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         show_all_users = show_all_users and is_admin
         self.request.session['owner_displays_all_validated_users'] = show_all_users
 
-      
         context['primary_title'] = 'Tickets'
         return context
 
@@ -96,16 +96,12 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
                     self.request.user)
         else:
             if is_admin:
-                tickets = queryset.order_by('-date')
+                tickets = queryset
             else:
                 tickets = Ticket.objects.filter_by_can_see_ticket(
                     self.request.user)
 
-        # search_title_for = self.request.GET.get('q')
-        # if search_title_for:
-         #   tickets = tickets.filter(summary__icontains=search_title_for)
-
-        return tickets
+        return tickets.annotate(last_activity=F('ticketlatestactivity__latest_activity')).order_by('-last_activity')
 
 
 class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
