@@ -2,6 +2,7 @@ import uuid
 from django.db import models, transaction
 from django.contrib.auth.models import Group
 from django.db.models import Q, Max
+from django.db.models.functions import Greatest, Coalesce
 from django.utils import timezone
 from main.models.sequence_counter import SequenceCounter
 from main.models.users import User
@@ -279,11 +280,15 @@ class TicketOpenRequest(models.Model):
         return "Reopen Request From: " + self.author.name + " " + str(self.reason)[:20]
 
 
-class TicketLatestActivity:
-    # The ticket whose activity we want to track
+class TicketLatestActivity(models.Model):
+    # Convenient columns for searching and sorting tickets
+    # by last activity dates
+    # But Currently, we're not counting deleting something as
+    # "activity" even though that often goes into history tables.
+
     # Reason for Delete Policy - CASCADE,  because all fields except the
     # ReopenRequests are logged in history. (And ReopenRequests block deletion)
-    ticket_id = ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     # Date of a Ticket Create,  or if it has any edits, the latest one:
     ticket_action_date = models.DateTimeField()
     # Date of this tick Ticket Reopen Request made by user - or date such
@@ -291,4 +296,21 @@ class TicketLatestActivity:
     reopen_request_action_date = models.DateTimeField(null=True, blank=True)
     # Date of the last new comment or comment edit made on the Ticket
     # (does not include DELETE actions at present)
-    last_comment_action = models.DateTimeField(null=True, blank=True)
+    latest_comment_action_date = models.DateTimeField(null=True, blank=True)
+
+    # This is the date of the latest activity related to the ticket
+    # from any table (not counting any kind of deletion)
+    latest_activity = models.GeneratedField(
+        expression=Greatest(
+            Coalesce('reopen_request_action_date', 'ticket_action_date'),
+            Coalesce('latest_comment_action_date', 'ticket_action_date'),
+            'ticket_action_date'
+        ),
+        output_field=models.DateField(),
+        db_persist=True
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['latest_activity']),
+        ]
