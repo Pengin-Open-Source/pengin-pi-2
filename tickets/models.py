@@ -112,35 +112,35 @@ class Ticket(models.Model):
                 # Gemini snippet - gets new number.
                 self.ticket_number = SequenceCounter.get_next_id("ticket")
 
-        # In any event (but a rollback),  save this new ticket or post ticket to the database.
-        super().save(*args, **kwargs)
+            # In any event (but a rollback),  save this new ticket or post ticket to the database.
+            super().save(*args, **kwargs)
 
-        if save_method == 'DELETE':
-            # if this is a pre-delete save,  the ticket row will have been updated to contain
-            # 1) The action/method: "DELETE"
-            # 2) The User who did the Delete
-            #    (saved in last_edited_by.  So I am not checking
-            #    since it SHOULD always be here)
-            # 3) The time of the deletion
-            # We need to make sure this information is copied into Ticket history
-            # before we delete the Ticket.
-            # (If Ticket history needs to be totally deleted, that should be done
-            # by a DBA)
+            if save_method == 'DELETE':
+                # if this is a pre-delete save,  the ticket row will have been updated to contain
+                # 1) The action/method: "DELETE"
+                # 2) The User who did the Delete
+                #    (saved in last_edited_by.  So I am not checking
+                #    since it SHOULD always be here)
+                # 3) The time of the deletion
+                # We need to make sure this information is copied into Ticket history
+                # before we delete the Ticket.
+                # (If Ticket history needs to be totally deleted, that should be done
+                # by a DBA)
 
-            # Make sure we handle the case where
-            # where the ticket was never assigned to anyone
-            if self.owner:
-                deleted_ticket_owner = self.owner.pk
-            else:
-                deleted_ticket_owner = None
+                # Make sure we handle the case where
+                # where the ticket was never assigned to anyone
+                if self.owner:
+                    deleted_ticket_owner = self.owner.pk
+                else:
+                    deleted_ticket_owner = None
 
-            archived_ticket = TicketHistory(ticket=self.pk, ticket_number=self.ticket_number, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
-                                            author=self.author.pk, owner=deleted_ticket_owner,  last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
-                                            resolution_date=self.resolution_date, role=group_snapshot)
+                archived_ticket = TicketHistory(ticket=self.pk, ticket_number=self.ticket_number, summary=self.summary, content=self.content,  tags=self.tags, date=self.date,
+                                                author=self.author.pk, owner=deleted_ticket_owner,  last_edited_by=self.last_edited_by.pk, row_action=self.row_action, resolution_status=self.resolution_status,
+                                                resolution_date=self.resolution_date, role=group_snapshot)
 
-            archived_ticket.save()
-        else:  # Any event but delete needs to update the last ticket action date.
-            TicketLatestActivity.set_ticket_action_date(self, self.date)
+                archived_ticket.save()
+            else:  # Any event but delete needs to update the last ticket action date.
+                TicketLatestActivity.set_ticket_action_date(self, self.date)
 
 
 class TicketHistory(models.Model):
@@ -219,9 +219,8 @@ class TicketComment(models.Model):
                                                         author=self.author.pk, last_edited_by=self.last_edited_by.pk, row_action=self.row_action)
                 archived_comment.save()
             else:  # Any event but delete needs to update the last comment action date.
-                TicketLatestActivity.set_latest_comment_action_date(self.ticket, self.date)
-
-        super().save(*args, **kwargs)
+                TicketLatestActivity.set_latest_comment_action_date(
+                    self.ticket, self.date)
 
 
 class TicketCommentHistory(models.Model):
@@ -285,7 +284,14 @@ class TicketOpenRequest(models.Model):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            TicketLatestActivity.set_reopen_request_action_date(self.ticket, self.date)
+            save_method = self.row_action
+            if save_method == "CREATE":
+                TicketLatestActivity.set_reopen_request_action_date(
+                    self.ticket, self.request_date)
+            elif save_method == "EDIT":
+                TicketLatestActivity.set_reopen_request_action_date(
+                    self.ticket, self.date_handled)
+
             super().save(*args, **kwargs)
 
 

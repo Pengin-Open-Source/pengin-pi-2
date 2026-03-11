@@ -31,7 +31,7 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
 
         tickets = self.object_list
 
-        tickets = tickets.order_by('-date')
+        tickets = tickets.order_by('-last_activity')
 
         for ticket in tickets:
             if ticket.row_action == 'CREATE':
