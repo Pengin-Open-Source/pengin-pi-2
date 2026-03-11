@@ -85,8 +85,7 @@ class TicketFilter(django_filters.FilterSet):
                                          attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
                                                 'data-default-empty-selection': '{Any Tags}'}, choices=[],))
 
-    date_created_or_last_edited = django_filters.DateFilter(
-        field_name='date', label='Created/Edited On Or After....', lookup_expr='gte', widget=DateTimePickerInput())
+    date = django_filters.DateTimeFilter( label='Created/Edited On Or After....', widget=DateTimePickerInput())
 
     # Gemini's suggestion for multiple terms selected for one search box,
     # refactored,  and re-used to deal with the foreign key /getlist problem
@@ -272,4 +271,4 @@ class TicketFilter(django_filters.FilterSet):
     class Meta:
         model = Ticket
         fields = ['priority', 'ticket_number',
-                  'summary', 'role', 'content', 'author', 'owner', 'last_edited_by', 'tags']
+                  'summary', 'role', 'content', 'author', 'owner', 'last_edited_by', 'tags', 'date']
