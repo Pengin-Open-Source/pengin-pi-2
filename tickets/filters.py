@@ -1,8 +1,11 @@
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import django_filters
 from django_flatpickr.widgets import DateTimePickerInput
 from tickets.models import Ticket
 from django import forms
 from django.db.models import Q
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
 
 
 class TicketFilter(django_filters.FilterSet):
@@ -79,13 +82,14 @@ class TicketFilter(django_filters.FilterSet):
 
                                                ))
 
-    tags = django_filters.CharFilter(field_name='tags',  # Actually searches the Group table's name field
+    tags = django_filters.CharFilter(field_name='tags',
                                      method='filter_multiple_search_phrases', label='Search Ticket by Tags....',
                                      widget=forms.SelectMultiple(
                                          attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
                                                 'data-default-empty-selection': '{Any Tags}'}, choices=[],))
 
-    date = django_filters.DateTimeFilter( label='Created/Edited On Or After....', widget=DateTimePickerInput())
+    date = django_filters.DateTimeFilter(
+        label='Created/Edited On Or After....',  method='filter_search_date',  widget=DateTimePickerInput())
 
     # Gemini's suggestion for multiple terms selected for one search box,
     # refactored,  and re-used to deal with the foreign key /getlist problem
@@ -151,6 +155,28 @@ class TicketFilter(django_filters.FilterSet):
                 search_query |= Q(**{f"{name}__icontains": val})
 
         return queryset.filter(search_query).distinct()
+
+    def filter_search_date(self, queryset, name, _value):
+        date_value = _value
+        if not date_value:
+            return queryset
+
+        utc_zone = ZoneInfo('UTC')
+
+        try:
+            local_zone = ZoneInfo(self.request.COOKIES.get('time_zone'))
+        except (ZoneInfoNotFoundError, TypeError):  # may happen if the user disables cookies
+             # off by a few hours if the user is not in UTC, but better than a crash
+            local_zone = ZoneInfo('UTC') 
+        naive_dt = date_value.replace(tzinfo=None)
+
+        local_datetime = naive_dt.replace(tzinfo=local_zone)
+
+        # 4. Convert the local time to UTC
+        # The .astimezone() method handles the shift based on the time zone info.
+        utc_dt = local_datetime.astimezone(utc_zone)
+
+        return queryset.filter(**{f"{name}__gte": utc_dt}).distinct()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
