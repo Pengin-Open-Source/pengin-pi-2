@@ -88,8 +88,17 @@ class TicketFilter(django_filters.FilterSet):
                                          attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
                                                 'data-default-empty-selection': '{Any Tags}'}, choices=[],))
 
-    date = django_filters.DateTimeFilter(
-        label='Created/Edited On Or After....',  method='filter_search_date',  widget=DateTimePickerInput())
+    after_ticket_date = django_filters.DateTimeFilter(field_name='date',
+                                                      label='Created/Edited On Or After....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
+
+    before_ticket_date = django_filters.DateTimeFilter(field_name='date',
+                                                       label='Created/Edited On or Before....',  method='filter_search_lte_date',  widget=DateTimePickerInput())
+
+    ticket_resolution_after_date = django_filters.DateTimeFilter(field_name='resolution_date',
+                                                                 label='Ticket Resolved On Or After....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
+
+    ticket_resolution_before_date = django_filters.DateTimeFilter(field_name='resolution_date',
+                                                                  label='Ticket Resolved On or Before....',  method='filter_search_lte_date',  widget=DateTimePickerInput())
 
     # Gemini's suggestion for multiple terms selected for one search box,
     # refactored,  and re-used to deal with the foreign key /getlist problem
@@ -156,7 +165,7 @@ class TicketFilter(django_filters.FilterSet):
 
         return queryset.filter(search_query).distinct()
 
-    def filter_search_date(self, queryset, name, _value):
+    def filter_search_gte_date(self, queryset, name, _value):
         date_value = _value
         if not date_value:
             return queryset
@@ -166,8 +175,8 @@ class TicketFilter(django_filters.FilterSet):
         try:
             local_zone = ZoneInfo(self.request.COOKIES.get('time_zone'))
         except (ZoneInfoNotFoundError, TypeError):  # may happen if the user disables cookies
-             # off by a few hours if the user is not in UTC, but better than a crash
-            local_zone = ZoneInfo('UTC') 
+            # off by a few hours if the user is not in UTC, but better than a crash
+            local_zone = ZoneInfo('UTC')
         naive_dt = date_value.replace(tzinfo=None)
 
         local_datetime = naive_dt.replace(tzinfo=local_zone)
@@ -177,6 +186,28 @@ class TicketFilter(django_filters.FilterSet):
         utc_dt = local_datetime.astimezone(utc_zone)
 
         return queryset.filter(**{f"{name}__gte": utc_dt}).distinct()
+
+    def filter_search_lte_date(self, queryset, name, _value):
+        date_value = _value
+        if not date_value:
+            return queryset
+
+        utc_zone = ZoneInfo('UTC')
+
+        try:
+            local_zone = ZoneInfo(self.request.COOKIES.get('time_zone'))
+        except (ZoneInfoNotFoundError, TypeError):  # may happen if the user disables cookies
+            # off by a few hours if the user is not in UTC, but better than a crash
+            local_zone = ZoneInfo('UTC')
+        naive_dt = date_value.replace(tzinfo=None)
+
+        local_datetime = naive_dt.replace(tzinfo=local_zone)
+
+        # 4. Convert the local time to UTC
+        # The .astimezone() method handles the shift based on the time zone info.
+        utc_dt = local_datetime.astimezone(utc_zone)
+
+        return queryset.filter(**{f"{name}__lte": utc_dt}).distinct()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -297,4 +328,4 @@ class TicketFilter(django_filters.FilterSet):
     class Meta:
         model = Ticket
         fields = ['priority', 'ticket_number',
-                  'summary', 'role', 'content', 'author', 'owner', 'last_edited_by', 'tags', 'date']
+                  'summary', 'role', 'content', 'author', 'owner', 'last_edited_by', 'tags']
