@@ -10,6 +10,12 @@ from django.utils import timezone
 
 class TicketFilter(django_filters.FilterSet):
 
+    sort_order = django_filters.OrderingFilter(
+        fields=(
+            ('summary', 'summary'),
+        ),
+    )
+
     priority = django_filters.ChoiceFilter(
         choices=(
                 ('LOW', 'Low'),
@@ -89,16 +95,21 @@ class TicketFilter(django_filters.FilterSet):
                                                 'data-default-empty-selection': '{Any Tags}'}, choices=[],))
 
     after_ticket_date = django_filters.DateTimeFilter(field_name='date',
-                                                      label='Created/Edited On Or After....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
+                                                      label='Last Edited On Or After....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
 
     before_ticket_date = django_filters.DateTimeFilter(field_name='date',
-                                                       label='Created/Edited On or Before....',  method='filter_search_lte_date',  widget=DateTimePickerInput())
+                                                       label='Last Edited On or Before....',  method='filter_search_lte_date',  widget=DateTimePickerInput())
 
     ticket_resolution_after_date = django_filters.DateTimeFilter(field_name='resolution_date',
-                                                                 label='Ticket Resolved On Or After....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
+                                                                 label='Resolved On Or After....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
 
     ticket_resolution_before_date = django_filters.DateTimeFilter(field_name='resolution_date',
-                                                                  label='Ticket Resolved On or Before....',  method='filter_search_lte_date',  widget=DateTimePickerInput())
+                                                                  label='Resolved On or Before....',  method='filter_search_lte_date',  widget=DateTimePickerInput())
+
+    ticket_activity_after_date = django_filters.DateTimeFilter(field_name='last_activity',
+                                                               label='Last Activity On Or After....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
+    ticket_activity_after_date = django_filters.DateTimeFilter(field_name='last_activity',
+                                                               label='Last Activity On Or Before....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
 
     # Gemini's suggestion for multiple terms selected for one search box,
     # refactored,  and re-used to deal with the foreign key /getlist problem
@@ -212,6 +223,8 @@ class TicketFilter(django_filters.FilterSet):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+     
+
         # PRE_LOADED FILTER DATA SECTION:
         # THESE FILTERS HAVE ACTUAL TICKET DATA
         # LOADED INTO THEM
@@ -265,9 +278,6 @@ class TicketFilter(django_filters.FilterSet):
         # user to have a list of previously used search terms.
 
         self.update_search_options("content", set())
-
-        # Fields that don't use TomSelect, ie,  Dates.
-        # #TODO Add date search ranges....
 
     def clean(self):
         cleaned_data = super().clean()
