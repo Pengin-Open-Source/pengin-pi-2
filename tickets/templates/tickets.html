@@ -20,18 +20,34 @@
       <a class="text-button" href="{% url 'tickets' 'all' %}">all</a>|
       <a class="text-button" href="{% url 'tickets' 'resolved' %}">resolved</a>|
       <a class="text-button" href="{% url 'tickets' 'open' %}">open</a>|
-      <a class="text-button" href="{% url 'tickets' 'closed' %}">closed</a>
+      <a class="text-button" href="{% url 'tickets' 'closed' %}">closed</a>|
+{% comment %}       <form method="get" action="{{ request.path }}">
+        <select name="sort_order">
+            <option value="-last_activity">Last Activity (Most Recent) </option>
+            <option value="last_activity">Last Activity (Least Recent) </option>
+            <option value="summary">Titles: A-Z</option>
+            <option value="-summary">Titles: Z-A</option>
+        </select>
+        <button type="submit">Sort Tickets</button>
+    </form> {% endcomment %}
+      
     </div>
     
      
     <form method="get">
       {{ filter.form.media }} 
+      <div style="border: 1px solid blue; padding: 10px;">
+        {{ filter.form.sort_order.label_tag }} 
+        {{ filter.form.sort_order }}
+     </div>
       {% for field in filter.form %}
-      <div class="fieldWrapper">
-          <p>{{ field.errors }}</p>
-          <p>{{ field.label_tag }}</p>
-          <p>{{ field }}</p>
-      </div>
+        {% if field.name != 'sort_order' %}
+          <div class="fieldWrapper">
+              <p>{{ field.errors }}</p>
+              <p>{{ field.label_tag }}</p>
+              <p>{{ field }}</p>
+          </div>
+        {% endif %}
       {% endfor %}
       <a href="{{ request.path }}" class="message-load-button"> Clear All Filters </a>
       <br/>

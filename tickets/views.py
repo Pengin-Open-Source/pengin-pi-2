@@ -30,8 +30,9 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         context = super().get_context_data(**kwargs)
 
         tickets = self.object_list
-
-        tickets = tickets.order_by('-last_activity')
+        #User-chosen sort order - or default to most recent activity 1st.
+        sort_by = self.request.GET.get('sort_order', '-last_activity')
+        tickets = tickets.order_by(sort_by)
 
         for ticket in tickets:
             if ticket.row_action == 'CREATE':
