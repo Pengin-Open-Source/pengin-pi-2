@@ -17,10 +17,17 @@ class FilterSortOrder(django_filters.FilterSet):
             ('-last_activity', 'By Activity (most recent first)'),
             ('last_activity', 'By Activity (longest inactive)'),
             ('-resolution_date', 'By Resolution Date'),
+            ('-resolution_date', 'By Resolution Date (oldest first)'),
             ('summary', 'By Summary/Title A-Z'),
             ('-summary', 'By Summary/Title Z-A'),
             ('-ticket_number', 'By Ticket Number (Highest First)'),
             ('ticket_number', 'By Ticket Number (Lowest First)'),
+            ('role__name',  'By Group Name'),
+            ('-role__name',  'By Group Name (Z-A)'),
+            ('author__name',  'By Author Name (A-Z)'),
+            ('-author__name',  'By Author Name (Z-A)'),
+            ('owner__name',  'By Owner Name (A-Z)'),
+            ('-owner__name',  'By Owner Name (Z-A)'),
         ),
         fields=(
             ('-last_activity', 'Recent Activity'),
@@ -81,7 +88,7 @@ class TicketFilter(django_filters.FilterSet):
                                      widget=forms.SelectMultiple(
                                          attrs={
                                             'class': 'tom-select-enabled', 'multiple': 'multiple',
-                                            'data-default-empty-selection': '{Any Group/Role}'},
+                                             'data-default-empty-selection': '{Any Group/Role}'},
                                          choices=[],
 
                                      ))
@@ -91,7 +98,7 @@ class TicketFilter(django_filters.FilterSet):
                                        widget=forms.SelectMultiple(
                                            attrs={
                                               'class': 'tom-select-enabled', 'multiple': 'multiple',
-                                              'data-default-empty-selection': '{Any Author}'},
+                                               'data-default-empty-selection': '{Any Author}'},
                                            choices=[],
 
                                        ))
@@ -101,7 +108,7 @@ class TicketFilter(django_filters.FilterSet):
                                       widget=forms.SelectMultiple(
                                           attrs={
                                              'class': 'tom-select-enabled', 'multiple': 'multiple',
-                                             'data-default-empty-selection': '{Any Owner}'},
+                                              'data-default-empty-selection': '{Any Owner}'},
                                           choices=[],
 
                                       ))
@@ -111,7 +118,7 @@ class TicketFilter(django_filters.FilterSet):
                                                widget=forms.SelectMultiple(
                                                    attrs={
                                                       'class': 'tom-select-enabled', 'multiple': 'multiple',
-                                                      'data-default-empty-selection': '{Anyone}'},
+                                                       'data-default-empty-selection': '{Anyone}'},
                                                    choices=[],
 
                                                ))
