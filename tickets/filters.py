@@ -17,7 +17,7 @@ class FilterSortOrder(django_filters.FilterSet):
             ('-last_activity', 'By Activity (most recent first)'),
             ('last_activity', 'By Activity (longest inactive)'),
             ('-resolution_date', 'By Resolution Date'),
-            ('-resolution_date', 'By Resolution Date (oldest first)'),
+            ('resolution_date', 'By Resolution Date (oldest first)'),
             ('summary', 'By Summary/Title A-Z'),
             ('-summary', 'By Summary/Title Z-A'),
             ('-ticket_number', 'By Ticket Number (Highest First)'),
