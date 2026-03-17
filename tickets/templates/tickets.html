@@ -6,6 +6,7 @@
 {% load macros %}
 {% loadmacros "macros/pagination.html" %}
 
+ {% comment %} Worked with Gemini coding this file {% endcomment %}
 
 {% block pageDropDowns %}
   <a href="{% url 'create_ticket' %}">Create Ticket</a>
@@ -24,21 +25,7 @@
       <form method="get" action="{{ request.path }}">
            {{ sort_order_filter_form.sort_order.label_tag }} 
            {{ sort_order_filter_form.sort_order }}
-        </div> 
-          {% comment %} <select name="sort_order">
-              <option value="-last_activity">Last Activity (Most Recent) </option>
-              <option value="last_activity">Last Activity (Least Recent) </option>
-              <option value="summary">Titles: A-Z</option>
-              <option value="-summary">Titles: Z-A</option>
-          </select>
-
-          <select name="sort_order" id="sort_order">
-            {% for choice in sort_order_options %}
-                <option value="{{ choice }}" {% if selected_sort == choice %}selected{% endif %}>
-                    {{ choice }}
-                </option>
-            {% endfor %}
-        </select> {% endcomment %}
+   </div> 
 
         </form> 
       
@@ -49,16 +36,30 @@
       {{ filter.form.media }} 
         {% if request.GET.sort_order %}
            <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}">
-        {% endif %}  
-      {% for field in filter.form %}
-        {% if field.name != 'sort_order' %}
-          <div class="fieldWrapper">
-              <p>{{ field.errors }}</p>
-              <p>{{ field.label_tag }}</p>
-              <p>{{ field }}</p>
-          </div>
         {% endif %}
-      {% endfor %}
+       
+         
+        <div class="basic-search">
+          {{ filter.form.priority.label_tag }} {{ filter.form.priority }}
+          {{ filter.form.role.label_tag }} {{ filter.form.role }}
+          {{ filter.form.owner.label_tag }} {{ filter.form.owner }}
+          {{ filter.form.author.label_tag }} {{ filter.form.author }}
+        </div>
+
+        {% comment %} Hide More Advanced Options until the user wants to see them.  {% endcomment %}
+        <a href="#" id="toggle-advanced" style="font-size: 0.9em; color: blue;">+ Advanced Filters</a>
+        <div id="advanced-search" style="display: none; margin-top: 10px; border-left: 2px solid #ddd; padding-left: 10px;">
+            {% for field in filter.form %}
+              {% if field.name != 'priority' and field.name != 'author' and field.name != 'owner' and field.name != 'role'  %}
+                <div class="fieldWrapper">
+                    <p>{{ field.errors }}</p>
+                    <p>{{ field.label_tag }}</p>
+                    <p>{{ field }}</p>
+                </div>
+              {% endif %}
+            {% endfor %}
+        </div>
+
       <a href="{{ request.path }}" class="message-load-button"> Clear All Filters </a>
       <br/>
       <p> <button type="submit"> <i> Search {{ view.kwargs.status|default:"All"|title }} Tickets... </i> </button> </p>
@@ -72,7 +73,7 @@
 
 
 {% block tableContent %}
- {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
+ {% comment %} Code to manage UTC-to-local timezone conversion {% endcomment %}
 <script>
   function convertUTCToLocal(utcTime) {
     const utcMillis = new Date(utcTime).getTime();
@@ -152,17 +153,21 @@
   <script>
     // Using Vanilla JS to be safe
     document.addEventListener("DOMContentLoaded", function() {
-        const settings = {
+      //########### TOM SELECT CODE ############################//
+      // settings for TomSelect fields
+      const settings = {
             selectOnTab: true,
             maxOptions: 50,
             create: true,
-            // This ensures the dropdown doesn't get wider than your 6-column grid cell
             dropdownParent: 'body', 
             plugins: ['remove_button'],
             persist: true,
         };
 
-        // Targeting your specific filter fields
+
+
+        
+        // Targeting your specific filter fields that use tom select
         document.querySelectorAll('.tom-select-enabled').forEach((el) => {
             // Create the instance
             const control = new TomSelect(el, settings);
@@ -186,7 +191,7 @@
                  this.control_input.setAttribute('placeholder', newLabel);
               }
 
-              // 3. Force the UI to refresh the placeholder display
+              // Force the UI to refresh the placeholder display
               this.updatePlaceholder();
   
               // Refresh the dropdown UI without closing it
@@ -212,11 +217,53 @@
             });
   
         });
+
+        //################################################
+        // For Toggling Advanced Search Fields' Visibility
+        //#################################################
+
+        const toggleLink = document.getElementById('toggle-advanced');
+        const advancedDiv = document.getElementById('advanced-fields');
+        //  The Logic to Check for Existing Data on Page Load
+        // We look for ANY input or select within the advanced div that isn't empty
+        const advancedInputs = advancedDiv.querySelectorAll('input, select, textarea');
+        let hasActiveFilters = false;
+        
+        advancedInputs.forEach(input => {
+          // Check if the input has a value and it's not just a default/empty string
+          if (input.value && input.value.trim() !== "") {
+            
+             hasActiveFilters = true;
+              
+          }
+        });
+
+        // If we already have data in the advanced search fields, 
+        // show the Advanced search div immediately so the user sees their 
+        // active filters
+        if (hasActiveFilters) {
+          advancedDiv.style.display = 'block';
+           toggleLink.textContent = '- Show Less';
+        }
+
+         // The Click Event Listener for Manual Toggling
+         toggleLink.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent the '#' from scrolling the page
+            
+            if (advancedDiv.style.display === 'none' || advancedDiv.style.display === '') {
+                advancedDiv.style.display = 'flex';
+                toggleLink.textContent = '-Show Less';
+            } else {
+                advancedDiv.style.display = 'none';
+                toggleLink.textContent = '+Advanced Filters';
+            }
+          });
+
     });
 </script>
 
 <script>
-  // Gemini's help for making Sort dropdown submit on change
+
   // Target the Sort Select element by the ID Django gives it
   const sortSelect = document.getElementById('id_sort_order');
   if (sortSelect) {
