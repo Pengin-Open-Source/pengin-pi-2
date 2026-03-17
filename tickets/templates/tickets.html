@@ -21,25 +21,35 @@
       <a class="text-button" href="{% url 'tickets' 'resolved' %}">resolved</a>|
       <a class="text-button" href="{% url 'tickets' 'open' %}">open</a>|
       <a class="text-button" href="{% url 'tickets' 'closed' %}">closed</a>|
-{% comment %}       <form method="get" action="{{ request.path }}">
-        <select name="sort_order">
-            <option value="-last_activity">Last Activity (Most Recent) </option>
-            <option value="last_activity">Last Activity (Least Recent) </option>
-            <option value="summary">Titles: A-Z</option>
-            <option value="-summary">Titles: Z-A</option>
-        </select>
-        <button type="submit">Sort Tickets</button>
-    </form> {% endcomment %}
+      <form method="get" action="{{ request.path }}">
+           {{ sort_order_filter_form.sort_order.label_tag }} 
+           {{ sort_order_filter_form.sort_order }}
+        </div> 
+          {% comment %} <select name="sort_order">
+              <option value="-last_activity">Last Activity (Most Recent) </option>
+              <option value="last_activity">Last Activity (Least Recent) </option>
+              <option value="summary">Titles: A-Z</option>
+              <option value="-summary">Titles: Z-A</option>
+          </select>
+
+          <select name="sort_order" id="sort_order">
+            {% for choice in sort_order_options %}
+                <option value="{{ choice }}" {% if selected_sort == choice %}selected{% endif %}>
+                    {{ choice }}
+                </option>
+            {% endfor %}
+        </select> {% endcomment %}
+
+        </form> 
       
     </div>
     
      
     <form method="get">
       {{ filter.form.media }} 
-      <div style="border: 1px solid blue; padding: 10px;">
-        {{ filter.form.sort_order.label_tag }} 
-        {{ filter.form.sort_order }}
-     </div>
+        {% if request.GET.sort_order %}
+           <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}">
+        {% endif %}  
       {% for field in filter.form %}
         {% if field.name != 'sort_order' %}
           <div class="fieldWrapper">
@@ -203,6 +213,17 @@
   
         });
     });
+</script>
+
+<script>
+  // Gemini's help for making Sort dropdown submit on change
+  // Target the Sort Select element by the ID Django gives it
+  const sortSelect = document.getElementById('id_sort_order');
+  if (sortSelect) {
+      sortSelect.onchange = function() {
+          this.form.submit();
+      };
+  }
 </script>
 {% endblock %}
 

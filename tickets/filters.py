@@ -6,15 +6,43 @@ from django import forms
 from django.db.models import Q
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
+# Colaborated with Gemini working on the file -> mvetom
+
+
+class FilterSortOrder(django_filters.FilterSet):
+
+    sort_order = django_filters.OrderingFilter(
+
+        choices=(
+            ('-last_activity', 'By Activity (most recent first)'),
+            ('last_activity', 'By Activity (longest inactive)'),
+            ('-resolution_date', 'By Resolution Date'),
+            ('summary', 'By Summary/Title A-Z'),
+            ('-summary', 'By Summary/Title Z-A'),
+            ('-ticket_number', 'By Ticket Number (Highest First)'),
+            ('ticket_number', 'By Ticket Number (Lowest First)'),
+        ),
+        fields=(
+            ('-last_activity', 'Recent Activity'),
+        ),
+        # Removes the "---------" blank option
+        empty_label=None,
+        null_label=None
+    )
+
+    class Meta:
+        model = Ticket
+        fields = ['priority', 'ticket_number',
+                  'summary', 'role', 'content', 'author', 'owner', 'last_edited_by', 'tags']
 
 
 class TicketFilter(django_filters.FilterSet):
 
-    sort_order = django_filters.OrderingFilter(
-        fields=(
-            ('summary', 'summary'),
-        ),
-    )
+    # sort_order = django_filters.OrderingFilter(
+    #     fields=(
+    #         ('summary', 'summary'),
+    #     ),
+    # )
 
     priority = django_filters.ChoiceFilter(
         choices=(
@@ -52,8 +80,8 @@ class TicketFilter(django_filters.FilterSet):
                                      method='filter_foreign_key_name_attribute', label='Search Tickets by Role....',
                                      widget=forms.SelectMultiple(
                                          attrs={
-                                             'class': 'tom-select-enabled', 'multiple': 'multiple',
-                                             'data-default-empty-selection': '{Any Group/Role}'},
+                                            'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                            'data-default-empty-selection': '{Any Group/Role}'},
                                          choices=[],
 
                                      ))
@@ -62,8 +90,8 @@ class TicketFilter(django_filters.FilterSet):
                                        method='filter_foreign_key_name_attribute', label='Search Tickets by Author....',
                                        widget=forms.SelectMultiple(
                                            attrs={
-                                               'class': 'tom-select-enabled', 'multiple': 'multiple',
-                                               'data-default-empty-selection': '{Any Author}'},
+                                              'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                              'data-default-empty-selection': '{Any Author}'},
                                            choices=[],
 
                                        ))
@@ -72,8 +100,8 @@ class TicketFilter(django_filters.FilterSet):
                                       method='filter_foreign_key_name_attribute', label='Search Tickets by Owner....',
                                       widget=forms.SelectMultiple(
                                           attrs={
-                                              'class': 'tom-select-enabled', 'multiple': 'multiple',
-                                              'data-default-empty-selection': '{Any Owner}'},
+                                             'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                             'data-default-empty-selection': '{Any Owner}'},
                                           choices=[],
 
                                       ))
@@ -82,8 +110,8 @@ class TicketFilter(django_filters.FilterSet):
                                                method='filter_foreign_key_name_attribute', label='Search by Last User to Edit....',
                                                widget=forms.SelectMultiple(
                                                    attrs={
-                                                       'class': 'tom-select-enabled', 'multiple': 'multiple',
-                                                       'data-default-empty-selection': '{Anyone}'},
+                                                      'class': 'tom-select-enabled', 'multiple': 'multiple',
+                                                      'data-default-empty-selection': '{Anyone}'},
                                                    choices=[],
 
                                                ))
@@ -108,8 +136,8 @@ class TicketFilter(django_filters.FilterSet):
 
     ticket_activity_after_date = django_filters.DateTimeFilter(field_name='last_activity',
                                                                label='Last Activity On Or After....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
-    ticket_activity_after_date = django_filters.DateTimeFilter(field_name='last_activity',
-                                                               label='Last Activity On Or Before....',  method='filter_search_gte_date',  widget=DateTimePickerInput())
+    ticket_activity_before_date = django_filters.DateTimeFilter(field_name='last_activity',
+                                                                label='Last Activity On Or Before....',  method='filter_search_lte_date',  widget=DateTimePickerInput())
 
     # Gemini's suggestion for multiple terms selected for one search box,
     # refactored,  and re-used to deal with the foreign key /getlist problem
@@ -222,8 +250,6 @@ class TicketFilter(django_filters.FilterSet):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-     
 
         # PRE_LOADED FILTER DATA SECTION:
         # THESE FILTERS HAVE ACTUAL TICKET DATA

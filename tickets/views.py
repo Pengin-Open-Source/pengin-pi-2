@@ -12,7 +12,7 @@ from django.db.models import F
 from main.models.users import User
 from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory, TicketLatestActivity
 from tickets.forms import ResolvedTicketOpenRequestForm, SpecificUserResolvedTicketOpenRequestForm, TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
-from tickets.filters import TicketFilter
+from tickets.filters import TicketFilter, FilterSortOrder
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_comment_on_ticket, can_edit_ticket_privileged, can_edit_ticket_status, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
@@ -30,7 +30,9 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         context = super().get_context_data(**kwargs)
 
         tickets = self.object_list
-        #User-chosen sort order - or default to most recent activity 1st.
+        context['sort_order_filter_form'] = FilterSortOrder(
+            self.request.GET, queryset=self.object_list).form
+        # User-chosen sort order - or default to most recent activity 1st.
         sort_by = self.request.GET.get('sort_order', '-last_activity')
         tickets = tickets.order_by(sort_by)
 
@@ -75,6 +77,7 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         self.request.session['owner_displays_all_validated_users'] = show_all_users
 
         context['primary_title'] = 'Tickets'
+
         return context
 
     def get_queryset(self):
