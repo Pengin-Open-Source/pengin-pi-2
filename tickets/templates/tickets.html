@@ -251,14 +251,26 @@
          // The Click Event Listener for Manual Toggling
          toggleLink.addEventListener('click', function(e) {
             e.preventDefault(); // Prevent the '#' from scrolling the page
-            console.log("I got here")
+            
 
             if (advancedDiv.style.display === 'none' || advancedDiv.style.display === '') {
                 advancedDiv.style.display = 'block';
                 toggleLink.textContent = '-Show Less';
-            } else {
-                advancedDiv.style.display = 'none';
-                toggleLink.textContent = '+Advanced Filters';
+            } 
+            else {
+
+                const confirmClear = confirm("Would you like to clear the advanced filters as well?");
+              
+                if (confirmClear) {
+                    // Loop through and reset only the advanced inputs
+                    advancedInputs.forEach(input => {
+                            input.value = '';
+                        
+                    });
+                    advancedDiv.style.display = 'none';
+                    toggleLink.textContent = '+Advanced Filters';
+                }
+
             }
           });
 
