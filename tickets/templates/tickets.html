@@ -40,10 +40,14 @@
        
          
         <div class="basic-search">
-          {{ filter.form.priority.label_tag }} {{ filter.form.priority }}
-          {{ filter.form.role.label_tag }} {{ filter.form.role }}
-          {{ filter.form.owner.label_tag }} {{ filter.form.owner }}
-          {{ filter.form.author.label_tag }} {{ filter.form.author }}
+        <p> {{ filter.form.priority.errors }}</p>
+        <p> {{ filter.form.priority.label_tag }} {{ filter.form.priority }} </p>
+        <p> {{ filter.form.role.errors }}</p>
+        <p> {{ filter.form.role.label_tag }} {{ filter.form.role }} </p>
+        <p> {{ filter.form.owner.errors }}</p>
+        <p> {{ filter.form.owner.label_tag }} {{ filter.form.owner }} </p>
+        <p> {{ filter.form.author.errors }}</p>
+        <p> {{ filter.form.author.label_tag }} {{ filter.form.author }} </p>
         </div>
 
         {% comment %} Hide More Advanced Options until the user wants to see them.  {% endcomment %}
@@ -163,9 +167,6 @@
             plugins: ['remove_button'],
             persist: true,
         };
-
-
-
         
         // Targeting your specific filter fields that use tom select
         document.querySelectorAll('.tom-select-enabled').forEach((el) => {
@@ -220,11 +221,11 @@
 
         //################################################
         // For Toggling Advanced Search Fields' Visibility
-        //#################################################
+        //################################################
 
         const toggleLink = document.getElementById('toggle-advanced');
-        const advancedDiv = document.getElementById('advanced-fields');
-        //  The Logic to Check for Existing Data on Page Load
+        const advancedDiv = document.getElementById('advanced-search');
+        // The Logic to Check for Existing Data on Page Load
         // We look for ANY input or select within the advanced div that isn't empty
         const advancedInputs = advancedDiv.querySelectorAll('input, select, textarea');
         let hasActiveFilters = false;
@@ -244,14 +245,16 @@
         if (hasActiveFilters) {
           advancedDiv.style.display = 'block';
            toggleLink.textContent = '- Show Less';
-        }
 
+        }
+        
          // The Click Event Listener for Manual Toggling
          toggleLink.addEventListener('click', function(e) {
             e.preventDefault(); // Prevent the '#' from scrolling the page
-            
+            console.log("I got here")
+
             if (advancedDiv.style.display === 'none' || advancedDiv.style.display === '') {
-                advancedDiv.style.display = 'flex';
+                advancedDiv.style.display = 'block';
                 toggleLink.textContent = '-Show Less';
             } else {
                 advancedDiv.style.display = 'none';
