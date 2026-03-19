@@ -25,9 +25,7 @@
       <form method="get" action="{{ request.path }}">
            {{ sort_order_filter_form.sort_order.label_tag }} 
            {{ sort_order_filter_form.sort_order }}
-   </div> 
-
-        </form> 
+       </form> 
       
     </div>
     
@@ -55,11 +53,24 @@
         <div id="advanced-search" style="display: none; margin-top: 10px; border-left: 2px solid #ddd; padding-left: 10px;">
             {% for field in filter.form %}
               {% if field.name != 'priority' and field.name != 'author' and field.name != 'owner' and field.name != 'role'  %}
-                <div class="fieldWrapper">
-                    <p>{{ field.errors }}</p>
-                    <p>{{ field.label_tag }}</p>
-                    <p>{{ field }}</p>
-                </div>
+                
+                {% if 'date' in field.name  %}
+                    {% if 'after' in field.name %}
+                      <div class="date-row">
+                    {% endif %}
+                    <div class="date-field">
+                      {{ field.errors }} {{ field.label_tag }} {{ field }}
+                    </div>
+                    {% if 'before' in field.name %}
+                       </div> {# Close the flex row after every second date field #}
+                     {% endif %}
+                {% else %}
+                    <div class="fieldWrapper">
+                        <p>{{ field.errors }}</p>
+                        <p>{{ field.label_tag }}</p>
+                        <p>{{ field }}</p>
+                    </div>
+                {% endif %}
               {% endif %}
             {% endfor %}
         </div>

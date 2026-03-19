@@ -561,7 +561,7 @@ th {
 }
 
 /* Calendar */
-.calendar-date {
+date.calendar-date {
   margin-bottom: 0.5rem;
 }
 
@@ -925,4 +925,36 @@ th {
   color: var(--main-blue);
   font-size: 1.5rem;
   cursor: pointer;
+}
+
+/* GEMINI's Suggestion for date range selection field formatting */
+
+/* Put the two date range selection fields here */
+.date-row {
+  display: grid;
+  /* Col 1: Label1 (auto) | Col 2: Input1 (flexible) | Col 3: Label2 (auto) | Col 4: Input2 (flexible) */
+  grid-template-columns: minmax(100px, auto) 1fr minmax(100px, auto) 1fr;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* Each date field */
+
+
+/* Ensure the date-field div doesn't add extra nested flex behavior */
+.date-field {
+  display: contents;
+  /* This 'unwraps' the div so its children (label/input) sit directly in the grid */
+}
+
+.date-field label {
+  font-weight: bold;
+  white-space: nowrap;
+  /* Prevents labels from wrapping and ruining the alignment */
+}
+
+.date-field input {
+  width: 100%;
+  /* Makes sure the input fills its 1fr slot */
 }
