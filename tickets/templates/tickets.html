@@ -51,28 +51,37 @@
         {% comment %} Hide More Advanced Options until the user wants to see them.  {% endcomment %}
         <a href="#" id="toggle-advanced" style="font-size: 0.9em; color: blue;">+ Advanced Filters</a>
         <div id="advanced-search" style="display: none; margin-top: 10px; border-left: 2px solid #ddd; padding-left: 10px;">
+          
+            {# PASS 1: Standard Multi-selects #}
             {% for field in filter.form %}
-              {% if field.name != 'priority' and field.name != 'author' and field.name != 'owner' and field.name != 'role'  %}
-                
-                {% if 'date' in field.name  %}
-                    {% if 'after' in field.name %}
-                      <div class="date-row">
-                    {% endif %}
-                    <div class="date-field">
-                      {{ field.errors }} {{ field.label_tag }} {{ field }}
-                    </div>
-                    {% if 'before' in field.name %}
-                       </div> {# Close the flex row after every second date field #}
-                     {% endif %}
-                {% else %}
-                    <div class="fieldWrapper">
-                        <p>{{ field.errors }}</p>
-                        <p>{{ field.label_tag }}</p>
-                        <p>{{ field }}</p>
-                    </div>
+                {% if 'date' not in field.name  and field.name != 'priority' and field.name != 'author' and field.name != 'owner' and field.name != 'role'  %}
+                  <div class="fieldWrapper">
+                    <p>{{ field.errors }}</p>
+                    <p>{{ field.label_tag }}</p>
+                    <p>{{ field }}</p>
+                </div>
                 {% endif %}
-              {% endif %}
             {% endfor %}
+
+            <i> Search by Date Range(s)..... </i>
+
+            <hr>
+
+            {# PASS 2: Dates ... put them in one Grid Container #}
+            <div class="date-grid-master">
+                {% for field in filter.form %}
+                    {% if 'date' in field.name %}
+                        <div class="date-stack">
+                            <label>{{ field.label }}</label>
+                            <div class="input-area">
+                                {{ field.errors }}
+                                {{ field }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <hr>
         </div>
 
       <a href="{{ request.path }}" class="message-load-button"> Clear All Filters </a>

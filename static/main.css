@@ -929,32 +929,30 @@ date.calendar-date {
 
 /* GEMINI's Suggestion for date range selection field formatting */
 
-/* Put the two date range selection fields here */
-.date-row {
+.date-grid-master {
   display: grid;
-  /* Col 1: Label1 (auto) | Col 2: Input1 (flexible) | Col 3: Label2 (auto) | Col 4: Input2 (flexible) */
-  grid-template-columns: minmax(100px, auto) 1fr minmax(100px, auto) 1fr;
-  gap: 15px;
-  align-items: center;
-  margin-bottom: 10px;
+  /* Col 1: Start Label | Col 2: Start Input | Col 3: End Label | Col 4: End Input */
+  /* We actually want 2 pairs per row, so 4 columns total */
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+  gap: 20px 30px;
+  /* 20px vertical between rows, 30px horizontal between After/Before */
 }
 
-/* Each date field */
-
-
-/* Ensure the date-field div doesn't add extra nested flex behavior */
-.date-field {
-  display: contents;
-  /* This 'unwraps' the div so its children (label/input) sit directly in the grid */
+.date-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  /* Space between label and input */
 }
 
-.date-field label {
+.date-stack label {
+  font-size: 0.85rem;
   font-weight: bold;
-  white-space: nowrap;
-  /* Prevents labels from wrapping and ruining the alignment */
+  color: #555;
 }
 
-.date-field input {
+.date-stack input {
   width: 100%;
-  /* Makes sure the input fills its 1fr slot */
+  padding: 6px;
+  box-sizing: border-box;
 }
