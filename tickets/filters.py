@@ -313,8 +313,35 @@ class TicketFilter(django_filters.FilterSet):
         self.update_search_options("content", set())
 
     def clean(self):
+        print("I am in the clean method")
         cleaned_data = super().clean()
         ticket_numbers = cleaned_data.get('ticket_number')
+
+        after_ticket_date = cleaned_data.get('after_ticket_date')
+        print(after_ticket_date)
+        before_ticket_date = cleaned_data.get('before_ticket_date')
+        print(before_ticket_date)
+        if before_ticket_date < after_ticket_date:
+            raise forms.ValidationError(
+                "Last Edited Before date... can't come before Last Edited After date!")
+
+        ticket_resolution_after_date = cleaned_data.get(
+            'ticket_resolution_after_date')
+        ticket_resolution_before_date = cleaned_data.get(
+            'ticket_resolution_before_date')
+
+        if ticket_resolution_before_date < ticket_resolution_after_date:
+            raise forms.ValidationError(
+                "Resolved Before date.... can't come before Resolved After date!")
+
+        ticket_activity_after_date = cleaned_data.get(
+            'ticket_activity_after_date')
+        ticket_activity_before_date = cleaned_data.get(
+            'ticket_activity_before_date')
+
+        if ticket_activity_before_date < ticket_activity_after_date:
+            raise forms.ValidationError(
+                "Last Activity Before date... can't come before Last Activity After date!")
 
         for number in ticket_numbers:
             if not number.isdigit():
