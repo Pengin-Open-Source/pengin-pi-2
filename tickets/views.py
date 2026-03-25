@@ -76,7 +76,22 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         show_all_users = show_all_users and is_admin
         self.request.session['owner_displays_all_validated_users'] = show_all_users
 
+        # Look for errors in the Selected Filter Criteria
+        filterset = self.filterset
         context['primary_title'] = 'Tickets'
+        # Check if the filter form has been submitted and has errors
+        if filterset.is_bound and not filterset.is_valid():
+            error_list = []
+            for field, errors in filterset.errors.items():
+                if field == '__all__':
+                    error_list.append("Warning! Errors were found:")
+                else:
+                    error_list.append(f"Errors for field '{field}':")
+
+                for error in errors:
+                    error_list.append(f"- {error}")
+
+            context["form_errors"] = error_list
 
         return context
 

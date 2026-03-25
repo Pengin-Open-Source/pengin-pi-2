@@ -35,7 +35,18 @@
         {% if request.GET.sort_order %}
            <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}">
         {% endif %}
-       
+
+    
+        {% if form_errors %}
+          <div class="alert alert-danger">
+              {% for error in form_errors %}
+                  <ul>
+                      <li style="color:red;">{{ error }}</li>
+                  </ul>
+              {% endfor %}
+          </div>
+        {% endif %}
+
          
         <div class="basic-search">
         <p> {{ filter.form.priority.errors }}</p>

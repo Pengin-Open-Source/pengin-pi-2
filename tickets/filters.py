@@ -45,12 +45,6 @@ class FilterSortOrder(django_filters.FilterSet):
 
 class TicketFilter(django_filters.FilterSet):
 
-    # sort_order = django_filters.OrderingFilter(
-    #     fields=(
-    #         ('summary', 'summary'),
-    #     ),
-    # )
-
     priority = django_filters.ChoiceFilter(
         choices=(
                 ('LOW', 'Low'),
@@ -312,44 +306,52 @@ class TicketFilter(django_filters.FilterSet):
 
         self.update_search_options("content", set())
 
-    def clean(self):
-        print("I am in the clean method")
-        cleaned_data = super().clean()
-        ticket_numbers = cleaned_data.get('ticket_number')
+    @property
+    def form(self):
+        form = super().form
+        # Add custom validation logic to the form's clean method
 
-        after_ticket_date = cleaned_data.get('after_ticket_date')
-        print(after_ticket_date)
-        before_ticket_date = cleaned_data.get('before_ticket_date')
-        print(before_ticket_date)
-        if before_ticket_date < after_ticket_date:
-            raise forms.ValidationError(
-                "Last Edited Before date... can't come before Last Edited After date!")
+        def custom_clean():
+            print("I am in custom clean method")
+            cleaned_data = form.cleaned_data
+            ticket_numbers = cleaned_data.get('ticket_number')
 
-        ticket_resolution_after_date = cleaned_data.get(
-            'ticket_resolution_after_date')
-        ticket_resolution_before_date = cleaned_data.get(
-            'ticket_resolution_before_date')
-
-        if ticket_resolution_before_date < ticket_resolution_after_date:
-            raise forms.ValidationError(
-                "Resolved Before date.... can't come before Resolved After date!")
-
-        ticket_activity_after_date = cleaned_data.get(
-            'ticket_activity_after_date')
-        ticket_activity_before_date = cleaned_data.get(
-            'ticket_activity_before_date')
-
-        if ticket_activity_before_date < ticket_activity_after_date:
-            raise forms.ValidationError(
-                "Last Activity Before date... can't come before Last Activity After date!")
-
-        for number in ticket_numbers:
-            if not number.isdigit():
+            after_ticket_date = cleaned_data.get('after_ticket_date')
+            print(after_ticket_date)
+            before_ticket_date = cleaned_data.get('before_ticket_date')
+            print(before_ticket_date)
+            if before_ticket_date < after_ticket_date:
+                print("before_ticket_date < after_ticket_date:")
                 raise forms.ValidationError(
-                    f"'{number}' is not a valid Ticket Number. Please use digits only."
-                )
+                    "Last Edited Before date can't come before Last Edited After date!")
 
-        return cleaned_data
+            ticket_resolution_after_date = cleaned_data.get(
+                'ticket_resolution_after_date')
+            ticket_resolution_before_date = cleaned_data.get(
+                'ticket_resolution_before_date')
+
+            if ticket_resolution_before_date < ticket_resolution_after_date:
+                raise forms.ValidationError(
+                    "Resolved Before date can't come before Resolved After date!")
+
+            ticket_activity_after_date = cleaned_data.get(
+                'ticket_activity_after_date')
+            ticket_activity_before_date = cleaned_data.get(
+                'ticket_activity_before_date')
+
+            if ticket_activity_before_date < ticket_activity_after_date:
+                raise forms.ValidationError(
+                    "Last Activity Before date can't come before Last Activity After date!")
+
+            for number in ticket_numbers:
+                if not number.isdigit():
+                    raise forms.ValidationError(
+                        f"'{number}' is not a valid Ticket Number. Please use digits only."
+                    )
+
+            return cleaned_data
+        form.clean = custom_clean
+        return form
 
     # refactor/tweak current code and Gemini suggestions - to get one method
     # to help account for multiple selections chosen in any field,  including
