@@ -320,28 +320,28 @@ class TicketFilter(django_filters.FilterSet):
             print(after_ticket_date)
             before_ticket_date = cleaned_data.get('before_ticket_date')
             print(before_ticket_date)
-            if before_ticket_date < after_ticket_date:
-                print("before_ticket_date < after_ticket_date:")
-                raise forms.ValidationError(
-                    "Last Edited Before date can't come before Last Edited After date!")
+            if (before_ticket_date and after_ticket_date):
+                if before_ticket_date < after_ticket_date:
+                    raise forms.ValidationError(
+                        "Last Edited Before date can't come before Last Edited After date!")
 
             ticket_resolution_after_date = cleaned_data.get(
                 'ticket_resolution_after_date')
             ticket_resolution_before_date = cleaned_data.get(
                 'ticket_resolution_before_date')
-
-            if ticket_resolution_before_date < ticket_resolution_after_date:
-                raise forms.ValidationError(
-                    "Resolved Before date can't come before Resolved After date!")
+            if ticket_resolution_after_date and ticket_resolution_before_date:
+                if ticket_resolution_before_date < ticket_resolution_after_date:
+                    raise forms.ValidationError(
+                        "Resolved Before date can't come before Resolved After date!")
 
             ticket_activity_after_date = cleaned_data.get(
                 'ticket_activity_after_date')
             ticket_activity_before_date = cleaned_data.get(
                 'ticket_activity_before_date')
-
-            if ticket_activity_before_date < ticket_activity_after_date:
-                raise forms.ValidationError(
-                    "Last Activity Before date can't come before Last Activity After date!")
+            if ticket_activity_after_date and ticket_activity_before_date:
+                if ticket_activity_before_date < ticket_activity_after_date:
+                    raise forms.ValidationError(
+                        "Last Activity Before date can't come before Last Activity After date!")
 
             for number in ticket_numbers:
                 if not number.isdigit():
