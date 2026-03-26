@@ -95,7 +95,7 @@
             <hr>
         </div>
 
-      <a href="{{ request.path }}" class="message-load-button"> Clear All Filters </a>
+      <a href="{{ request.path }}?sort_order={{ request.GET.sort_order|default:"-last_activity" }}" class="message-load-button"> Clear All Filters </a>
       <br/>
       <p> <button type="submit"> <i> Search {{ view.kwargs.status|default:"All"|title }} Tickets... </i> </button> </p>
 
