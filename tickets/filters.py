@@ -312,14 +312,11 @@ class TicketFilter(django_filters.FilterSet):
         # Add custom validation logic to the form's clean method
 
         def custom_clean():
-            print("I am in custom clean method")
             cleaned_data = form.cleaned_data
             ticket_numbers = cleaned_data.get('ticket_number')
 
             after_ticket_date = cleaned_data.get('after_ticket_date')
-            print(after_ticket_date)
             before_ticket_date = cleaned_data.get('before_ticket_date')
-            print(before_ticket_date)
             if (before_ticket_date and after_ticket_date):
                 if before_ticket_date < after_ticket_date:
                     raise forms.ValidationError(
