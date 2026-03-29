@@ -16,7 +16,7 @@
       <a class="text-button" href="{% url 'view_all_resolved_reopen_requests' ticket.id 'all' %}">All Resolved Requests</a>|
       <a class="text-button" href="{% url 'view_all_resolved_reopen_requests' ticket.id 'approved' %}">Approved</a>|
       <a class="text-button" href="{% url 'view_all_resolved_reopen_requests' ticket.id 'denied' %}">Denied</a>|
-      <a class="text-button" href="{% url 'view_all_resolved_reopen_requests' ticket.id 'related request approved' %}">Approved via Related Request</a>
+      <a class="text-button" href="{% url 'view_all_resolved_reopen_requests' ticket.id 'related request approved' %}">Approved via Related Request</a>|
       <a class="text-button" href="{% url 'view_all_resolved_reopen_requests' ticket.id 'manually reopened' %}">Ticket Manually Reopened</a>
     </div>
 {% endblock %}
