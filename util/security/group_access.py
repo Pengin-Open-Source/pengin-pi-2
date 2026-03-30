@@ -65,6 +65,16 @@ def is_a_manager(user_to_check):
     return manages_anything
 
 
+def get_groups_user_manages(user_to_check):
+    group_manager_pairs = GroupManager.objects.all().values('manager', 'managed_group')
+
+    group_ids = [item['managed_group']
+                 for item in group_manager_pairs if item['manager'] == user_to_check.id]
+
+    groups_user_manages = Group.objects.filter(id__in=group_ids)
+    return groups_user_manages
+
+
 def get_group_managers(groups=None):
     if groups:
         super_groups = get_super_groups(groups)
