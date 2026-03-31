@@ -157,7 +157,8 @@ def get_all_groups_for_user_with_extended_rbac(given_user):
     # The user has a role that can access this role
     # all possible unique groups a user has RBAC to.
 
-    combined_rbac_set = user_groups | user_super_groups | user_accessed_groups
+    combined_rbac_set = (user_groups | user_super_groups |
+                         user_accessed_groups).distinct()
     return combined_rbac_set
 
 
