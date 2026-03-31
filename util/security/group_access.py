@@ -41,7 +41,7 @@ def get_sub_groups(groups):
     descendant_groups = SubGroup.objects.filter(
         ancestor__in=groups).values('descendant')
 
-    child_group_list = [id['ancestor'] for id in descendant_groups]
+    child_group_list = [id['descendant'] for id in descendant_groups]
     sub_groups = Group.objects.filter(
         id__in=child_group_list)
 
@@ -71,7 +71,9 @@ def get_groups_user_manages(user_to_check):
     group_ids = [item['managed_group']
                  for item in group_manager_pairs if item['manager'] == user_to_check.id]
 
-    groups_user_manages = Group.objects.filter(id__in=group_ids)
+    groups_user_manages_directly = Group.objects.filter(id__in=group_ids)
+    managed_grandchildren = get_sub_groups(groups_user_manages_directly)
+    groups_user_manages = groups_user_manages_directly | managed_grandchildren
     return groups_user_manages
 
 
