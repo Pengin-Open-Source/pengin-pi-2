@@ -492,10 +492,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # we probably want to discourage them from simply meddling
                     # within another Manager's group by "unassigning" their tickets.
 
-                if (can_access_group(current_user, the_role_object.id)):
+                if (can_access_group(current_user, the_role_object.id)) and ticket.resolution_status != 'closed':
                     # A manager user can assign themselves as Owner if they are
                     # part of the group,  even if this is not the group that
-                    # they manage.
+                    # they manage. ETA - IF THE TICKET IS NOT CLOSED!!
                     #
                     # The ticket owner also becomes an option in this case:
                     # The Ticket's *saved*, assigned owner was mismatched with the
@@ -517,7 +517,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     ################################################
                     # This case occurs when the user is a manager,
                     # but this is not one of the roles they manage,
-                    # and they are not a member of this role.
+                    # and they are not a member of this role,
+                    # (ETA - OR THEY ARE A MEMBER, BUT THE TICKET IS CLOSED)
                     # (However, being a manager they can still move
                     #  the ticket to this or any other role)
                     # They cannot assign themselves as Ticket
@@ -650,8 +651,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 # in the role it is currently in.
                 role_options = Group.objects.filter(
                     pk=currently_saved_role.pk)
-
-            if (can_access_group(current_user, ticket.role.id)):
+            # if the user can access the group AND THE TICKET IS NOT CLOSED, they can assign themselves.
+            if (can_access_group(current_user, ticket.role.id)) and ticket.resolution_status != 'closed':
                 # The user can assign themselves as Owner.
                 # If the ticket has an owner, they can see that as well
                 if ticket_has_owner:

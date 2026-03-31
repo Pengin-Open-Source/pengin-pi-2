@@ -129,7 +129,7 @@ class TicketForm(forms.ModelForm):
                     role_options = Group.objects.filter(
                         pk=currently_saved_role.pk)
 
-                if (can_access_group(current_user, selected_role.id)):
+                if (can_access_group(current_user, selected_role.id)) and ticket.resolution_status != 'closed':
                     # The user can assign themselves as Owner.
                     # If the ticket has an owner, and the they
                     # are on the saved role, they can see that as well
