@@ -183,8 +183,10 @@
   {% use_macro render_pagination page_obj page_range_with_ellipsis=page_range_with_ellipsis %}
    
 
+  <script src="{% static 'javascript/tomselectjs/2.3.1/tom-select.complete.min.js'    %}"></script>
   {% comment %} Google Gemini's suggestions for implementing TomSelect for Search Options..... {% endcomment %}
-  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+ 
+  
   <script>
     // Using Vanilla JS to be safe
     document.addEventListener("DOMContentLoaded", function() {
