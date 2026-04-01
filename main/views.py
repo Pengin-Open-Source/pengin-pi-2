@@ -249,7 +249,7 @@ class GroupMemberListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin,
         if member_filter is None:
             member_filter = 'all'
         group = get_object_or_404(Group, id=self.kwargs.get('pk'))
-        # If list of members gets in the 1000s
+        # TODO If list of members gets in the 1000s
         # and performance may suffer. In that case,
         # consider replacing Lower() call with some
         # other strategy,  like a lowercase name

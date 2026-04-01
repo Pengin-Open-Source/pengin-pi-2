@@ -169,7 +169,7 @@ def is_user_who_resolved_ticket(current_user, ticket):
     TicketHistory = apps.get_model('tickets', 'TicketHistory')
 
     ticket_history = TicketHistory.objects.filter(
-        ticket_id=ticket.id)
+        ticket=ticket.id)
 
     last_ticket_history_record = ticket_history.last()
     # if there's no history, this user didn't change it

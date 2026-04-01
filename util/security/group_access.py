@@ -41,7 +41,7 @@ def get_sub_groups(groups):
     descendant_groups = SubGroup.objects.filter(
         ancestor__in=groups).values('descendant')
 
-    child_group_list = [id['ancestor'] for id in descendant_groups]
+    child_group_list = [id['descendant'] for id in descendant_groups]
     sub_groups = Group.objects.filter(
         id__in=child_group_list)
 
@@ -63,6 +63,18 @@ def is_a_manager(user_to_check):
     manages_anything = user_to_check in all_managers
 
     return manages_anything
+
+
+def get_groups_user_manages(user_to_check):
+    group_manager_pairs = GroupManager.objects.all().values('manager', 'managed_group')
+
+    group_ids = [item['managed_group']
+                 for item in group_manager_pairs if item['manager'] == user_to_check.id]
+
+    groups_user_manages_directly = Group.objects.filter(id__in=group_ids)
+    managed_grandchildren = get_sub_groups(groups_user_manages_directly)
+    groups_user_manages = groups_user_manages_directly | managed_grandchildren
+    return groups_user_manages
 
 
 def get_group_managers(groups=None):
@@ -145,7 +157,8 @@ def get_all_groups_for_user_with_extended_rbac(given_user):
     # The user has a role that can access this role
     # all possible unique groups a user has RBAC to.
 
-    combined_rbac_set = user_groups | user_super_groups | user_accessed_groups
+    combined_rbac_set = (user_groups | user_super_groups |
+                         user_accessed_groups).distinct()
     return combined_rbac_set
 
 

@@ -5,11 +5,16 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.db.models.functions import Lower
+from django.core.paginator import Paginator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.mail import send_mail  # Assumes send_mail is correctly set up
 from django.http import Http404
 from datetime import timedelta
+
+from main.mixins import LoginAndValidationRequiredMixin
+from util.security.group_access import get_all_groups_for_user_with_extended_rbac, get_groups_user_manages
 from .forms import EditProfileForm, EditPasswordForm
 # Removed import for Role and UserRoles as they do not exist
 # Correctly import User from the main app
@@ -17,8 +22,11 @@ from main.models.users import User
 import uuid
 
 # Example utility function if generate_uuid is required
+
+
 def generate_uuid():
     return str(uuid.uuid4())
+
 
 @method_decorator(login_required, name='dispatch')
 class ProfileView(LoginRequiredMixin, View):
@@ -43,7 +51,8 @@ class SendEmailView(LoginRequiredMixin, View):
         delta = user.validation_date + timedelta(minutes=5)
         if not user.validated and now > delta:
             user.validation_date = now
-            user.validation_id = generate_uuid()  # Assuming generate_uuid generates a unique identifier
+            # Assuming generate_uuid generates a unique identifier
+            user.validation_id = generate_uuid()
             user.save()
             send_mail(
                 'Validate Your Account',
@@ -103,7 +112,8 @@ class EditPasswordView(LoginRequiredMixin, View):
         if form.is_valid():
             old_password = form.cleaned_data.get('curr_password')
             new_password = form.cleaned_data.get('new_password')
-            confirm_new_password = form.cleaned_data.get('confirm_new_password')
+            confirm_new_password = form.cleaned_data.get(
+                'confirm_new_password')
             if new_password == confirm_new_password:
                 if check_password(request.user.password, old_password):
                     request.user.password = make_password(new_password)
@@ -114,3 +124,42 @@ class EditPasswordView(LoginRequiredMixin, View):
             'form': form,
             'primary_title': 'Edit Password'
         })
+
+
+class UserGroupListView(LoginAndValidationRequiredMixin, View):
+
+    template_name = "user_group_list.html"
+
+    def get(self, request, *args, **kwargs):
+        group_filter = self.kwargs.get('group_filter')
+        if group_filter is None:
+            group_filter = 'member_of'
+        user_to_check = request.user
+        # TODO If list of members gets in the 1000s
+        # and performance may suffer. In that case,
+        # consider replacing Lower() call with some
+        # other strategy,  like a lowercase name
+        # field in the database.
+
+        # TODO - differentiate between types of Group memberships:
+        # Direct,  Inherited, and non-tree Group-to-Group access
+        if group_filter == 'member_of':
+            group_list = get_all_groups_for_user_with_extended_rbac(
+                user_to_check).order_by(Lower('name'))
+        elif group_filter == 'manager_of':
+            group_list = get_groups_user_manages(
+                user_to_check).order_by(Lower('name'))
+        else:
+            # this should never be hit,  but leave it here as placeholder for the TODO above
+            group_list = []
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(group_list, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+
+        context['page_obj'] = page_obj
+
+        context['primary_title'] = "Groups For " + user_to_check.name
+        return render(request, self.template_name, context)

@@ -8,10 +8,11 @@ from django.views.generic import DetailView, CreateView, UpdateView, DeleteView
 from django_filters.views import FilterView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
+from django.db.models import F
 from main.models.users import User
-from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
+from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory, TicketLatestActivity
 from tickets.forms import ResolvedTicketOpenRequestForm, SpecificUserResolvedTicketOpenRequestForm, TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
-from tickets.filters import TicketFilter
+from tickets.filters import TicketFilter, FilterSortOrder
 from main.mixins import LoginAndValidationRequiredMixin
 from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_comment_on_ticket, can_edit_ticket_privileged, can_edit_ticket_status, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
 from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
@@ -29,8 +30,11 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         context = super().get_context_data(**kwargs)
 
         tickets = self.object_list
-
-        tickets = tickets.order_by('-date')
+        context['sort_order_filter_form'] = FilterSortOrder(
+            self.request.GET, queryset=self.object_list).form
+        # User-chosen sort order - or default to most recent activity 1st.
+        sort_by = self.request.GET.get('sort_order', '-last_activity')
+        tickets = tickets.order_by(sort_by)
 
         for ticket in tickets:
             if ticket.row_action == 'CREATE':
@@ -39,12 +43,6 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
                 ticket_creation_info = get_ticket_create_info(ticket)
                 ticket.create_date, ticket.is_create_missing = ticket_creation_info
 
-        titles = sorted(list(set(tickets.values_list('summary', flat=True))))
-        context['available_ticket_titles'] = titles
-
-        ticket_roles = sorted(list(set(tickets.values_list(
-            'role__name', flat=True))))
-        context['available_ticket_roles'] = ticket_roles
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
         paginator = Paginator(tickets, 10)
@@ -78,7 +76,22 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
         show_all_users = show_all_users and is_admin
         self.request.session['owner_displays_all_validated_users'] = show_all_users
 
+        # Look for errors in the Selected Filter Criteria
+        filterset = self.filterset
         context['primary_title'] = 'Tickets'
+        # Check if the filter form has been submitted and has errors
+        if filterset.is_bound and not filterset.is_valid():
+            error_list = []
+            for field, errors in filterset.errors.items():
+                if field == '__all__':
+                    error_list.append("Warning! Errors were found:")
+                else:
+                    error_list.append(f"Errors for field '{field}':")
+
+                for error in errors:
+                    error_list.append(f"- {error}")
+
+            context["form_errors"] = error_list
 
         return context
 
@@ -102,16 +115,12 @@ class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
                     self.request.user)
         else:
             if is_admin:
-                tickets = queryset.order_by('-date')
+                tickets = queryset
             else:
                 tickets = Ticket.objects.filter_by_can_see_ticket(
                     self.request.user)
 
-        # search_title_for = self.request.GET.get('q')
-        # if search_title_for:
-         #   tickets = tickets.filter(summary__icontains=search_title_for)
-
-        return tickets
+        return tickets.annotate(last_activity=F('ticketlatestactivity__latest_activity')).order_by('-last_activity')
 
 
 class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
@@ -341,7 +350,7 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
         context['can_edit_ticket'] = can_edit_ticket(self.request.user, ticket)
         context['can_edit_ticket_status'] = can_edit_ticket_status(
             self.request.user, ticket)
-        context['primary_title'] = self.object.summary + \
+        context['primary_title'] = "Ticket #" + str(ticket.ticket_number) + ": " + self.object.summary + \
             " |  Submitted by: " + self.object.author.name + \
             " | Status: " + self.object.resolution_status.upper()
         return context
@@ -483,10 +492,10 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     # we probably want to discourage them from simply meddling
                     # within another Manager's group by "unassigning" their tickets.
 
-                if (can_access_group(current_user, the_role_object.id)):
+                if (can_access_group(current_user, the_role_object.id)) and ticket.resolution_status != 'closed':
                     # A manager user can assign themselves as Owner if they are
                     # part of the group,  even if this is not the group that
-                    # they manage.
+                    # they manage. ETA - IF THE TICKET IS NOT CLOSED!!
                     #
                     # The ticket owner also becomes an option in this case:
                     # The Ticket's *saved*, assigned owner was mismatched with the
@@ -508,7 +517,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     ################################################
                     # This case occurs when the user is a manager,
                     # but this is not one of the roles they manage,
-                    # and they are not a member of this role.
+                    # and they are not a member of this role,
+                    # (ETA - OR THEY ARE A MEMBER, BUT THE TICKET IS CLOSED)
                     # (However, being a manager they can still move
                     #  the ticket to this or any other role)
                     # They cannot assign themselves as Ticket
@@ -641,8 +651,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                 # in the role it is currently in.
                 role_options = Group.objects.filter(
                     pk=currently_saved_role.pk)
-
-            if (can_access_group(current_user, ticket.role.id)):
+            # if the user can access the group AND THE TICKET IS NOT CLOSED, they can assign themselves.
+            if (can_access_group(current_user, ticket.role.id)) and ticket.resolution_status != 'closed':
                 # The user can assign themselves as Owner.
                 # If the ticket has an owner, they can see that as well
                 if ticket_has_owner:
@@ -678,7 +688,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             form.fields['tags'].widget.attrs['readonly'] = 'readonly'
         context['form'] = form
         context['is_admin'] = is_admin
-        context['primary_title'] = self.object.summary
+        context['primary_title'] = "Ticket #" + \
+            str(ticket.ticket_number) + ": " + ticket.summary
         context['ticket_id'] = self.object.id
 
         return context
@@ -744,7 +755,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
             context = {}
             context['form'] = ticket_form
             context['is_admin'] = self.request.user.is_staff
-            context['primary_title'] = ticket.summary
+            context['primary_title'] = "Ticket #" + \
+                str(ticket.ticket_number) + ": " + ticket.summary
             context['ticket_id'] = ticket.id
             return render(request, self.template_name,  context)
 
@@ -786,7 +798,8 @@ class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin,
         form = TicketEditStatusForm(instance=ticket, current_user=current_user)
         context['form'] = form
         context['is_admin'] = self.request.user.is_staff
-        context['primary_title'] = self.object.summary
+        context['primary_title'] = "Edit Status for Ticket #" + \
+            str(self.object.ticket_number) + ": " + self.object.summary
         context['ticket_id'] = self.object.id
         return context
 
@@ -989,8 +1002,9 @@ class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPass
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        context['primary_title'] = 'Pending Requests to Open Ticket: ' + \
-            requested_ticket.summary
+        context['primary_title'] = 'Pending Requests to Open Ticket #' + \
+            str(requested_ticket.ticket_number) + \
+            ": " + requested_ticket.summary
 
         requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
             approval_status="pending").order_by('-request_date')
@@ -1028,8 +1042,9 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
 
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
-        context["primary_title"] = "Request to Reopen Ticket: " + \
-            requested_ticket.summary
+        context["primary_title"] = "Request to Reopen Ticket #" + \
+            str(requested_ticket.ticket_number) + \
+            ": " + requested_ticket.summary
 
         return context
 
@@ -1063,8 +1078,9 @@ class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserP
 
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
-        context["primary_title"] = "My Request to Reopen Ticket: " + \
-            requested_ticket.summary
+        context["primary_title"] = "My Request to Reopen Ticket #: " + \
+            str(requested_ticket.ticket_number) + \
+            ": " + requested_ticket.summary
 
         return context
 
@@ -1089,8 +1105,9 @@ class AllResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  User
 
         context = super().get_context_data(**kwargs)
         requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        context['primary_title'] = 'Resolved Requests to Open Ticket: ' + \
-            requested_ticket.summary
+        context['primary_title'] = 'Resolved Requests to Open Ticket #' + \
+            str(requested_ticket.ticket_number) + \
+            ": " + requested_ticket.summary
 
         # Currently treating everything not pending as resolved
         # Not currently excluding anything created with the error status,
@@ -1136,8 +1153,9 @@ class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMix
 
         context = super().get_context_data(**kwargs)
         requested_ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
-        context['primary_title'] = self.request.user.name + "'s Resolved Requests to Open Ticket: " + \
-            requested_ticket.summary
+        context['primary_title'] = self.request.user.name + "'s Resolved Requests to Open Ticket #" + \
+            str(requested_ticket.ticket_number) + \
+            ": " + requested_ticket.summary
 
         # Currently treating everything not pending as resolved
         # Not currently excluding anything created with the error status,
@@ -1188,8 +1206,9 @@ class ExtendedResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin
 
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
-        context["primary_title"] = "RESOLVED Request to Reopen Ticket: " + \
-            requested_ticket.summary
+        context["primary_title"] = "RESOLVED Request to Reopen Ticket #" + \
+            str(requested_ticket.ticket_number) + \
+            ": " + requested_ticket.summary
 
         return context
 
@@ -1222,8 +1241,9 @@ class SpecificUserResolvedTicketReopenRequestDetails(LoginAndValidationRequiredM
 
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
-        context["primary_title"] = self.request.user.name + "'s RESOLVED Request to Reopen Ticket: " + \
-            requested_ticket.summary
+        context["primary_title"] = self.request.user.name + "'s RESOLVED Request to Reopen Ticket #" + \
+            str(requested_ticket.ticket_number) + \
+            ": " + requested_ticket.summary
 
         return context
 
@@ -1248,7 +1268,7 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
         context["reopen_request"] = reopen_request
         context['ticket_id'] = self.object.ticket.id
         context['request_id'] = self.object.id
-        context["primary_title"] = "Approve Reopen of Ticket: " + \
+        context["primary_title"] = "Approve Reopen of Ticket #" + str(self.object.ticket.ticket_number) + ": " + \
             self.object.ticket.summary
         return context
 
@@ -1287,6 +1307,8 @@ class ApproveTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPasses
                     ticket.save()
                 # indirectly resolve any other reopen requests on this ticket
                 other_pending = TicketOpenRequest.objects.filter(
+                    # very pendantic FYI :-) : ticket_id is the db field - not ORM - name,
+                    # and its actually cheaper to use.
                     approval_status='pending').filter(ticket_id=ticket.id)
                 other_pending_ids = list(
                     other_pending.values_list('pk', flat=True))
@@ -1330,7 +1352,7 @@ class DenyTicketReopenRequestView(LoginAndValidationRequiredMixin, UserPassesTes
         context["reopen_request"] = reopen_request
         context['ticket_id'] = self.object.ticket.id
         context['request_id'] = self.object.id
-        context["primary_title"] = "Deny Reopen of Ticket: " + \
+        context["primary_title"] = "Deny Reopen of Ticket #" + str(self.object.ticket.ticket_number) + ": " + \
             self.object.ticket.summary
         return context
 
@@ -1368,7 +1390,7 @@ def get_ticket_create_info(ticket):
     is_create_missing = False
 
     ticket_history = TicketHistory.objects.filter(
-        ticket_id=ticket.id,  row_action="CREATE")
+        ticket=ticket.id,  row_action="CREATE")
 
     # there should be only one value.
     # we will set a flag if there is no row with method 'CREATE'  in TicketHistory
