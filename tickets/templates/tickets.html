@@ -280,50 +280,62 @@
         }
         
         // The Click Event Listener for Manual Toggling
-toggleLink.addEventListener('click', function(e) {
-  e.preventDefault(); 
+        toggleLink.addEventListener('click', function(e) {
+          e.preventDefault(); 
 
-  if (advancedDiv.style.display === 'none' || advancedDiv.style.display === '') {
-      advancedDiv.style.display = 'block';
-      toggleLink.textContent = '-Show Less';
-  } 
-  else {
-      const confirmClear = confirm("Would you like to clear the advanced filters as well?");
-      if (confirmClear) {
-        // 1. Target ONLY the original form elements, ignoring the Tom-Select generated divs
-        const actualFields = Array.from(advancedDiv.querySelectorAll('input, select, textarea'));
-    
-        actualFields.forEach(field => {
-            // Skip the Tom-Select 'control' inputs (the ones that handle the typing)
-            if (field.classList.contains('tom-select-input') || field.hasAttribute('autocomplete')) {
-                // If Tom-Select is active on the parent, we handle it through the original element
-                return; 
-            }
-    
-            // 2. Check for the instance on the ORIGINAL element
-            if (field.tomselect) {
-                field.tomselect.clear(true); // 'true' tells it to clear silently
-            } 
-            // 3. Standard fields
-            else {
-                if (field.type === 'checkbox' || field.type === 'radio') {
-                    field.checked = false;
+          if (advancedDiv.style.display === 'none' || advancedDiv.style.display === '') {
+              advancedDiv.style.display = 'block';
+              toggleLink.textContent = '-Show Less';
+          } 
+          else {
+              let confirmClear = false;
+              hasActiveFilters = false;
+              advancedInputs.forEach(input => {
+                // Check if the input has a value and it's not just a default/empty string
+                if (input.value && input.value.trim() !== "") {
+                  
+                   hasActiveFilters = true;
+                    
                 }
-                else if (field.tagName === 'SELECT') {
-                  field.selectedIndex = 0;
-                 }
-                else {
-                    field.value = '';
-                }
+              });
+              if (hasActiveFilters) {
+                 confirmClear = confirm("Would you like to clear the advanced filters as well?");
+              }
+              if (!hasActiveFilters || confirmClear) {
+                // 1. Target ONLY the original form elements, ignoring the Tom-Select generated divs
+                const actualFields = Array.from(advancedDiv.querySelectorAll('input, select, textarea'));
+            
+                actualFields.forEach(field => {
+                    // Skip the Tom-Select 'control' inputs (the ones that handle the typing)
+                    if (field.classList.contains('tom-select-input') || field.hasAttribute('autocomplete')) {
+                        // If Tom-Select is active on the parent, we handle it through the original element
+                        return; 
+                    }
+            
+                    // 2. Check for the instance on the ORIGINAL element
+                    if (field.tomselect) {
+                        field.tomselect.clear(true); // 'true' tells it to clear silently
+                    } 
+                    // 3. Standard fields
+                    else {
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            field.checked = false;
+                        }
+                        else if (field.tagName === 'SELECT') {
+                          field.selectedIndex = 0;
+                        }
+                        else {
+                            field.value = '';
+                        }
+                    }
+                });
+            
+              advancedDiv.style.display = 'none';
+              toggleLink.textContent = '+Advanced Filters';
             }
+            
+          }
         });
-    
-       advancedDiv.style.display = 'none';
-       toggleLink.textContent = '+Advanced Filters';
-    }
-     
-  }
-});
     });
 </script>
 
