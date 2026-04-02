@@ -30,7 +30,7 @@
     </div>
     
      
-    <form method="get">
+    <form method="get" id="search-filter-form">
       {{ filter.form.media }} 
         {% if request.GET.sort_order %}
            <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}">
@@ -184,7 +184,8 @@
    
 
   <script src="{% static 'javascript/tomselectjs/2.3.1/tom-select.complete.min.js'    %}"></script>
-  {% comment %} Google Gemini's suggestions for implementing TomSelect for Search Options..... {% endcomment %}
+  {% comment %} Worked with Google Gemini heavily on this JS code.
+  This code helps us manage Sort order, TomSelect fields,  Show/Hide Advanced Filters, Clear Filters,  and maintain Filters when Changing Sort Order {% endcomment %}
  
   
   <script>
@@ -345,9 +346,23 @@
 
   // Target the Sort Select element by the ID Django gives it
   const sortSelect = document.getElementById('id_sort_order');
+  const filterForm = document.getElementById('search-filter-form'); 
   if (sortSelect) {
       sortSelect.onchange = function() {
-          this.form.submit();
+          // 1. Start our parameters with the new sort value
+        const params = new URLSearchParams();
+        params.append('sort_order', this.value);
+
+        // 2. Add everything from the filter form
+        const filterData = new FormData(filterForm);
+        for (const [key, value] of filterData.entries()) {
+            if (key!=='sort_order' && value.trim() !== "") {
+                params.append(key, value);
+            }
+        }
+
+        // 3. Manual redirect
+        window.location.href = window.location.pathname + '?' + params.toString();
       };
   }
 </script>
