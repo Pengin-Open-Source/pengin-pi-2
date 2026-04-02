@@ -1,5 +1,5 @@
 {% extends "layout/fullPageScroll.html" %}
-
+{% load static %}
 {%comment %}
    View a specific, resolved Reopen Request for a particular Ticket
    If someone who can Review Requests for this ticket brings up this 
@@ -12,21 +12,7 @@
 {% endblock %}
 
 {% block pageContent %}
-<script>
-  function convertUTCToLocal(utcTime) {
-    const utcMillis = new Date(utcTime).getTime();
-    const localDate = new Date(utcMillis);
-    return localDate.toLocaleString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    });
-  
-  }
-</script>
+<script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
 <p> 
     {% for field in form %}
       <div class="fieldWrapper">

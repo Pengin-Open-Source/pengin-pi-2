@@ -1,22 +1,9 @@
 {% load macros %}
+{% load static %}
 {% loadmacros "macros/pagination.html" %}
 {% macro render_comments comments current_user is_edited %}
- {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
-  <script>
-    function convertUTCToLocal(utcTime) {
-      const utcMillis = new Date(utcTime).getTime();
-      const localDate = new Date(utcMillis);
-      return localDate.toLocaleString('en-US', {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true
-      });
-    
-    }
-  </script>
+
+  <script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
 
   {% for comment in comments %}
   <tr><td>

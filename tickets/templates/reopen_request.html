@@ -1,5 +1,5 @@
 {% extends "layout/fullPageScroll.html" %}
-
+{% load static %}
 {% block pageDropDowns %}
 <a href="{% url 'view_pending_reopen_requests' ticket_id %}"> Back to Pending Reopen Requests </a>
 {% endblock %}
@@ -13,20 +13,8 @@
       </div>
     {% endfor %} 
     <div><b> Requested on  <span id="request-time"></span> </b> </div>
+    <script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
     <script>
-      function convertUTCToLocal(utcTime) {
-              const utcMillis = new Date(utcTime).getTime();
-              const localDate = new Date(utcMillis);
-              return localDate.toLocaleString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true
-          });
-            
-        }
         var utcTime = new Date('{{ reopen_request.request_date|date:"c" }}');
         var localTime = convertUTCToLocal(utcTime);
         document.getElementById('request-time').textContent = localTime;

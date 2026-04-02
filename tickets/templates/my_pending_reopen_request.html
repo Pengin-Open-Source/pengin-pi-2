@@ -1,5 +1,5 @@
 {% extends "layout/fullPageScroll.html" %}
-
+{% load static %}
 {%comment %}
    Pending Reopen request for a specific ticket from the current user. There is no "list page" for this, 
    for this view,  since the rule is a user may not have more than one pending reopen request
@@ -20,20 +20,8 @@
       </div>
     {% endfor %} 
     <div><b> Requested on <span id="request-time"></span> </b> </div>
+    <script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
     <script>
-      function convertUTCToLocal(utcTime) {
-              const utcMillis = new Date(utcTime).getTime();
-              const localDate = new Date(utcMillis);
-              return localDate.toLocaleString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true
-          });
-            
-        }
         var utcTime = new Date('{{ reopen_request.request_date|date:"c" }}');
         var localTime = convertUTCToLocal(utcTime);
         document.getElementById('request-time').textContent = localTime;

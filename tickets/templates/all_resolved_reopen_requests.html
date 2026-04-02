@@ -1,4 +1,5 @@
 {% extends "layout/alternating_color_table.html" %}
+{% load static %}
 {% load macros %}
 {% loadmacros "macros/pagination.html" %}
 
@@ -23,22 +24,8 @@
 
 
 {% block tableContent %}
- {% comment %} Worked with Gemini to get some code to manage UTC-to-local timezone conversion {% endcomment %}
-<script>
-  function convertUTCToLocal(utcTime) {
-    const utcMillis = new Date(utcTime).getTime();
-    const localDate = new Date(utcMillis);
-    return localDate.toLocaleString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    });
-  
-  }
-</script>
+
+<script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
   {% for reopen_request in page_obj %}
   <tr><td class="post-container">
     <a class="alternating-colors-table-links"href="{% url 'view_extended_resolved_request_details' reopen_request.id %} ">{{ reopen_request.reason|escape }}</a>
