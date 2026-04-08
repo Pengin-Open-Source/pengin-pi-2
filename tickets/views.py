@@ -1,22 +1,56 @@
-from django.http import HttpResponseRedirect, JsonResponse, Http404
-from django.shortcuts import redirect, render, get_object_or_404
-from django.urls import reverse_lazy
-from django.core.paginator import Paginator
-from django.utils import timezone
-from django.views import View
-from django.views.generic import DetailView, CreateView, UpdateView, DeleteView
-from django_filters.views import FilterView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
+from django.core.paginator import Paginator
 from django.db.models import F
-from main.models.users import User
-from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
-from tickets.forms import ResolvedTicketOpenRequestForm, SpecificUserResolvedTicketOpenRequestForm, TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
-from tickets.filters import TicketFilter, FilterSortOrder
-from main.mixins import LoginAndValidationRequiredMixin
-from tickets.permissions import can_approve_this_reopen_request, can_approve_reopen_requests_for_ticket, can_comment_on_ticket, can_edit_ticket_privileged, can_edit_ticket_status, can_request_reopen, can_see_ticket, can_edit_ticket, is_ticket_manager
-from util.security.group_access import can_access_group, get_users_with_extended_rbac_to_group,  get_all_groups_for_user_with_extended_rbac, is_a_manager, is_manager_of_this_role
+from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views import View
+from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 
+from django_filters.views import FilterView
+
+from main.mixins import LoginAndValidationRequiredMixin
+from main.models.users import User
+from tickets.filters import FilterSortOrder, TicketFilter
+from tickets.forms import (
+    ResolvedTicketOpenRequestForm,
+    SpecificUserResolvedTicketOpenRequestForm,
+    TicketCommentForm,
+    TicketCreateOpenRequestForm,
+    TicketEditStatusForm,
+    TicketForm,
+    TicketOpenRequestResponseForm,
+    TicketPendingOpenRequestForm,
+    TicketSettingsForm,
+)
+from tickets.models import (
+    Ticket,
+    TicketComment,
+    TicketCommentHistory,
+    TicketHistory,
+    TicketOpenRequest,
+    transaction,
+)
+from tickets.permissions import (
+    can_approve_reopen_requests_for_ticket,
+    can_approve_this_reopen_request,
+    can_comment_on_ticket,
+    can_edit_ticket,
+    can_edit_ticket_privileged,
+    can_edit_ticket_status,
+    can_request_reopen,
+    can_see_ticket,
+    is_ticket_manager,
+)
+from util.security.group_access import (
+    can_access_group,
+    get_all_groups_for_user_with_extended_rbac,
+    get_users_with_extended_rbac_to_group,
+    is_a_manager,
+    is_manager_of_this_role,
+)
 
 class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
 

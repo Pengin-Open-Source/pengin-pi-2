@@ -1,9 +1,10 @@
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import django_filters
 from django_flatpickr.widgets import DateTimePickerInput
-from tickets.models import Ticket
 from django import forms
 from django.db.models import Q
+from tickets.models import Ticket
+
 
 # Colaborated with Gemini working on the file -> mvetom
 
