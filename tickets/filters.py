@@ -4,8 +4,7 @@ from django_flatpickr.widgets import DateTimePickerInput
 from tickets.models import Ticket
 from django import forms
 from django.db.models import Q
-from django.utils.dateparse import parse_datetime
-from django.utils import timezone
+
 # Colaborated with Gemini working on the file -> mvetom
 
 

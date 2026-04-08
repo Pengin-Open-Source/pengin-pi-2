@@ -1,7 +1,7 @@
 import uuid
 from django.db import models, transaction
 from django.contrib.auth.models import Group
-from django.db.models import Q, Max
+from django.db.models import Q
 from django.db.models.functions import Greatest, Coalesce
 from django.utils import timezone
 from main.models.sequence_counter import SequenceCounter

@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.db.models import F
 from main.models.users import User
-from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory, TicketLatestActivity
+from tickets.models import Ticket, TicketComment, TicketOpenRequest, transaction, TicketHistory, TicketCommentHistory
 from tickets.forms import ResolvedTicketOpenRequestForm, SpecificUserResolvedTicketOpenRequestForm, TicketForm, TicketCommentForm, TicketEditStatusForm, TicketOpenRequestResponseForm, TicketPendingOpenRequestForm, TicketCreateOpenRequestForm, TicketSettingsForm
 from tickets.filters import TicketFilter, FilterSortOrder
 from main.mixins import LoginAndValidationRequiredMixin
