@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'macros',
     "django_flatpickr",
     # Add your apps here
-    # 'global_admin',
+    #'global_admin',
     'main',
     'home',
     'about',
