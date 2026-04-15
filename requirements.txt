@@ -34,7 +34,7 @@ werkzeug~=3.0.3
 # plays nice with Django.
 django-filter<25.0 
 # Web Content rendering
-django-markdown-it
+django-markdownit
 #Lets us use macros in Django
 django-macros 
 
