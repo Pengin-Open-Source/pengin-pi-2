@@ -3,7 +3,6 @@ from django.contrib import admin
 from django.urls import path, include
 from .views import GroupListView, GroupDetailView, GroupChildListDetailView, GroupMemberListView, GroupsIHaveSpecialAccessToListDetailView, GroupsWithSpecialAccessToMeListDetailView, LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
 
-
 handler400 = 'main.views.handler400'
 
 
