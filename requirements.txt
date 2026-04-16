@@ -29,6 +29,8 @@ werkzeug~=3.0.3
 
 
 ## 3. UI & Frontend Integration ##
+# Widget for selecting dates
+django-flatpickr==2.0.3 
 # UI for search/filters. 
 # "Safety Pinned" version to make sure it
 # plays nice with Django.
