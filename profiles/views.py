@@ -38,7 +38,8 @@ class ProfileView(LoginRequiredMixin, View):
             'name': request.user.name,
             'email': request.user.email,
             'can_do': can_re_validate,
-            'primary_title': 'Profile Information'
+            'primary_title': 'Profile Information',
+            'is_admin': request.user.is_staff
         }
         return render(request, 'profile.html', context)
 
