@@ -22,6 +22,7 @@ from util.security.group_access import (
     is_manager_of_this_role,
 )
 
+
 class TicketForm(forms.ModelForm):
 
     priority = forms.ChoiceField(
@@ -231,12 +232,12 @@ class TicketForm(forms.ModelForm):
                 owner_options = get_users_with_extended_rbac_to_group()
                 # ..but I can assign the ticket to any *role* I have access to
                 user_roles = get_all_groups_for_user_with_extended_rbac(
-                    current_user)
+                    current_user).distinct()
                 if user_roles.exists():
                     # Get all the roles the user is connected with
                     # + the default_ticket_support role
                     role_options = user_roles | Group.objects.filter(
-                        pk=default_role.pk)
+                        pk=default_role.pk).distinct()
                 else:
                     # If I am not connected with any role,  I must assign the ticket
                     # to default ticket support,  leaving management to assign it
