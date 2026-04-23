@@ -28,6 +28,14 @@ class Command(BaseCommand):
         # but may change later.
         # priorities = ['LOW', 'MEDIUM', 'HIGH']
 
+        confirm = input(
+            "This will delete the last set of generated tickets. Are you sure? (y/N): ")
+
+        if confirm.lower() != 'y':
+            self.stdout.write(self.style.ERROR(
+                "Aborted. No tickets were deleted."))
+            return
+
         roles = list(Group.objects.all())
         if not roles:
             self.stdout.write(self.style.ERROR(
