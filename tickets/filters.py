@@ -287,7 +287,7 @@ class TicketFilter(django_filters.FilterSet):
                 last_editor_options.add('{None}')
 
         tag_options = set([
-            tag for row in ticket_column_data for tag in row[6].split()])
+            tag for row in ticket_column_data for tag in row[6].split(',')])
 
         self.update_search_options("ticket_number", ticket_number_options)
         self.update_search_options("summary", title_options)
