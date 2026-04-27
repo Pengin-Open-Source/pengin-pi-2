@@ -46,6 +46,10 @@ class TicketForm(forms.ModelForm):
         model = Ticket
         fields = ['priority', 'summary', 'role', 'owner', 'content', 'tags']
 
+        labels = {
+            'tags': 'Search Keywords',
+        }
+
     def __init__(self, *args, can_set_ticket_owner_blank=True, role_options=None, owner_options=None, role_default=None, owner_default=None, **kwargs):
         self.current_user = kwargs.pop('current_user', None)
 

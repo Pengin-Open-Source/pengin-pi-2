@@ -118,7 +118,7 @@ class TicketFilter(django_filters.FilterSet):
                                                ))
 
     tags = django_filters.CharFilter(field_name='tags',
-                                     method='filter_multiple_search_phrases', label='Search Ticket by Tags....',
+                                     method='filter_multiple_search_phrases', label = 'Filter by Search Keywords',
                                      widget=forms.SelectMultiple(
                                          attrs={'class': 'tom-select-enabled', 'multiple': 'multiple',
                                                 'data-default-empty-selection': '{Any Tags}'}, choices=[],))
