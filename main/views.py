@@ -4,6 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
+from django.urls import reverse
 from util.security.group_access import get_all_direct_group_members, get_non_tree_accessor_groups, get_non_tree_accessed_groups, get_direct_children_of_group, get_direct_parent, get_users_with_extended_rbac_to_group
 from main.mixins import LoginAndValidationRequiredMixin
 from util.mail import send_mail
@@ -30,18 +31,39 @@ def handler400(request,  exception):
 class LoginView(View):
     def get(self, request):
         form = LoginForm()
-        return render(request, 'authentication/login.html', {'form': form, 'primary_title': 'Login'})
+        next_destination = request.GET.get('next', '')
+        if next_destination:
+            return render(request, 'authentication/login.html', {
+                'form': form,
+                'primary_title': 'Login',
+                'next': next_destination
+            })
+        return render(request,  { 'authentication/login.html'
+            'form': form,
+            'primary_title': 'Login'})
 
     # @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request):
         form = LoginForm(request, data=request.POST)
+        next_url = request.POST.get('next') or request.GET.get('next') or ''
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            if next_url:
+                return redirect(next_url)
             return redirect('home_view')
+
         messages.error(
             request, 'Please check your login details and try again.')
-        return redirect('login')
+
+        if next_url:
+            return render(request, 'authentication/login.html', {
+            'form': form,
+            'primary_title': 'Login',
+            'next': next_url #
+        })
+        else:
+            return redirect('login')
 
 
 class SignupView(View):
@@ -69,7 +91,8 @@ class LogoutView(View):
     def get(self, request):
         logout(request)
         return redirect('home_view')
-   
+
+
 class PasswordResetRequestView(View):
     def get(self, request):
         form = PasswordResetForm()

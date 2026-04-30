@@ -27,6 +27,7 @@ SECRET_KEY = 'django-insecure-14nmqptb91000ao@b&c-a1*%=8b)!f-g2=^gsxcbo+d7!h&onj
 # Turn to false if you want to see "neater" 400 messages
 DEBUG = True
 
+LOGIN_URL = '/login/'
 ALLOWED_HOSTS = ['localhost',  '127.0.0.1']
 
 # Application definition
@@ -44,7 +45,7 @@ INSTALLED_APPS = [
     'macros',
     "django_flatpickr",
     # Add your apps here
-    #'global_admin',
+    # 'global_admin',
     'main',
     'home',
     'about',

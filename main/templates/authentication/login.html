@@ -27,6 +27,12 @@
             <input class="form-input" type="checkbox" name="remember">
             <label> Remember me</label>
         </div>
+          
+        <!-- This line is the "memory" for the redirect -->
+        {% if request.GET.next %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% endif %}
+
         <button class="primary-button" type="submit">Login</button>
     </form>
 {% endblock %}
