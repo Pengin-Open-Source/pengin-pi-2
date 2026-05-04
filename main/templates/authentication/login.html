@@ -29,8 +29,8 @@
         </div>
           
         <!-- This line is the "memory" for the redirect -->
-        {% if request.GET.next %}
-          <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% if next %}
+          <input type="hidden" name="next" value="{{ next }}">
         {% endif %}
 
         <button class="primary-button" type="submit">Login</button>
