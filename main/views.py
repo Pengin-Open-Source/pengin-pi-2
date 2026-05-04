@@ -38,7 +38,7 @@ class LoginView(View):
                 'primary_title': 'Login',
                 'next': next_destination
             })
-        return render(request,  { 'authentication/login.html'
+        return render(request, 'authentication/login.html',   {
             'form': form,
             'primary_title': 'Login'})
 
@@ -58,10 +58,10 @@ class LoginView(View):
 
         if next_url:
             return render(request, 'authentication/login.html', {
-            'form': form,
-            'primary_title': 'Login',
-            'next': next_url #
-        })
+                'form': form,
+                'primary_title': 'Login',
+                'next': next_url
+            })
         else:
             return redirect('login')
 
