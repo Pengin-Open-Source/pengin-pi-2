@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import Group
+from django.contrib.auth.decorators import login_required
 from forums.models import Thread, ForumPost,  ForumPostHistory, ForumComment, ForumCommentHistory, ThreadRole, transaction
 from forums.forms import ThreadForm, ForumPostForm, ForumCommentForm
 from util.security.auth_tools import group_required, is_admin_required
@@ -18,6 +19,7 @@ from main.models.users import User
 
 # see group_required code; validated, authenticated staff
 # bypass the requirement to be in this group.
+@method_decorator(login_required, name='dispatch')
 @method_decorator(group_required('user'), name='dispatch')
 class ForumsListView(LoginRequiredMixin, ListView):
 

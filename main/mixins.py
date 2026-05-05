@@ -19,7 +19,7 @@ class LoginAndValidationRequiredMixin(LoginRequiredMixin):
 
         # Else if not authenticated
         login_url = reverse('login')
-        return redirect(login_url)
+        return redirect(f"{login_url}?next={request.path}")
 
     # def handle_no_permission(self):
     #     login_url = reverse('login')
