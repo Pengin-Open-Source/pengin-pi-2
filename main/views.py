@@ -87,9 +87,9 @@ class SignupView(View):
 
 
 class LogoutView(View):
-    @method_decorator(login_required)
     def get(self, request):
-        logout(request)
+        if request.user.is_authenticated:
+            logout(request)
         return redirect('home_view')
 
 
