@@ -1,18 +1,17 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.db.models.functions import Lower
 from django.core.paginator import Paginator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.mail import send_mail  # Assumes send_mail is correctly set up
-from django.http import Http404
+from django.http import HttpResponseForbidden
 from datetime import timedelta
-
 from main.mixins import LoginAndValidationRequiredMixin
 from util.security.group_access import get_all_groups_for_user_with_extended_rbac, get_groups_user_manages
 from .forms import EditProfileForm, EditPasswordForm
@@ -66,17 +65,20 @@ class SendEmailView(LoginRequiredMixin, View):
 
 class ValidateView(View):
     def get(self, request, token):
-        try:
-            user = User.objects.filter(validation_id=token).first()
-            if user:
+        if not request.user.is_authenticated:
+            login_url = reverse('login')
+            return redirect(f"{login_url}?next={request.path}")
+        user = User.objects.filter(validation_id=token).first()
+        if user:
+            if user == request.user:
                 user.validated = True
                 # Assuming you might want to add the user to a default group instead
                 user.save()
                 return redirect('profiles:profile')
             else:
-                raise Http404("User not found.")
-        except User.DoesNotExist:
-            raise Http404("User not found.")
+                return HttpResponseForbidden("<h1> Expired, Unauthorized, or Invalid, link for the current user. </h1>")
+        else:
+            return HttpResponseForbidden("<h1> Expired, Unauthorized, or Invalid, link for the current user. </h1>")
 
 
 @method_decorator(login_required, name='dispatch')
