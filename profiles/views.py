@@ -74,7 +74,7 @@ class ValidateView(View):
                 user.validated = True
                 # Assuming you might want to add the user to a default group instead
                 user.save()
-                return redirect('profiles:profile')
+                return render(request, 'user_validated.html', {})
             else:
                 return HttpResponseForbidden("<h1> Expired, Unauthorized, or Invalid, link for the current user. </h1>")
         else:
