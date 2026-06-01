@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 import uuid
 from datetime import datetime
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
@@ -39,6 +40,23 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
+
+    # Worked with Gemini to throw an error with error message
+    # as a barrier against having unvalidated Group/Role Managers
+
+    def clean(self):
+        super().clean()
+        # Check if the assigned manager is validated
+        if not self.validated and hasattr(self, 'groups_managed') and self.groups_managed.exists():
+            raise ValidationError(
+                "You are trying to revoke validation for a Manager User. "
+                "Revoke Management Access for any user before revoking validation."
+            )
+
+    def save(self, *args, **kwargs):
+        # Force validation to run programmatically (e.g., in the shell)
+        self.clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         app_label = 'main'  # Explicitly set the app_label
@@ -105,6 +123,23 @@ class GroupManager(models.Model):
         Group, related_name='group_managers', on_delete=models.CASCADE)
     manager = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='groups_managed')
+
+    # Worked with Gemini to throw an error with error message
+    # as a barrier against having unvalidated Group/Role Managers
+
+    def clean(self):
+        super().clean()
+        # Check if the assigned manager is validated
+        if not hasattr(self, 'manager') or (self.manager and not self.manager.validated):
+            raise ValidationError(
+                "You are trying to make an unvalidated User a manager. "
+                "Validate users before giving them Management access."
+            )
+
+    def save(self, *args, **kwargs):
+        # Force validation to run programmatically (e.g., in the shell)
+        self.clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         unique_together = ('managed_group', 'manager')
