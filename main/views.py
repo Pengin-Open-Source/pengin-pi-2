@@ -200,6 +200,7 @@ class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, Vie
 
         context['parent_group'] = parent
         context['group'] = group
+        context['group_manager'] = group_manager
         context['manager_form'] = manager_form
         context['form'] = form
         context['is_admin'] = request.user.is_staff

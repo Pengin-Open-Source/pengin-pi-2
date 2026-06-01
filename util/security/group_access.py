@@ -58,6 +58,9 @@ def get_direct_children_of_group(group):
 
 
 def is_a_manager(user_to_check):
+    # Unvalidated managers do not count/should have no privileges
+    if not user_to_check.validated:
+        return False
     all_managers = get_group_managers()
 
     manages_anything = user_to_check in all_managers
@@ -66,6 +69,9 @@ def is_a_manager(user_to_check):
 
 
 def get_groups_user_manages(user_to_check):
+    # Treat unvalidated managers as though they didn't exist
+    if not user_to_check.validated:
+        return Group.objects.none()
     group_manager_pairs = GroupManager.objects.all().values('manager', 'managed_group')
 
     group_ids = [item['managed_group']
@@ -88,7 +94,8 @@ def get_group_managers(groups=None):
 
     manager_uuids = [uuid['manager'] for uuid in group_manager_objects]
 
-    group_managers = User.objects.filter(id__in=manager_uuids)
+    # Filter out any Manager who is not a *Validated* User
+    group_managers = User.objects.filter(id__in=manager_uuids, validated=True)
 
     return group_managers
 

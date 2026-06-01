@@ -16,8 +16,23 @@
 
 {% block pageContent %}
     <form>
+
+            
             {% csrf_token %}
+            {% if not group_manager.manager.validated %}
+            <hr>
+            <div style="color: darkgoldenrod;"> <strong> <b>⚠️⚠️ Warning!!⚠️⚠️   Unvalidated Manager! </b> </strong> </div>
+            <hr>
+            <div style="color: red;"> <i> <em>
+                 <strong> <b> Action Required: </b> </strong> This manager is currently unvalidated. </br>
+                 Their management privileges are not active at runtime.  </br>
+                 In order for User: <strong> <b> {{ group_manager.manager.name }} </b> </strong> to have management privileges,  their profile must be validated/revalidated. </i> </em>
+            </div>
+           
+            {% endif %}
             {{ manager_form.as_p }}
+        
+
     </form> 
     <form>
         {% csrf_token %}
