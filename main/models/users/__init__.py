@@ -44,8 +44,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Worked with Gemini to throw an error with error message
     # as a barrier against having unvalidated Group/Role Managers
 
-    def clean(self):
-        super().clean()
+    def save(self, *args, **kwargs):
+        # Force validation to run programmatically (e.g., in the shell)
+        self.clean()
+
+        # 1. Grab update_fields if it exists
+        update_fields = kwargs.get('update_fields')
+
+        # 2. If we are ONLY updating the login timestamp, skip our manager validation
+        if update_fields and list(update_fields) == ['last_login']:
+            super().save(*args, **kwargs)
+            return
         # Check if the assigned manager is validated
         if not self.validated and hasattr(self, 'groups_managed') and self.groups_managed.exists():
             raise ValidationError(
@@ -53,9 +62,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                 "Revoke Management Access for any user before revoking validation."
             )
 
-    def save(self, *args, **kwargs):
-        # Force validation to run programmatically (e.g., in the shell)
-        self.clean()
+
         super().save(*args, **kwargs)
 
     class Meta:
