@@ -63,6 +63,13 @@ class User(AbstractBaseUser, PermissionsMixin):
                 "Revoke Management Access for any user before revoking validation."
             )
 
+        # "Kill Switch" - if a user is inactivated, also un-validate them
+        # this will help keep them out of dropdowns and immediately block
+        # their access to several things even before they logout.
+        
+        if not self.is_active:
+            self.validated = False
+
         super().save(*args, **kwargs)
 
     class Meta:
