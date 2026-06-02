@@ -18,6 +18,7 @@ class CustomUserManager(BaseUserManager):
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('validated', True)
         return self.create_user(email, password, **extra_fields)
 
 
@@ -62,11 +63,17 @@ class User(AbstractBaseUser, PermissionsMixin):
                 "Revoke Management Access for any user before revoking validation."
             )
 
-
         super().save(*args, **kwargs)
 
     class Meta:
         app_label = 'main'  # Explicitly set the app_label
+
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(is_staff=False) | models.Q(validated=True),
+                name='prevent_unvalidated_staff'
+            )
+        ]
 
     # Define unique related_name for groups and user_permissions
     groups = models.ManyToManyField(
