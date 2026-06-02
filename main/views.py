@@ -2,6 +2,7 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
 from django.urls import reverse
@@ -28,6 +29,7 @@ def handler400(request,  exception):
     return (render(request, "400.html", {'error_message': str(exception)}, status=400))
 
 
+@method_decorator(sensitive_post_parameters(), name='dispatch')
 class LoginView(View):
     def get(self, request):
         form = LoginForm()
@@ -66,6 +68,7 @@ class LoginView(View):
             return redirect('login')
 
 
+@method_decorator(sensitive_post_parameters(), name='dispatch')
 class SignupView(View):
     def get(self, request):
         form = SignUpForm()
@@ -93,6 +96,7 @@ class LogoutView(View):
         return redirect('home_view')
 
 
+@method_decorator(sensitive_post_parameters(), name='dispatch')
 class PasswordResetRequestView(View):
     def get(self, request):
         form = PasswordResetForm()
@@ -117,6 +121,7 @@ class PasswordResetRequestView(View):
         return redirect('generate_prt')
 
 
+@method_decorator(sensitive_post_parameters('password'), name='dispatch')
 class PasswordResetView(View):
     def get(self, request, token):
         user = User.objects.filter(prt=token).first()

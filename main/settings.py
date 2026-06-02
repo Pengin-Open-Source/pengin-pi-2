@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-14nmqptb91000ao@b&c-a1*%=8b)!f-g2=^gsxcbo+d7!h&onj
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Turn to false if you want to see "neater" 400 messages
-DEBUG = True
+# Defaults to False,  but pulls value from the .env file if it can.
+DEBUG = config('DJANGO_DEBUG', default='False').lower() == 'true'
 
 LOGIN_URL = '/login/'
 ALLOWED_HOSTS = ['localhost',  '127.0.0.1']
