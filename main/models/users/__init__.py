@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
 
+# Worked with Gemini on this file.
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -42,8 +44,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
-    # Worked with Gemini to throw an error with error message
-    # as a barrier against having unvalidated Group/Role Managers
+    # We don't want unvalidated Managers
 
     def save(self, *args, **kwargs):
         # Force validation to run programmatically (e.g., in the shell)
@@ -66,15 +67,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         # "Kill Switch" - if a user is inactivated, also un-validate them
         # this will help keep them out of dropdowns and immediately block
         # their access to several things even before they logout.
-        
         if not self.is_active:
             self.validated = False
-
         super().save(*args, **kwargs)
 
     class Meta:
         app_label = 'main'  # Explicitly set the app_label
-
+        # We don't want invalidate staff.
+        # We also don't want inactive users to still be validated,
+        # because then they will still be considered valid options for say,
+        # Ticket Ownership.
         constraints = [
             models.CheckConstraint(
                 check=models.Q(is_staff=False) | models.Q(validated=True),
@@ -82,7 +84,8 @@ class User(AbstractBaseUser, PermissionsMixin):
             ),
 
             models.CheckConstraint(
-                check=models.Q(is_active =False, validated=False) | models.Q(is_active=True),
+                check=models.Q(is_active=False, validated=False) | models.Q(
+                    is_active=True),
                 name='unvalidate_all_inactive_users'
             )
         ]
@@ -112,6 +115,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return str(self.email)
+
 # GEMINI suggested a closure table for dealing with subgroup inheritance
 # and also another link table for special access from one group to another across
 # the hierarchy
@@ -150,8 +154,7 @@ class GroupManager(models.Model):
     manager = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='groups_managed')
 
-    # Worked with Gemini to throw an error with error message
-    # as a barrier against having unvalidated Group/Role Managers
+    # We do not want unvalidated Group/Role Managers
 
     def clean(self):
         super().clean()

@@ -48,6 +48,31 @@ class GroupManagerDjangoSiteForm(forms.ModelForm):
 class GroupManagerDjangoSiteFormAdmin(admin.ModelAdmin):
     form = GroupManagerDjangoSiteForm
 
+# Suggestion from Gemini on how to Force un-validation
+# of a User if the SuperUser inactivates it.
+# They way the SuperUser doesn't have to know/remember
+# to uncheck two boxes
+class UserAdminForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Get the current form states for both fields
+        is_active = cleaned_data.get('is_active')
+
+        # NOTE: Swap 'is_validated' with the exact name of your validation field
+        is_validated = cleaned_data.get('validated')
+
+        # The Pre-Database Kill Switch:
+        # If the user is being deactivated, automatically turn off the validation flag.
+        if is_active is False and is_validated is True:
+            cleaned_data['validated'] = False
+
+        return cleaned_data
+
 
 class GroupForm(forms.ModelForm):
 
