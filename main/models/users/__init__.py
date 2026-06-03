@@ -79,6 +79,11 @@ class User(AbstractBaseUser, PermissionsMixin):
             models.CheckConstraint(
                 check=models.Q(is_staff=False) | models.Q(validated=True),
                 name='prevent_unvalidated_staff'
+            ),
+
+            models.CheckConstraint(
+                check=models.Q(is_active =False, validated=False) | models.Q(is_active=True),
+                name='unvalidate_all_inactive_users'
             )
         ]
 
