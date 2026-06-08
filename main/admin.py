@@ -6,8 +6,13 @@ from main.forms import GroupManagerDjangoSiteFormAdmin, UserAdminForm
 from .models import User, Address, SubGroup, GroupToGroupAccess, GroupManager
 
 # part of Gemini's solution to "uncheck validation automatically
+
+
 class UserAdmin(admin.ModelAdmin):
     form = UserAdminForm
+    list_display = ("name", "email", "is_superuser",
+                    "is_active", "validated", "is_staff")
+    ordering = ("-is_superuser", "-is_active", "name")
 
 
 admin.site.register(User, UserAdmin)
