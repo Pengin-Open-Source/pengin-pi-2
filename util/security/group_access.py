@@ -61,9 +61,10 @@ def is_a_manager(user_to_check):
     # Unvalidated managers do not count/should have no privileges
     if not user_to_check.validated:
         return False
-    all_managers = get_group_managers()
 
-    manages_anything = user_to_check in all_managers
+    manages_anything = False
+    if hasattr(user_to_check, 'groups_managed') and user_to_check.groups_managed.exists():
+        manages_anything = True
 
     return manages_anything
 
@@ -72,15 +73,11 @@ def get_groups_user_manages(user_to_check):
     # Treat unvalidated managers as though they didn't exist
     if not user_to_check.validated:
         return Group.objects.none()
-    group_manager_pairs = GroupManager.objects.all().values('manager', 'managed_group')
 
-    group_ids = [item['managed_group']
-                 for item in group_manager_pairs if item['manager'] == user_to_check.id]
-
-    groups_user_manages_directly = Group.objects.filter(id__in=group_ids)
+    groups_user_manages_directly = user_to_check.groups_managed.all()
     managed_grandchildren = get_sub_groups(groups_user_manages_directly)
-    groups_user_manages = groups_user_manages_directly | managed_grandchildren
-    return groups_user_manages
+
+    return groups_user_manages_directly | managed_grandchildren
 
 
 def get_group_managers(groups=None):
