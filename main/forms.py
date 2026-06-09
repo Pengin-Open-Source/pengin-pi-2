@@ -2,6 +2,8 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+
+from util.security.group_access import is_a_manager
 from .models.users import User, Group, GroupManager
 from util.forms.fields import UserModelChoiceField
 
@@ -67,6 +69,7 @@ class UserAdminForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        is_manager = False
 
         # Get the current form states for both fields
         is_active = cleaned_data.get('is_active')
@@ -80,13 +83,23 @@ class UserAdminForm(forms.ModelForm):
         if is_active is False and is_validated is True:
             cleaned_data['validated'] = False
 
+        # if this is a staff user,  it must be valid and active
         if is_staff and (not is_validated or not is_active):
             raise forms.ValidationError({
                 "Cannot invalidate or inactivate Staff.  Remove Staff status first"
             })
 
-        # if this is a staff user,  don't allow
+        # is this an existing user,  and is it a manager?
+        if self.instance.pk is not None:
+            edited_user = User.objects.get(id=self.instance.pk)
+            is_manager = is_a_manager(edited_user)
 
+        # Managers shouldn't be inactive or invalid
+        if is_manager and (not is_validated or not is_active):
+            raise forms.ValidationError({
+                "Do not invalidate or inactivate Managers.  Remove User from GroupManagers Table first"
+            })
+        
         return cleaned_data
 
 
