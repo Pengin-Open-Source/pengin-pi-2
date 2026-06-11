@@ -74,7 +74,11 @@ def get_groups_user_manages(user_to_check):
     if not user_to_check.validated:
         return Group.objects.none()
 
-    groups_user_manages_directly = user_to_check.groups_managed.all()
+    group_ids = user_to_check.groups_managed.values_list(
+        'managed_group', flat=True)
+
+    groups_user_manages_directly = Group.objects.filter(id__in=group_ids)
+
     managed_grandchildren = get_sub_groups(groups_user_manages_directly)
 
     return groups_user_manages_directly | managed_grandchildren
