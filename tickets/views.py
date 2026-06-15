@@ -52,6 +52,7 @@ from util.security.group_access import (
     is_manager_of_this_role,
 )
 
+
 class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
 
     # queryset = Ticket.objects.all()
@@ -1255,7 +1256,7 @@ class ExtendedResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin
 class SpecificUserResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     # Notice how we use the same template for both Specific Users
     # viewing their own requests, & Ticket Reopen Request Reviewers
-    # looking at ALL past reopen requests.
+    # looking at ANY of this Ticket's past reopen requests.
     template_name = "past_reopen_request.html"
     model = TicketOpenRequest
 
