@@ -149,6 +149,12 @@ class GroupToGroupAccess(models.Model):
 
 
 class GroupManager(models.Model):
+    """ Not to be confused with GroupManager in django.contrib.auth.models
+        That GroupManager is extending models.Manager.
+        This GroupManager is an ORM Model,  and defines a link table
+        connecting users with Groups that they are to manage.
+    """
+     
     managed_group = models.ForeignKey(
         Group, related_name='group_managers', on_delete=models.CASCADE)
     manager = models.ForeignKey(
