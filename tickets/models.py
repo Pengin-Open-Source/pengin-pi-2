@@ -255,7 +255,7 @@ class TicketOpenRequest(models.Model):
     # At the moment,  Author is not allowed to edit, so as to
     # prevent changing of the reason for the re-open request.
     row_action = models.CharField(max_length=10, default='ERROR')
-    # 'pending' 'approved' 'denied 'reopened by other user'
+    # 'pending' 'approved' 'denied 'manually reopened''related request approved'
     approval_status = models.CharField(max_length=100, default='pending')
     reviewer_comment = models.TextField(null=True,  blank=True)
     date_handled = models.DateTimeField(null=True, blank=True)
