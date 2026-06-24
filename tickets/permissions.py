@@ -153,7 +153,7 @@ def is_user_who_resolved_ticket(current_user, ticket):
     # than commenting on it, or using the Status view to change
     # it to some non-open state, the ticket would have been Reopened.
     # Hence, if this state is Resolved, the last change must
-    # have been to change it a Status of Resolved.
+    # have been to change it to a Status of Resolved.
 
     # TODO - Fix this comment and code if we decide to let
     # managers/staff move tickets between unrelated teams
