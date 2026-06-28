@@ -19,7 +19,7 @@
 
             
             {% csrf_token %}
-            {% if not group_manager.manager.validated %}
+            {% if has_group_manager and not group_manager.manager.validated %}
             <hr>
             <div style="color: darkgoldenrod;"> <strong> <b>⚠️⚠️ Warning!!⚠️⚠️   Unvalidated Manager! </b> </strong> </div>
             <hr>

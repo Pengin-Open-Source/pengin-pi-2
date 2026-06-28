@@ -189,11 +189,14 @@ class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, Vie
         group_manager = GroupManager.objects.filter(
             managed_group=group).first()
 
+
         context = {}
         if group_manager:
             manager_form = GroupManagerForm(instance=group_manager)
+            context["has_group_manager"] = True
         else:
             manager_form = GroupManagerForm()
+            context["has_group_manager"] = False
 
         for field in manager_form.fields:
             manager_form.fields[field].widget.attrs['disabled'] = True
