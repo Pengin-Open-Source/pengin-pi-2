@@ -76,9 +76,9 @@ class ValidateView(View):
                 user.save()
                 return render(request, 'user_validated.html', {})
             else:
-                return HttpResponseForbidden("<h1> Expired, Unauthorized, or Invalid, link for the current user. </h1>")
+                return HttpResponseForbidden("<h1> Expired, Unauthorized, or Invalid link for the current user. </h1>")
         else:
-            return HttpResponseForbidden("<h1> Expired, Unauthorized, or Invalid, link for the current user. </h1>")
+            return HttpResponseForbidden("<h1> Expired, Unauthorized, or Invalid link for the current user. </h1>")
 
 
 @method_decorator(login_required, name='dispatch')
