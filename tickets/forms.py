@@ -192,6 +192,9 @@ class TicketForm(forms.ModelForm):
             # Users who can edit Summary, Content, and Tags:
             # Owner, Manager, Staff, Author
             if not can_edit_ticket_privileged(current_user, ticket):
+                if ticket.priority != cleaned_data.get('priority'):
+                    raise SuspiciousOperation(
+                        "Warning! You are not allowed Edit the Priority")
                 if ticket.content != cleaned_data.get('content'):
                     raise SuspiciousOperation(
                         "Warning! You are not allowed Edit the Content!")

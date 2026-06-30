@@ -714,10 +714,13 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         form = TicketForm(can_set_ticket_owner_blank=can_set_ticket_owner_blank, role_options=role_options, owner_options=owner_options,
                           role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket, current_user=current_user)
 
-        # Users who can edit Summary, Content, and Tags:
+        # Users who can edit Priortiy, Summary, Content, and Tags:
         # Owner, Manager,  Staff, Author
         # (Check method for changes to this list)
         if not can_edit_ticket_privileged(current_user, ticket):
+            # Have to actually diable the priority field in order to stop
+            # the user from changing fields - it's a select field.
+            form.fields['priority'].widget.attrs['disabled'] = 'disabled'
             form.fields['summary'].widget.attrs['readonly'] = 'readonly'
             form.fields['content'].widget.attrs['readonly'] = 'readonly'
             form.fields['tags'].widget.attrs['readonly'] = 'readonly'
@@ -733,9 +736,17 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         ticket_id = self.kwargs.get('pk')
         ticket = get_object_or_404(
             Ticket, id=ticket_id)
+
+        # Gemini's advice on how to handle maintaining the Priority 
+        # value displayed upon save without errors
+        # even if the Priority field is disabled.
+        post_data = request.POST.copy()
+        if 'priority' not in post_data:
+            post_data['priority'] = ticket.priority
+
         current_user = self.request.user
         ticket_form = TicketForm(
-            request.POST, instance=ticket, current_user=current_user)
+            post_data, instance=ticket, current_user=current_user)
         if ticket_form.is_valid():
             # ticket = ticket_form.save(commit=False)
             ticket_to_be_edited = ticket_form.instance
