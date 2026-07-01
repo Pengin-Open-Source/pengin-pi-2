@@ -59,16 +59,17 @@ def can_open_ticket(current_user, ticket):
 
     can_access_ticket_group = can_access_group(current_user, ticket.role.id)
 
-    # if the status is open, selecting the Open status isn't invalid :-)
-    if can_access_ticket_group and ticket.resolution_status == 'open':
-        return True
+    if can_access_ticket_group:
+        # if the status is open, selecting the Open status isn't invalid :-)
+        if ticket.resolution_status == 'open':
+            return True
 
-    # The user who moved the ticket from "Open" status to
-    # "Resolved" status can reopen the ticket, if:
-    #  a) that was the last status change &
-    #  b) the user can still access the group.
-    if can_access_ticket_group and is_user_who_resolved_ticket(current_user, ticket):
-        return True
+        # The user who moved the ticket from "Open" status to
+        # "Resolved" status can reopen the ticket, if:
+        #  a) that was the last status change &
+        #  b) the user can still access the group.
+        if is_user_who_resolved_ticket(current_user, ticket):
+            return True
 
     return False
 
