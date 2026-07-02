@@ -30,6 +30,13 @@ header {
   z-index: 999;
 }
 
+input[readonly],
+textarea[readonly] {
+  opacity: 0.5;
+
+  cursor: not-allowed
+}
+
 main {
   background: linear-gradient(#535252, #d1cccc);
   min-height: 100%;
