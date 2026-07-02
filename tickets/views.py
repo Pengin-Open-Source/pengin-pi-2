@@ -718,7 +718,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         # Owner, Manager,  Staff, Author
         # (Check method for changes to this list)
         if not can_edit_ticket_privileged(current_user, ticket):
-            # Have to actually diable the priority field in order to stop
+            # Have to actually disable the priority field in order to stop
             # the user from changing fields - it's a select field.
             form.fields['priority'].widget.attrs['disabled'] = 'disabled'
             form.fields['summary'].widget.attrs['readonly'] = 'readonly'
