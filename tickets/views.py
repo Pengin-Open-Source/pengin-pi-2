@@ -737,7 +737,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         ticket = get_object_or_404(
             Ticket, id=ticket_id)
 
-        # Gemini's advice on how to handle maintaining the Priority 
+        # Gemini's advice on how to handle maintaining the Priority
         # value displayed upon save without errors
         # even if the Priority field is disabled.
         post_data = request.POST.copy()
@@ -1163,10 +1163,10 @@ class AllResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  User
         if status == 'all':
             # all means "all handled requests" in this context. ALWAYS exclude pending.
             requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).exclude(
-                approval_status="pending").order_by('date_handled')
+                approval_status="pending").order_by('-date_handled')
         else:
             requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
-                approval_status=status).order_by('date_handled')
+                approval_status=status).order_by('-date_handled')
 
             # Similar to what Sincere is using for companies
         page_number = self.request.POST.get(
@@ -1211,10 +1211,10 @@ class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMix
         if status == 'all':
             # all means "all handled requests" in this context. ALWAYS exclude pending.
             requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
-                author=self.request.user).exclude(approval_status="pending").order_by('date_handled')
+                author=self.request.user).exclude(approval_status="pending").order_by('-date_handled')
         else:
             requests = TicketOpenRequest.objects.filter(ticket=requested_ticket).filter(
-                author=self.request.user).filter(approval_status=status).order_by('date_handled')
+                author=self.request.user).filter(approval_status=status).order_by('-date_handled')
         context["ticket_id"] = requested_ticket.id
         page_number = self.request.POST.get(
             'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
