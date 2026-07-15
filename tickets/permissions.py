@@ -122,9 +122,15 @@ def is_ticket_manager(current_user, ticket):
     return is_manager_of_this_role(current_user, ticket.role)
 
 
+def is_reopen_request_pending_approval(reopen_request):
+    if reopen_request.approval_status == 'pending':
+        return True
+    return False
+
+
 def can_approve_this_reopen_request(current_user, reopen_request):
 
-    if reopen_request.approval_status != 'pending':
+    if not is_reopen_request_pending_approval(reopen_request):
         return False
 
     ticket = reopen_request.ticket

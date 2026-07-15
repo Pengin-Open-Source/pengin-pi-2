@@ -43,6 +43,7 @@ from tickets.permissions import (
     can_request_reopen,
     can_see_ticket,
     is_ticket_manager,
+    is_reopen_request_pending_approval
 )
 from util.security.group_access import (
     can_access_group,
@@ -1097,7 +1098,7 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
     def test_func(self):
         current_user = self.request.user
         reopen_request = self.get_object()
-        return can_approve_reopen_requests_for_ticket(current_user, reopen_request.ticket)
+        return can_approve_this_reopen_request(current_user, reopen_request)
 
 
 class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
@@ -1133,7 +1134,9 @@ class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserP
     def test_func(self):
         current_user = self.request.user
         reopen_request = self.get_object()
-        return reopen_request.author == current_user
+        if reopen_request.author == current_user and is_reopen_request_pending_approval(reopen_request):
+            return True
+        return False
 
 
 class AllResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
