@@ -32,6 +32,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     validated = models.BooleanField(default=False)
     validation_date = models.DateTimeField(default=datetime.utcnow)
     validation_id = models.UUIDField(default=uuid.uuid4, unique=True)
+    self_validated = models.BooleanField(default=False)
     prt = models.UUIDField(default=uuid.uuid4, unique=True)
     prt_reset_date = models.DateTimeField(null=True, blank=True)
     prt_consumption_date = models.DateTimeField(null=True, blank=True)
@@ -87,6 +88,12 @@ class User(AbstractBaseUser, PermissionsMixin):
                 check=models.Q(is_active=False, validated=False) | models.Q(
                     is_active=True),
                 name='unvalidate_all_inactive_users'
+            ),
+
+            models.CheckConstraint(
+                check=models.Q(validated=False) | models.Q(
+                    self_validated=True),
+                name='user_self_validation_before_admin_validation'
             )
         ]
 
@@ -154,7 +161,7 @@ class GroupManager(models.Model):
         This GroupManager is an ORM Model,  and defines a link table
         connecting users with Groups that they are to manage.
     """
-     
+
     managed_group = models.ForeignKey(
         Group, related_name='group_managers', on_delete=models.CASCADE)
     manager = models.ForeignKey(

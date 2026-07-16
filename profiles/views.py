@@ -71,7 +71,7 @@ class ValidateView(View):
         user = User.objects.filter(validation_id=token).first()
         if user:
             if user == request.user:
-                user.validated = True
+                user.self_validated = True
                 # Assuming you might want to add the user to a default group instead
                 user.save()
                 return render(request, 'user_validated.html', {})
