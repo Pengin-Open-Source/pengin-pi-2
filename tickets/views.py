@@ -1134,7 +1134,7 @@ class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserP
     def test_func(self):
         current_user = self.request.user
         reopen_request = self.get_object()
-        if reopen_request.author == current_user and is_reopen_request_pending_approval(reopen_request):
+        if reopen_request.author == current_user and is_reopen_request_pending_approval(reopen_request) and can_see_ticket(current_user, reopen_request.ticket):
             return True
         return False
 
@@ -1230,6 +1230,9 @@ class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMix
     def test_func(self):
         current_user = self.request.user
         ticket = self.get_object()
+        # even if a user has requests, they can't see them when their access is revoked
+        if not can_see_ticket(current_user, ticket):
+            return False
         user_resolved_requests = TicketOpenRequest.objects.filter(
             ticket=ticket).filter(author=current_user).exclude(approval_status="pending")
 
@@ -1299,7 +1302,8 @@ class SpecificUserResolvedTicketReopenRequestDetails(LoginAndValidationRequiredM
     def test_func(self):
         current_user = self.request.user
         reopen_request = self.get_object()
-
+        if not can_see_ticket(current_user, reopen_request.ticket):
+            return False
         return reopen_request.author == current_user
 
 
