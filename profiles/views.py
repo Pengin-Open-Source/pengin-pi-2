@@ -13,6 +13,7 @@ from django.core.mail import send_mail  # Assumes send_mail is correctly set up
 from django.http import HttpResponseForbidden
 from datetime import timedelta
 from main.mixins import LoginAndValidationRequiredMixin
+from main.models import SelfValidationAllowed
 from util.security.group_access import get_all_groups_for_user_with_extended_rbac, get_groups_user_manages
 from .forms import EditProfileForm, EditPasswordForm
 # Removed import for Role and UserRoles as they do not exist
@@ -32,7 +33,7 @@ class ProfileView(LoginRequiredMixin, View):
     def get(self, request):
         now = timezone.now()
         delta = request.user.validation_date + timedelta(minutes=5)
-        can_re_validate = not request.user.validated and now > delta
+        can_re_validate = not request.user.self_validated and now > delta
         context = {
             'name': request.user.name,
             'email': request.user.email,
@@ -48,8 +49,10 @@ class SendEmailView(LoginRequiredMixin, View):
     def get(self, request):
         now = timezone.now()
         user = request.user
+        # NOTE validation date probably needs be renamed to sign up date
+        # or used differently.
         delta = user.validation_date + timedelta(minutes=5)
-        if not user.validated and now > delta:
+        if not user.self_validated and now > delta:
             user.validation_date = now
             # Assuming generate_uuid generates a unique identifier
             user.validation_id = generate_uuid()
@@ -71,10 +74,19 @@ class ValidateView(View):
         user = User.objects.filter(validation_id=token).first()
         if user:
             if user == request.user:
+
                 user.self_validated = True
-                # Assuming you might want to add the user to a default group instead
+                validate_permission, created = SelfValidationAllowed.objects.get_or_create(
+                    pk=1)
+
+                if validate_permission.enable_user_self_validation:
+                    user.validated = True
+                    return_template = 'user_validated.html'
+                else:
+                    return_template = 'user_pre_validated.html'
+
                 user.save()
-                return render(request, 'user_validated.html', {})
+                return render(request, return_template, {})
             else:
                 return HttpResponseForbidden("<h1> Expired, Unauthorized, or Invalid link for the current user. </h1>")
         else:

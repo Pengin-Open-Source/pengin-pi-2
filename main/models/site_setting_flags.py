@@ -47,3 +47,6 @@ class SelfValidationAllowed(models.Model):
     def get_settings(cls):
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+
+    def __str__(self):
+        return "Allow User Self-Validation"
