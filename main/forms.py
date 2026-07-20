@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 from util.security.group_access import is_a_manager
 from .models.users import User, Group, GroupManager
+from .models.site_setting_flags import SelfValidationAllowed
 from util.forms.fields import UserModelChoiceField
 
 
@@ -27,6 +28,12 @@ class SetPasswordForm(forms.Form):
     confirm_new_password = forms.CharField(widget=forms.PasswordInput)
 
 
+class AllowUserSelfValidationForm(forms.ModelForm):
+    class Meta:
+        model = SelfValidationAllowed
+        fields = ['enable_user_self_validation']
+
+
 class GroupManagerForm(forms.ModelForm):
 
     manager = UserModelChoiceField(
@@ -46,9 +53,6 @@ class GroupManagerDjangoSiteForm(forms.ModelForm):
         model = GroupManager
         fields = '__all__'
 
-
-class GroupManagerDjangoSiteFormAdmin(admin.ModelAdmin):
-    form = GroupManagerDjangoSiteForm
 
 # Suggestion from Gemini on how to Force un-validation
 # of a User if the SuperUser inactivates it.
@@ -99,7 +103,7 @@ class UserAdminForm(forms.ModelForm):
             raise forms.ValidationError({
                 "Do not invalidate or inactivate Managers.  Remove User from GroupManagers Table first"
             })
-        
+
         return cleaned_data
 
 
