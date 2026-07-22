@@ -12,8 +12,8 @@ from django.contrib.auth.hashers import check_password, make_password
 from django.core.mail import send_mail  # Assumes send_mail is correctly set up
 from django.http import HttpResponseForbidden
 from datetime import timedelta
+from django.conf import settings
 from main.mixins import LoginAndValidationRequiredMixin
-from main.models import SelfValidationAllowed
 from util.security.group_access import get_all_groups_for_user_with_extended_rbac, get_groups_user_manages
 from .forms import EditProfileForm, EditPasswordForm
 # Removed import for Role and UserRoles as they do not exist
@@ -76,10 +76,7 @@ class ValidateView(View):
             if user == request.user:
 
                 user.self_validated = True
-                validate_permission, created = SelfValidationAllowed.objects.get_or_create(
-                    pk=1)
-
-                if validate_permission.enable_user_self_validation:
+                if settings.ENABLE_USER_SELF_VALIDATION is True:
                     user.validated = True
                     return_template = 'user_validated.html'
                 else:

@@ -1,11 +1,9 @@
 # forms.py
 from django import forms
-from django.contrib import admin
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 from util.security.group_access import is_a_manager
 from .models.users import User, Group, GroupManager
-from .models.site_setting_flags import SelfValidationAllowed
 from util.forms.fields import UserModelChoiceField
 
 
@@ -26,12 +24,6 @@ class PasswordResetForm(forms.Form):
 class SetPasswordForm(forms.Form):
     new_password = forms.CharField(widget=forms.PasswordInput)
     confirm_new_password = forms.CharField(widget=forms.PasswordInput)
-
-
-class AllowUserSelfValidationForm(forms.ModelForm):
-    class Meta:
-        model = SelfValidationAllowed
-        fields = ['enable_user_self_validation']
 
 
 class GroupManagerForm(forms.ModelForm):
