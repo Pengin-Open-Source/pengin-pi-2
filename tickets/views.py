@@ -715,7 +715,7 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         form = TicketForm(can_set_ticket_owner_blank=can_set_ticket_owner_blank, role_options=role_options, owner_options=owner_options,
                           role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket, current_user=current_user)
 
-        # Users who can edit Priortiy, Summary, Content, and Tags:
+        # Users who can edit Priority, Summary, Content, and Tags:
         # Owner, Manager,  Staff, Author
         # (Check method for changes to this list)
         if not can_edit_ticket_privileged(current_user, ticket):
