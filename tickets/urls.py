@@ -3,9 +3,9 @@ from django.urls import path
 from tickets.views import (
     TicketSettings, TicketsFilterView, TicketCreateView, TicketDetailView, TicketDeleteView,
     TicketCommentEditView, TicketEditView, TicketCommentDeleteView, TicketEditStatusView,
-    TicketPendingReopenRequestsView, AllResolvedTicketReopenRequestsView, ExtendedResolvedTicketReopenRequestDetails,
-    TicketReopenRequestDetails, MyPendingTicketReopenRequestDetails, ApproveTicketReopenRequestView,
-    DenyTicketReopenRequestView, SpecificUserResolvedTicketReopenRequestsView, SpecificUserResolvedTicketReopenRequestDetails
+    RequesterOfTicketPendingReopenRequestsView, HandlerOfResolvedTicketReopenRequestsView, HandlerOfResolvedTicketReopenRequestDetailView,
+    HandlerOfPendingTicketReopenRequestDetailView, RequesterOfTicketReopenRequestDetailView, ApproveTicketReopenRequestView,
+    DenyTicketReopenRequestView, RequesterOfResolvedTicketReopenRequestsView, RequesterOfResolvedTicketReopenRequestDetailView
 )
 
 urlpatterns = [
@@ -25,19 +25,19 @@ urlpatterns = [
     path('delete/comment/<uuid:pk>/',
          TicketCommentDeleteView.as_view(), name='delete_ticket_comment'),
     path('<uuid:pk>/view-pending-reopen-requests/',
-         TicketPendingReopenRequestsView.as_view(), name='view_pending_reopen_requests'),
+         RequesterOfTicketPendingReopenRequestsView.as_view(), name='view_pending_reopen_requests'),
     path('<uuid:pk>/view-all-resolved-reopen-requests/<str:status>/',
-         AllResolvedTicketReopenRequestsView.as_view(), name='view_all_resolved_reopen_requests'),
+         HandlerOfResolvedTicketReopenRequestsView.as_view(), name='view_all_resolved_reopen_requests'),
     path('<uuid:pk>/view-resolved-reopen-requests-for-specific-user/<str:status>/',
-         SpecificUserResolvedTicketReopenRequestsView.as_view(), name='view_resolved_reopen_requests_for_specific_user'),
+         RequesterOfResolvedTicketReopenRequestsView.as_view(), name='view_resolved_reopen_requests_for_specific_user'),
     path('<uuid:pk>/view-pending-reopen-request-details/',
-         TicketReopenRequestDetails.as_view(), name='view_pending_request_details'),
+         HandlerOfPendingTicketReopenRequestDetailView.as_view(), name='view_pending_request_details'),
     path('<uuid:pk>/view-my-pending-request/',
-         MyPendingTicketReopenRequestDetails.as_view(), name='view_my_pending_request'),
+         RequesterOfTicketReopenRequestDetailView.as_view(), name='view_my_pending_request'),
     path('<uuid:pk>/view-extended-resolved-request-details/',
-         ExtendedResolvedTicketReopenRequestDetails.as_view(), name='view_extended_resolved_request_details'),
+         HandlerOfResolvedTicketReopenRequestDetailView.as_view(), name='view_extended_resolved_request_details'),
     path('<uuid:pk>/view-resolved-request-details-for-specific-user/',
-         SpecificUserResolvedTicketReopenRequestDetails.as_view(), name='view_resolved_request_details_for_specific_user'),
+         RequesterOfResolvedTicketReopenRequestDetailView.as_view(), name='view_resolved_request_details_for_specific_user'),
     path('<uuid:pk>/approve-reopen-request/',
          ApproveTicketReopenRequestView.as_view(), name='approve_reopen_request'),
     path('<uuid:pk>/deny-reopen-request/',

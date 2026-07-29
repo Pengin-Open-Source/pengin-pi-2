@@ -337,9 +337,8 @@ class TicketCommentForm(forms.ModelForm):
         model = TicketComment
         fields = ['content']
 
+
 # Create a request to reopen a ticket
-
-
 class TicketCreateOpenRequestForm(forms.ModelForm):
 
     class Meta:
@@ -347,6 +346,7 @@ class TicketCreateOpenRequestForm(forms.ModelForm):
         fields = ['reason']
 
 
+# This is for both Handlers and Requesters
 class TicketPendingOpenRequestForm(forms.ModelForm):
     author = UserModelChoiceField(
         queryset=User.objects.filter(validated=True),
@@ -365,7 +365,10 @@ class TicketPendingOpenRequestForm(forms.ModelForm):
             id=self.instance.author.id)
 
 
-class ResolvedTicketOpenRequestForm(forms.ModelForm):
+# Form not limited the specific handler of this request;
+# anyone who can handle reopen requests for this Ticket
+# can see this form.
+class HandlerOfResolvedTicketOpenRequestForm(forms.ModelForm):
     author = UserModelChoiceField(
         queryset=User.objects.filter(validated=True),
     )
@@ -428,7 +431,7 @@ class ResolvedTicketOpenRequestForm(forms.ModelForm):
             self.fields['related_request_approved'].queryset = TicketOpenRequest.objects.none()
 
 
-class SpecificUserResolvedTicketOpenRequestForm(forms.ModelForm):
+class RequesterOfResolvedTicketOpenRequestForm(forms.ModelForm):
     author = UserModelChoiceField(
         queryset=User.objects.filter(validated=True),
     )
@@ -447,6 +450,7 @@ class SpecificUserResolvedTicketOpenRequestForm(forms.ModelForm):
             id=self.instance.author.id)
 
 
+# Form for handling Ticket Reopen Requests
 class TicketOpenRequestResponseForm(forms.ModelForm):
     class Meta:
         model = TicketOpenRequest

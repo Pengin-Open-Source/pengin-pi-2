@@ -15,7 +15,7 @@ from main.mixins import LoginAndValidationRequiredMixin
 from main.models.users import User
 from tickets.filters import FilterSortOrder, TicketFilter
 from tickets.forms import (
-    ResolvedTicketOpenRequestForm,
+    HandlerOfResolvedTicketOpenRequestForm,
     SpecificUserResolvedTicketOpenRequestForm,
     TicketCommentForm,
     TicketCreateOpenRequestForm,
@@ -1041,7 +1041,7 @@ class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View)
             return True
 
 
-class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
+class RequesterOfTicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
     template_name = 'reopen_requests_pending.html'
     model = Ticket
     context_object_name = 'ticket'
@@ -1071,7 +1071,7 @@ class TicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPass
         return can_approve_reopen_requests_for_ticket(current_user, ticket)
 
 
-class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+class HandlerOfPendingTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     template_name = "reopen_request.html"
     model = TicketOpenRequest
     form_class = TicketPendingOpenRequestForm
@@ -1101,7 +1101,7 @@ class TicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTest
         return can_approve_this_reopen_request(current_user, reopen_request)
 
 
-class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+class RequesterOfTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
 
     # Pending Reopen request for a specific ticket from the current user. There is no "list page" for this,
     # for this view,  since the rule is a user may not have more than one pending reopen request
@@ -1139,7 +1139,7 @@ class MyPendingTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserP
         return False
 
 
-class AllResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
+class HandlerOfResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
     template_name = 'all_resolved_reopen_requests.html'
     model = Ticket
     context_object_name = 'ticket'
@@ -1186,7 +1186,7 @@ class AllResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  User
         return can_approve_reopen_requests_for_ticket(current_user, ticket)
 
 
-class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
+class RequesterOfResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
     template_name = 'my_resolved_reopen_requests.html'
     model = Ticket
     context_object_name = 'ticket'
@@ -1239,18 +1239,18 @@ class SpecificUserResolvedTicketReopenRequestsView(LoginAndValidationRequiredMix
         return user_resolved_requests.exists()
 
 
-class ExtendedResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+class HandlerOfResolvedTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     template_name = "past_reopen_request.html"
     model = TicketOpenRequest
 
-    form_class = ResolvedTicketOpenRequestForm
+    form_class = HandlerOfResolvedTicketOpenRequestForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         reopen_request = get_object_or_404(
             TicketOpenRequest, id=self.kwargs.get('pk'))
         requested_ticket = reopen_request.ticket
-        form = ResolvedTicketOpenRequestForm(instance=reopen_request)
+        form = HandlerOfResolvedTicketOpenRequestForm(instance=reopen_request)
 
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
@@ -1270,7 +1270,7 @@ class ExtendedResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin
         return can_approve_reopen_requests_for_ticket(current_user, reopen_request.ticket)
 
 
-class SpecificUserResolvedTicketReopenRequestDetails(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
+class RequesterOfResolvedTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
     # Notice how we use the same template for both Specific Users
     # viewing their own requests, & Ticket Reopen Request Reviewers
     # looking at ANY of this Ticket's past reopen requests.
