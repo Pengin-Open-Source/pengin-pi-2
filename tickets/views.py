@@ -16,7 +16,7 @@ from main.models.users import User
 from tickets.filters import FilterSortOrder, TicketFilter
 from tickets.forms import (
     HandlerOfResolvedTicketOpenRequestForm,
-    SpecificUserResolvedTicketOpenRequestForm,
+    RequesterOfResolvedTicketOpenRequestForm,
     TicketCommentForm,
     TicketCreateOpenRequestForm,
     TicketEditStatusForm,
@@ -1277,7 +1277,7 @@ class RequesterOfResolvedTicketReopenRequestDetailView(LoginAndValidationRequire
     template_name = "past_reopen_request.html"
     model = TicketOpenRequest
 
-    form_class = SpecificUserResolvedTicketOpenRequestForm
+    form_class = RequesterOfResolvedTicketOpenRequestForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
