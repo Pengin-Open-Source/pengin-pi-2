@@ -8,7 +8,7 @@
 {% endcomment %}
 
 {% block pageDropDowns %}
-   <a href="{% url 'ticket' ticket_id %}"> Return to Ticket Details </a>
+   <a href="{% url 'view_all_resolved_reopen_requests' ticket.id 'all' %}"> Return to Resolved Requests List</a>
 {% endblock %}
 
 {% block pageContent %}
