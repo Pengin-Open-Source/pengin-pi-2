@@ -1,124 +1,4 @@
-# Ticket Create, UpDate,  Delete
-# Also Ticket Settings for Staff to decide what options
-# they want for Ticket assignment.
-
-class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
-    model = Ticket
-    form_class = TicketForm
-    template_name = 'ticket_create.html'
-
-    success_url = reverse_lazy('tickets')
-
-    def dispatch(self, request, *args, **kwargs):
-        selected_role = request.GET.get('selected_role')
-        current_user = self.request.user
-        if selected_role:
-            # It's an Ajax request, handle it differently
-            the_role_object = get_object_or_404(Group, id=selected_role)
-
-            if current_user.is_staff:
-                showAllOwnerOptions = self.request.session.get(
-                    'owner_displays_all_validated_users')
-                if showAllOwnerOptions:
-                    potential_owners_for_the_role = User.objects.filter(
-                        validated=True)
-                else:
-                    potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
-                        the_role_object)
-
-            elif is_manager_of_this_role(current_user, the_role_object):
-                potential_owners_for_the_role = get_users_with_extended_rbac_to_group(
-                    the_role_object)
-
-            else:
-                ################################################
-                # The user is not staff or the manager
-                # *** of this specific role**.
-                # We will just show the default (empty) owner list
-                # Users with any roles may come back and EDIT
-                # the ticket and assign themselves as the owner
-                ######################################################
-                potential_owners_for_the_role = get_users_with_extended_rbac_to_group()
-
-            owner_options = []
-            owner_options.append({'value': "",  'label': "---------"})
-
-            for user_option in potential_owners_for_the_role:
-                owner_options.append(
-                    {'value': user_option.pk,  'label': str(user_option.name)})
-
-            data = {'message': f'Newly Selected Role: {selected_role}',
-                    'status': 'success',  'options': owner_options}
-            return JsonResponse(data)
-        return super().dispatch(request, *args, **kwargs)
-
-    def get(self, request, *args, **kwargs):
-
-        # this is the group that that a new Ticket's Role field will be set
-        # to by default.  This will be the only option available for
-        # users with no roles and no special privileges to create their
-        # tickets in. group_created is just to catch the unused T/F result.
-        default_role, group_created = Group.objects.get_or_create(
-            name='default_ticket_support')
-        all_groups = Group.objects.all()
-        current_user = self.request.user
-        # Does this user manage ANY role/group?
-        is_a_role_manager = is_a_manager(current_user)
-        is_admin = current_user.is_staff
-
-        # If I'm staff or a manager,  I can change the ticket to any role
-        # and my preloaded owner options are any users who are in
-        # the default role (if any,  otherwise we get an empty select list)
-        if is_admin or is_a_role_manager:
-            role_options = all_groups
-            if is_admin:
-                showAllOwnerOptions = self.request.session.get(
-                    'owner_displays_all_validated_users')
-                if showAllOwnerOptions:
-                    owner_options = User.objects.filter(validated=True)
-                else:
-                    owner_options = get_users_with_extended_rbac_to_group(
-                        default_role)
-            elif is_manager_of_this_role(current_user, default_role):
-                owner_options = get_users_with_extended_rbac_to_group(
-                    default_role)
-            else:
-                owner_options = get_users_with_extended_rbac_to_group()
-
-        else:
-            # If I am not a staff or a manager,  I may not assign the
-            # ticket to any *user* to be the Ticket Owner
-            # (calling this with no role returns an empty list of users)
-            owner_options = get_users_with_extended_rbac_to_group()
-            # ..but I can assign the ticket to any *role* I have access to
-            user_roles = get_all_groups_for_user_with_extended_rbac(
-                current_user).distinct()
-            default_role_as_queryset = Group.objects.filter(
-                pk=default_role.pk).distinct()
-            if user_roles.exists():
-                # Get all the roles the user is connected with
-                # + the default_ticket_support role
-                role_options = user_roles | default_role_as_queryset
-            else:
-                # If I am not connected with any role,  I must assign the ticket
-                # to default ticket support,  leaving management to assign it
-                # to the correct role and owner later in the Edit Ticket page.
-                role_options = Group.objects.filter(pk=default_role.pk)
-
-        role_options = role_options.order_by('name')
-        form = TicketForm(role_options=role_options,
-                          owner_options=owner_options, role_default=default_role, current_user=current_user)
-        context = {'form': form}
-        return render(request, self.template_name,  context)
-
-    def post(self, request):
-        form = TicketForm(request.POST, current_user=request.user)
-        if form.is_valid():
-            form.instance.author = self.request.user
-            form.instance.row_action = 'CREATE'
-            form.instance.resolution_status = 'open'
-            ticket = form.save()
-            return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.pk}))
+# Ticket Status, Edit,  Delete
 
 
 class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -507,3 +387,106 @@ class TicketDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Del
 
         if is_ticket_manager(self.request.user, ticket):
             return True
+
+
+# View for Ticket Status Changes
+
+class TicketEditStatusView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Ticket
+    form_class = TicketEditStatusForm
+    template_name = 'ticket_edit_status.html'
+    context_object_name = 'ticket'
+
+    # Gemini's suggestion for how to fix a bug occuring on an implicit form
+    # load,  that happens before the form call in get_context_data method
+    # I want current_user for permission checks to filter the available
+    # statuses.
+
+    def get_form_kwargs(self):
+        """
+        Injects the 'current_user' argument into the form's __init__ method
+        before the form is instantiated.
+        """
+        # Get the standard kwargs (instance, data, initial, etc.)
+        kwargs = super().get_form_kwargs()
+
+        # Add the custom argument that your form's __init__ needs
+        kwargs['current_user'] = self.request.user
+
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # perhaps should be refactored to use self.object?
+        ticket = get_object_or_404(Ticket, id=self.kwargs.get('pk'))
+        current_user = self.request.user
+        form = TicketEditStatusForm(instance=ticket, current_user=current_user)
+        context['form'] = form
+        context['is_admin'] = self.request.user.is_staff
+        context['primary_title'] = "Edit Status for Ticket #" + \
+            str(self.object.ticket_number) + ": " + self.object.summary
+        context['ticket_id'] = self.object.id
+        return context
+
+    def post(self, request, *args, **kwargs):
+        ticket_id = self.kwargs.get('pk')
+        ticket = get_object_or_404(
+            Ticket, id=ticket_id)
+        current_user = self.request.user
+        ticket_form = TicketEditStatusForm(
+            request.POST, instance=ticket, current_user=current_user)
+        # what was the resolution status and date before now?
+        if ticket.resolution_status == 'open':
+            resolve_date = None
+        else:
+            # grab the resolution date that existed before this
+            # post
+            resolve_date = ticket.resolution_date
+        if ticket_form.is_valid():
+            # now ticket object contains the newly selected status
+            ticket = ticket_form.save(commit=False)
+            ticket.last_edited_by = request.user
+            ticket.row_action = 'EDIT'
+            ticket.date = timezone.now()
+            reopen_requests_pending = None
+            handle_requests = False
+            if ticket.resolution_status == 'resolved' and not ticket.resolution_date:
+                ticket.resolution_date = timezone.now()
+            # if we are CHANGING the status to open, blank out the date.
+            elif ticket.resolution_status == 'open':
+                ticket.resolution_date = None
+                reopen_requests_pending = ticket.reopen_requests.filter(
+                    approval_status='pending')
+                if reopen_requests_pending.exists():
+                    handle_requests = True
+                # bypass_initiated_by
+            # otherwise just keep the current resolution date.
+            else:
+                ticket.resolution_date = resolve_date
+
+            if handle_requests:
+                with transaction.atomic():
+                    # we indirectly resolved reopen requests on this ticket
+                    reopen_requests_pending_ids = list(
+                        reopen_requests_pending.values_list('pk', flat=True))
+                    for pending_request_id in reopen_requests_pending_ids:
+                        pending_request = TicketOpenRequest.objects.get(
+                            pk=pending_request_id)
+                        pending_request.approval_status = 'manually reopened'
+
+                        pending_request.date_handled = timezone.now()
+                        pending_request.row_action = 'EDIT'
+                        # link back to the request that caused this one to be resolved
+                        pending_request.bypass_initiated_by = current_user
+                        pending_request.save()
+                        ticket.save()
+            else:
+                ticket.save()
+            return HttpResponseRedirect(reverse_lazy('ticket', kwargs={'pk': ticket.id}))
+
+    def test_func(self):
+        current_user = self.request.user
+        ticket = self.get_object()
+        if can_edit_ticket_status(current_user, ticket):
+            return True
+        return False

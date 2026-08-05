@@ -1,3 +1,7 @@
+# Ticket Settings is for Staff to decide what options
+# they want for Ticket assignment.
+
+
 class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):
     template_name = "ticket_owner_list_settings.html"
 
