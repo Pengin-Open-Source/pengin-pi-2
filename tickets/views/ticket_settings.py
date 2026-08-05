@@ -1,5 +1,9 @@
-# Ticket Settings is for Staff to decide what options
-# they want for Ticket assignment.
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.shortcuts import redirect, render
+from django.views import View
+
+from main.mixins import LoginAndValidationRequiredMixin
+from tickets.forms import TicketSettingsForm
 
 
 class TicketSettings(LoginAndValidationRequiredMixin, UserPassesTestMixin, View):

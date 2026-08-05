@@ -1,4 +1,16 @@
 # Edit and Delete User comments (Creation of Comments currently on Ticket Detail View)
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic import DeleteView, UpdateView
+
+from main.mixins import LoginAndValidationRequiredMixin
+from tickets.forms import TicketCommentForm
+from tickets.models import Ticket, TicketComment, transaction
+from tickets.permissions import can_comment_on_ticket, is_ticket_manager
+from tickets.views.util import delete_comment
 
 
 class TicketCommentEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -65,4 +77,3 @@ class TicketCommentDeleteView(LoginAndValidationRequiredMixin, UserPassesTestMix
             return True
 
         return False
-

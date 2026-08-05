@@ -1,4 +1,28 @@
 # Ticket Status, Edit,  Delete
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.models import Group
+from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic import UpdateView, DeleteView
+from main.mixins import LoginAndValidationRequiredMixin
+from main.models import User
+from tickets.forms import TicketForm, TicketEditStatusForm
+from tickets.models import Ticket, TicketOpenRequest, transaction
+from tickets.permissions import (
+    can_edit_ticket,
+    can_edit_ticket_privileged,
+    is_ticket_manager,
+    can_edit_ticket_status,
+)
+from tickets.views.util import delete_ticket
+from util.security.group_access import (
+    can_access_group,
+    get_users_with_extended_rbac_to_group,
+    is_a_manager,
+    is_manager_of_this_role,
+)
 
 
 class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, UpdateView):

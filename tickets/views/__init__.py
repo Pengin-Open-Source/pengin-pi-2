@@ -10,12 +10,12 @@ from .comment import (
     TicketCommentDeleteView,
 )
 from .reopen_request import (
-    RequesterOfTicketPendingReopenRequestsView,
     RequesterOfTicketReopenRequestDetailView,
     RequesterOfResolvedTicketReopenRequestsView,
     RequesterOfResolvedTicketReopenRequestDetailView,
 )
 from .reopen_request_handler import (
+    HandlerOfPendingTicketReopenRequestsView,
     HandlerOfPendingTicketReopenRequestDetailView,
     HandlerOfResolvedTicketReopenRequestsView,
     HandlerOfResolvedTicketReopenRequestDetailView,

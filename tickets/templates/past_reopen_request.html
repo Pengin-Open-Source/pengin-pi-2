@@ -8,7 +8,11 @@
 {% endcomment %}
 
 {% block pageDropDowns %}
-   <a href="{% url 'view_all_resolved_reopen_requests' ticket.id 'all' %}"> Return to Resolved Requests List</a>
+ {% if is_handler  %}
+   <a href="{% url 'view_all_resolved_reopen_requests' ticket_id 'all' %}"> Return to Resolved Requests List</a>
+ {% else %}
+    <a href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket_id 'all' %}">Return to Resolved Reopen Requests</a>
+ {% endif %}
 {% endblock %}
 
 {% block pageContent %}

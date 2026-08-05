@@ -3,15 +3,17 @@
 ##                   ##
 from django.utils import timezone
 from tickets.models import (
-    TicketCommentHistory,
     TicketHistory,
+    TicketCommentHistory,
     transaction,
 )
 
-# Used to get original date of an edited ticket
-
 
 def get_ticket_create_info(ticket):
+    """
+    Retrieves the original creation date of a ticket from its history.
+    """
+
     oldest_date = ''
     is_create_missing = False
 
@@ -79,12 +81,13 @@ def get_comment_create_info(comment):
     return (oldest_date, is_create_missing)
 
 
-# Not putting a transaction at the top of this method itself,  b/c
-# this method may be called inside of the delete_ticket method.
-# I want failures to propagate up the chain and rollback the whole
-# ticket deletion, and not leave a deletion in a half-done state
 def delete_comment(usr, archive_comment):
-
+    """
+    Archives and deletes a comment.
+    This function does not use a transaction decorator itself, so it can be
+    called from within another transaction (like delete_ticket) and allow
+    failures to propagate up.
+    """
     archive_comment.row_action = 'DELETE'
     archive_comment.last_edited_by = usr
     archive_comment.date = timezone.now()

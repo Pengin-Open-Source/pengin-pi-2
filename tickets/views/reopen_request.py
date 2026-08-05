@@ -3,6 +3,23 @@
 # View Pending Request details, also  see past Resolved Requests.
 # NOTE For now,  Ticket Reopen Requests *creation* happens on the Ticket Detail View
 
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404
+from django.views.generic import DetailView
+
+from main.mixins import LoginAndValidationRequiredMixin
+from tickets.forms import (
+    RequesterOfResolvedTicketOpenRequestForm,
+    TicketPendingOpenRequestForm,
+)
+from tickets.models import Ticket, TicketOpenRequest
+from tickets.permissions import (
+    can_see_ticket,
+    is_reopen_request_pending_approval,
+)
+
+
 class RequesterOfTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
 
     # Pending Reopen request for a specific ticket from the current user. There is no "list page" for this,
@@ -10,7 +27,7 @@ class RequesterOfTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, 
     # per ticket. They must wait for the current pending request to be handled; then they can make
     # a new request as needed.
 
-    template_name = "my_pending_reopen_request.html"
+    template_name = "requester_pending_reopen_request.html"
     model = TicketOpenRequest
     form_class = TicketPendingOpenRequestForm
 
@@ -42,7 +59,7 @@ class RequesterOfTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, 
 
 
 class RequesterOfResolvedTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
-    template_name = 'my_resolved_reopen_requests.html'
+    template_name = 'requester_resolved_reopen_requests.html'
     model = Ticket
     context_object_name = 'ticket'
 
@@ -108,13 +125,13 @@ class RequesterOfResolvedTicketReopenRequestDetailView(LoginAndValidationRequire
         reopen_request = get_object_or_404(
             TicketOpenRequest, id=self.kwargs.get('pk'))
         requested_ticket = reopen_request.ticket
-        form = SpecificUserResolvedTicketOpenRequestForm(
+        form = self.form_class(
             instance=reopen_request)
 
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
-
+        context['is_handler'] = False
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
         context["primary_title"] = self.request.user.name + "'s RESOLVED Request to Reopen Ticket #" + \

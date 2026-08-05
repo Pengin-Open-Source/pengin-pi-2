@@ -3,21 +3,31 @@
 # View Request details, Grant or Deny Requests, see past Resolved Requests.
 # NOTE For now,  Ticket Reopen Requests *creation* happens on the Ticket Detail View
 
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.paginator import Paginator
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic import DetailView, UpdateView
+
+from main.mixins import LoginAndValidationRequiredMixin
+
+from tickets.models import Ticket, TicketOpenRequest, transaction
 
 from tickets.forms import (
     HandlerOfResolvedTicketOpenRequestForm,
-    RequesterOfResolvedTicketOpenRequestForm,
-    TicketCommentForm,
-    TicketCreateOpenRequestForm,
-    TicketEditStatusForm,
-    TicketForm,
     TicketOpenRequestResponseForm,
     TicketPendingOpenRequestForm,
-    TicketSettingsForm,
+)
+
+from tickets.permissions import (
+    can_approve_reopen_requests_for_ticket,
+    can_approve_this_reopen_request
 )
 
 
-class HandlerOfTicketPendingReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
+class HandlerOfPendingTicketReopenRequestsView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, DetailView):
     template_name = 'reopen_requests_pending.html'
     model = Ticket
     context_object_name = 'ticket'
@@ -45,7 +55,6 @@ class HandlerOfTicketPendingReopenRequestsView(LoginAndValidationRequiredMixin, 
         current_user = self.request.user
         ticket = self.get_object()
         return can_approve_reopen_requests_for_ticket(current_user, ticket)
-
 
 
 class HandlerOfPendingTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
@@ -264,7 +273,7 @@ class HandlerOfResolvedTicketReopenRequestDetailView(LoginAndValidationRequiredM
         for field in form.fields:
             form.fields[field].widget.attrs['disabled'] = True
         context['form'] = form
-
+        context['is_handler'] = True
         context["reopen_request"] = reopen_request
         context["ticket_id"] = requested_ticket.id
         context["primary_title"] = "RESOLVED Request to Reopen Ticket #" + \

@@ -1,6 +1,23 @@
-# View for Ticket Creation
+from django.contrib.auth.models import Group
+from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
+
+from main.mixins import LoginAndValidationRequiredMixin
+from main.models import User
+from tickets.forms import TicketForm
+from tickets.models import Ticket
+from util.security.group_access import (
+    get_all_groups_for_user_with_extended_rbac,
+    get_users_with_extended_rbac_to_group,
+    is_a_manager,
+    is_manager_of_this_role,
+)
+
 
 class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
+    """Handles the creation of new tickets."""
     model = Ticket
     form_class = TicketForm
     template_name = 'ticket_create.html'

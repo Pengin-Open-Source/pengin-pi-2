@@ -2,52 +2,40 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.db.models import F
-from django.http import Http404, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
-
+from django.views.generic import DetailView
 from django_filters.views import FilterView
 
 from main.mixins import LoginAndValidationRequiredMixin
 from main.models.users import User
 from tickets.filters import FilterSortOrder, TicketFilter
 from tickets.forms import (
-    RequesterOfResolvedTicketOpenRequestForm,
     TicketCommentForm,
     TicketCreateOpenRequestForm,
-    TicketEditStatusForm,
-    TicketForm,
-    TicketPendingOpenRequestForm,
-    TicketSettingsForm,
+    TicketForm
 )
 from tickets.models import (
     Ticket,
-    TicketComment,
     TicketOpenRequest,
-    transaction,
+    transaction
 )
 from tickets.permissions import (
     can_approve_reopen_requests_for_ticket,
-    can_approve_this_reopen_request,
     can_comment_on_ticket,
     can_edit_ticket,
-    can_edit_ticket_privileged,
     can_edit_ticket_status,
     can_request_reopen,
-    can_see_ticket,
-    is_ticket_manager,
-    is_reopen_request_pending_approval
+    can_see_ticket
 )
 from util.security.group_access import (
-    can_access_group,
-    get_all_groups_for_user_with_extended_rbac,
     get_users_with_extended_rbac_to_group,
-    is_a_manager,
     is_manager_of_this_role,
 )
+
+from tickets.views.util import get_ticket_create_info, get_comment_create_info
 
 
 class TicketsFilterView(LoginAndValidationRequiredMixin, FilterView):
@@ -319,11 +307,3 @@ class TicketDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Det
 
     def test_func(self):
         return can_see_ticket(self.request.user, self.get_object())
-
-
-
-
-
-
-
-
