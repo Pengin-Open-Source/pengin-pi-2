@@ -189,7 +189,6 @@ class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, Vie
         group_manager = GroupManager.objects.filter(
             managed_group=group).first()
 
-
         context = {}
         if group_manager:
             manager_form = GroupManagerForm(instance=group_manager)
@@ -220,9 +219,9 @@ class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, Vie
         return self.request.user.is_staff
 
 
-class GroupChildListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+class GroupChildListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
 
-    template_name = "management/group_children_detail.html"
+    template_name = "management/group_child_list.html"
 
     def get(self, request, *args, **kwargs):
 
@@ -245,7 +244,7 @@ class GroupChildListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestM
         return self.request.user.is_staff
 
 
-class GroupsIHaveSpecialAccessToListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+class GroupHasSpecialAccessToTheseGroupsListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
 
     template_name = "management/group_has_non_tree_access_to_groups.html"
 
