@@ -1,0 +1,40 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}
+{%comment %}
+   View a specific, resolved Reopen Request for a particular Ticket
+   If someone who can Review Requests for this ticket brings up this 
+   page, it will have a few more fields then when brought up by 
+   a user reviewing their own personal past reopen request.
+{% endcomment %}
+
+{% block pageDropDowns %}
+ {% if is_handler  %}
+   <a href="{% url 'view_all_resolved_reopen_requests' ticket_id 'all' %}"> Return to Resolved Requests List</a>
+ {% else %}
+    <a href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket_id 'all' %}">Return to Resolved Reopen Requests</a>
+ {% endif %}
+{% endblock %}
+
+{% block pageContent %}
+<script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
+<p> 
+    {% for field in form %}
+      <div class="fieldWrapper">
+          <p>{{ field.label_tag }}</p>
+          <p> {{ field }}</span> <p>
+      </div>
+    {% endfor %} 
+    <div><b> Requested on <span id="request-time"></span> </b> </div>
+    <script>
+        var utcTime = new Date('{{ reopen_request.request_date|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('request-time').textContent = localTime;
+    </script>
+    <div><b> Request Handled On <span id="review-time"></span> </b> </div>
+    <script>
+        var utcTime = new Date('{{ reopen_request.date_handled|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('review-time').textContent = localTime;
+    </script>
+</p>
+{% endblock %}

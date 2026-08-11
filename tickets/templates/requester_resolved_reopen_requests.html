@@ -1,0 +1,44 @@
+{% extends "layout/alternating_color_table.html" %}
+{% load static %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+{% block pageDropDowns %}
+  <a href="{% url 'ticket' ticket_id %}"> Return to Ticket Details  </a>
+{% endblock %}
+
+{% block beforeTableContent %}
+    <div class="title-underline">
+      <a class="text-button" href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket.id 'all' %}">All Resolved Requests</a>|
+      <a class="text-button" href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket.id 'approved' %}">Approved</a>|
+      <a class="text-button" href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket.id 'denied' %}">Denied</a>|
+      <a class="text-button" href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket.id 'related request approved' %}">Approved via Related Request</a>|
+      <a class="text-button" href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket.id 'manually reopened' %}">Ticket Manually Reopened</a>
+    </div>
+{% endblock %}
+
+
+
+{% block tableContent %}
+<script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
+  {% for reopen_request in page_obj %}
+  <tr><td class="post-container">
+    <a class="alternating-colors-table-links"href="{% url 'view_resolved_request_details_for_specific_user' reopen_request.id %} ">{{ reopen_request.reason|escape }}</a>
+    <div class="comment-title-underline">
+      <div><b> Requested by {{reopen_request.author.name|escape}}  on  <span id="request-time-{{forloop.counter}}"></span> </b> </div>
+      <script>
+        var utcTime = new Date('{{ reopen_request.request_date|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('request-time-{{forloop.counter}}').textContent = localTime;
+      </script>
+    </div>
+  </td></tr>
+  {% endfor %}
+  {% use_macro render_pagination page_obj %}
+
+
+
+
+{% endblock %}
+
+

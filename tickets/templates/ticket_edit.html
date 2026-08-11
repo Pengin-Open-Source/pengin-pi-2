@@ -1,0 +1,24 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %} 
+
+{% block pageDropDowns %}
+   <a href="{% url 'ticket'  ticket_id %}">Cancel</a>
+{% endblock %}
+
+{% block pageContent %}
+  <input type="hidden" id="ticket-edit-link" value='{% url 'edit_ticket' ticket_id %}'>
+  <form class="form" method="POST" action="{% url 'edit_ticket' ticket_id %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button id="submit-ticket-edit" class="primary-button" type="submit">Confirm Ticket Edit</button>
+
+  {% comment %}  If the selected Role changes, re-populate the owner field accordingly
+    (tweaking code from Google Gemini + what I have in calendarEvents.js)
+  {% endcomment %}
+
+  <script src="{% static 'javascript/jquery/1.12.4/jquery.min.js' %}"></script>
+  <script src="{% static 'javascript/scripts.js'                  %}"></script>
+  <script src="{% static 'javascript/editTicketRoleChangeOwnerList.js' %}"></script> 
+
+  </form>
+{% endblock %}

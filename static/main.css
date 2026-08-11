@@ -27,6 +27,14 @@ header {
   position: fixed;
   top: 0;
   width: 100%;
+  z-index: 999;
+}
+
+input[readonly],
+textarea[readonly] {
+  opacity: 0.5;
+
+  cursor: not-allowed
 }
 
 main {
@@ -48,6 +56,7 @@ footer {
   position: fixed;
   bottom: 0;
   width: 100%;
+  z-index: 999;
 }
 
 a {
@@ -57,6 +66,11 @@ a {
 
 button {
   border: none;
+}
+
+button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 a:hover {
@@ -554,7 +568,7 @@ th {
 }
 
 /* Calendar */
-.calendar-date {
+date.calendar-date {
   margin-bottom: 0.5rem;
 }
 
@@ -713,7 +727,7 @@ th {
 }
 
 .content-section-div-2.hide {
-    display: none;
+  display: none;
 }
 
 .message-container {
@@ -759,11 +773,13 @@ th {
   background-color: #dddddd;
 }
 
-.btn-select-user, .btn-select-chat {
+.btn-select-user,
+.btn-select-chat {
   cursor: pointer;
 }
 
-.btn-select-user:hover, .btn-select-chat:hover {
+.btn-select-user:hover,
+.btn-select-chat:hover {
   background-color: var(--hover-blue);
 }
 
@@ -835,13 +851,13 @@ th {
   min-width: 50%;
 }
 
-.sender > .message-content {
+.sender>.message-content {
   background-color: black;
   margin-left: auto;
   text-align: end;
 }
 
-.receiver > .message-content {
+.receiver>.message-content {
   background-color: var(--main-blue);
   margin-right: auto;
 }
@@ -885,14 +901,17 @@ th {
 }
 
 .top-bar-title.collapsible:after {
-  content: "\2212"; /* Unicode character for "minus" sign (-) */
+  content: "\2212";
+  /* Unicode character for "minus" sign (-) */
   font-size: 15px;
   color: white;
   float: right;
   margin-left: 5px;
 }
+
 .top-bar-title.collapsible.active:after {
-  content: '\002B'; /* Unicode character for "plus" sign (+) */
+  content: '\002B';
+  /* Unicode character for "plus" sign (+) */
 }
 
 .chat-header {
@@ -913,4 +932,34 @@ th {
   color: var(--main-blue);
   font-size: 1.5rem;
   cursor: pointer;
+}
+
+/* GEMINI's Suggestion for date range selection field formatting */
+
+.date-grid-master {
+  display: grid;
+  /* Col 1: Start Label | Col 2: Start Input | Col 3: End Label | Col 4: End Input */
+  /* We actually want 2 pairs per row, so 4 columns total */
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+  gap: 20px 30px;
+  /* 20px vertical between rows, 30px horizontal between After/Before */
+}
+
+.date-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  /* Space between label and input */
+}
+
+.date-stack label {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.date-stack input {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
 }

@@ -1,0 +1,357 @@
+{% extends "layout/alternating_color_table.html" %}
+{% load static %}  
+{% block page_head_assets %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock page_head_assets %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+ {% comment %} Worked with Gemini coding this file {% endcomment %}
+
+{% block pageDropDowns %}
+  <a href="{% url 'create_ticket' %}">Create Ticket</a>
+  {% if is_admin  %}
+    <a href="{% url "ticket_settings" %}">Ticket Settings</a>
+  {% endif  %}
+{% endblock %}
+
+
+{% block beforeTableContent %}
+    <div class="title-underline">
+      <a class="text-button" href="{% url 'tickets' 'all' %}">all</a>|
+      <a class="text-button" href="{% url 'tickets' 'resolved' %}">resolved</a>|
+      <a class="text-button" href="{% url 'tickets' 'open' %}">open</a>|
+      <a class="text-button" href="{% url 'tickets' 'closed' %}">closed</a>|
+      <form method="get" action="{{ request.path }}">
+           {{ sort_order_filter_form.sort_order.label_tag }} 
+           {{ sort_order_filter_form.sort_order }}
+       </form> 
+      
+    </div>
+    
+     
+    <form method="get" id="search-filter-form">
+      {{ filter.form.media }} 
+        {% if request.GET.sort_order %}
+           <input type="hidden" name="sort_order" value="{{ request.GET.sort_order }}">
+        {% endif %}
+
+    
+        {% if form_errors %}
+          <div class="alert alert-danger">
+              {% for error in form_errors %}
+                  <ul>
+                      <li style="color:red;">{{ error }}</li>
+                  </ul>
+              {% endfor %}
+          </div>
+        {% endif %}
+
+         
+        <div class="basic-search">
+        <p> {{ filter.form.priority.errors }}</p>
+        <p> {{ filter.form.priority.label_tag }} {{ filter.form.priority }} </p>
+        <p> {{ filter.form.role.errors }}</p>
+        <p> {{ filter.form.role.label_tag }} {{ filter.form.role }} </p>
+        <p> {{ filter.form.owner.errors }}</p>
+        <p> {{ filter.form.owner.label_tag }} {{ filter.form.owner }} </p>
+        <p> {{ filter.form.author.errors }}</p>
+        <p> {{ filter.form.author.label_tag }} {{ filter.form.author }} </p>
+        </div>
+
+        {% comment %} Hide More Advanced Options until the user wants to see them.  {% endcomment %}
+        <a href="#" id="toggle-advanced" style="font-size: 0.9em; color: blue;">+ Advanced Filters</a>
+        <div id="advanced-search" style="display: none; margin-top: 10px; border-left: 2px solid #ddd; padding-left: 10px;">
+          
+            {# PASS 1: Standard Multi-selects #}
+            {% for field in filter.form %}
+                {% if 'date' not in field.name  and field.name != 'priority' and field.name != 'author' and field.name != 'owner' and field.name != 'role'  %}
+                  <div class="fieldWrapper">
+                    <p>{{ field.errors }}</p>
+                    <p>{{ field.label_tag }}</p>
+                    <p>{{ field }}</p>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <i> Search by Date Range(s)..... </i>
+
+            <hr>
+
+            {# PASS 2: Dates ... put them in one Grid Container #}
+            <div class="date-grid-master">
+                {% for field in filter.form %}
+                    {% if 'date' in field.name %}
+                        <div class="date-stack">
+                            <label>{{ field.label }}</label>
+                            <div class="input-area">
+                                {{ field.errors }}
+                                {{ field }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <hr>
+        </div>
+
+      <a href="{{ request.path }}?sort_order={{ request.GET.sort_order|default:"-last_activity" }}" class="message-load-button"> Clear All Filters </a>
+      <br/>
+      <p> <button type="submit"> <i> Search {{ view.kwargs.status|default:"All"|title }} Tickets... </i> </button> </p>
+
+    </form>
+
+    
+  
+  
+{% endblock %}
+
+
+{% block tableContent %}
+ 
+<script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
+  {% for ticket in page_obj %}
+  <tr><td class="post-container">
+    <b>
+     
+    {% if ticket.priority == 'LOW' %}  
+      <p style="color: green;"> 
+    {% elif ticket.priority == 'MEDIUM' %}
+      <p style="color: chocolate;"> 
+    {% else %}
+      <p style="color: red;"> 
+    {% endif %} 
+       TICKET #{{ ticket.ticket_number }} | PRIORITY: {{ ticket.priority }}
+
+     </p>
+   </b> 
+    <a class="alternating-colors-table-links" href="{% url 'ticket'  ticket.id %}">{{ ticket.summary|escape }}</a>
+    <div class="comment-title-underline">
+      <div><b> {% if ticket.last_edited_by %} Last Edited By: {{ticket.last_edited_by.name|escape}} {% elif ticket.row_action == 'EDIT' %} Last Edited By: <i> Unknown User </i> {% else %} by {{ticket.author.name|escape}}  {% endif %} on  <span id="ticket-latest-time-{{forloop.counter}}"></span> </b> </div>
+      <script>
+        var utcTime = new Date('{{ ticket.date|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('ticket-latest-time-{{forloop.counter}}').textContent = localTime;
+      </script>
+      {% if ticket.row_action == 'CREATE' %} 
+         </div>
+      {% elif ticket.row_action == 'EDIT' %}
+        <i> (Edited) </i>  </div>
+       <div class="comment-title-underline">
+                  {% if ticket.is_create_missing %}
+                  <p style="color: red;" >  
+                    <i> Ticket Creation Date / Original Author not found!</i>
+                  </p>
+                  {% else %}
+                      <p style="color: coral;" > 
+                           Originally submitted by {{ticket.author.name |escape}} on  <span id="ticket-creation-time-{{forloop.counter}}"></span>
+                     </p>
+                     <script>
+                      var utcTime = new Date('{{ ticket.create_date|date:"c" }}');
+                      var localTime = convertUTCToLocal(utcTime);
+                      document.getElementById('ticket-creation-time-{{forloop.counter}}').textContent = localTime;
+                    </script>
+                  {% endif %}
+        </div>
+      {% else %}
+        </div>
+         <div class="comment-title-underline">
+            <p style="color: red;" >  
+              <i> Warning: This may be the date a ticket was deleted,  before being restored - rather than the last edit date. Your system administrator can check on this</i>
+            </p>
+        </div>
+      {% endif %} 
+   
+    <p class="">Resolution Status: <b> {{ticket.resolution_status|upper|escape}} </b>  |  Belongs to Group/Role: <b> {{ ticket.role.name }} </b> </p>
+  </td></tr>
+  {% endfor %}
+
+  {% use_macro render_pagination page_obj page_range_with_ellipsis=page_range_with_ellipsis %}
+   
+
+  <script src="{% static 'javascript/tomselectjs/2.3.1/tom-select.complete.min.js'    %}"></script>
+  {% comment %} Worked with Google Gemini heavily on this JS code.
+  This code helps us manage Sort order, TomSelect fields,  Show/Hide Advanced Filters, Clear Filters,  and maintain Filters when Changing Sort Order {% endcomment %}
+ 
+  
+  <script>
+    // Using Vanilla JS to be safe
+    document.addEventListener("DOMContentLoaded", function() {
+      //########### TOM SELECT CODE ############################//
+      // settings for TomSelect fields
+      const settings = {
+            selectOnTab: true,
+            maxOptions: 50,
+            create: true,
+            dropdownParent: 'body', 
+            plugins: ['remove_button'],
+            persist: true,
+        };
+        
+        // Targeting your specific filter fields that use tom select
+        document.querySelectorAll('.tom-select-enabled').forEach((el) => {
+            // Create the instance
+            const control = new TomSelect(el, settings);
+      
+            const emptyOption = control.options[''];
+            const textInitial = el.dataset.defaultEmptySelection;
+            const TEXT_POPULATED = '{Add Another....}';
+
+            control.on('change', function() {
+              // If items.length > 0, the user has pills selected
+              const newLabel = this.items.length > 0 ? TEXT_POPULATED : textInitial;
+      
+              
+              this.settings.placeholder = newLabel;
+
+              this.updateOption('', { value: '', text: newLabel });
+
+              // FORCE the DOM attribute to update on the input field
+              // This is usually why it takes "two clicks" — the attribute isn't refreshing.
+              if (this.control_input) {
+                 this.control_input.setAttribute('placeholder', newLabel);
+              }
+
+              // Force the UI to refresh the placeholder display
+              this.updatePlaceholder();
+  
+              // Refresh the dropdown UI without closing it
+              this.refreshOptions(false);
+          });
+
+
+            // Access the dynamic total count for THIS specific field
+            const totalItems = el.options.length;
+            const dropdown = control.dropdown_content;
+
+
+            // Add the scroll listener specifically to this instance's dropdown
+            dropdown.addEventListener('scroll', function() {
+              // Check if user is near the bottom
+              if (dropdown.scrollTop + dropdown.clientHeight >= dropdown.scrollHeight - 100) {
+                 // Only bump if we haven't reached the end of this specific list
+                 if (control.settings.maxOptions < totalItems) {
+                    control.settings.maxOptions = Math.min(control.settings.maxOptions + 100, totalItems);
+                    control.refreshOptions(false); // Update UI without closing
+                  }
+              }
+            });
+  
+        });
+
+        //################################################
+        // For Toggling Advanced Search Fields' Visibility
+        //################################################
+
+        const toggleLink = document.getElementById('toggle-advanced');
+        const advancedDiv = document.getElementById('advanced-search');
+        // The Logic to Check for Existing Data on Page Load
+        // We look for ANY input or select within the advanced div that isn't empty
+        const advancedInputs = advancedDiv.querySelectorAll('input, select, textarea');
+        let hasActiveFilters = false;
+        
+        advancedInputs.forEach(input => {
+          // Check if the input has a value and it's not just a default/empty string
+          if (input.value && input.value.trim() !== "") {
+            
+             hasActiveFilters = true;
+              
+          }
+        });
+
+        // If we already have data in the advanced search fields, 
+        // show the Advanced search div immediately so the user sees their 
+        // active filters
+        if (hasActiveFilters) {
+          advancedDiv.style.display = 'block';
+           toggleLink.textContent = '- Show Less';
+
+        }
+        
+        // The Click Event Listener for Manual Toggling
+        toggleLink.addEventListener('click', function(e) {
+          e.preventDefault(); 
+
+          if (advancedDiv.style.display === 'none' || advancedDiv.style.display === '') {
+              advancedDiv.style.display = 'block';
+              toggleLink.textContent = '-Show Less';
+          } 
+          else {
+              let confirmClear = false;
+              hasActiveFilters = false;
+              advancedInputs.forEach(input => {
+                // Check if the input has a value and it's not just a default/empty string
+                if (input.value && input.value.trim() !== "") {
+                  
+                   hasActiveFilters = true;
+                    
+                }
+              });
+              if (hasActiveFilters) {
+                 confirmClear = confirm("Would you like to clear the advanced filters as well?");
+              }
+              if (!hasActiveFilters || confirmClear) {
+                // 1. Target ONLY the original form elements, ignoring the Tom-Select generated divs
+                const actualFields = Array.from(advancedDiv.querySelectorAll('input, select, textarea'));
+            
+                actualFields.forEach(field => {
+                    // Skip the Tom-Select 'control' inputs (the ones that handle the typing)
+                    if (field.classList.contains('tom-select-input') || field.hasAttribute('autocomplete')) {
+                        // If Tom-Select is active on the parent, we handle it through the original element
+                        return; 
+                    }
+            
+                    // 2. Check for the instance on the ORIGINAL element
+                    if (field.tomselect) {
+                        field.tomselect.clear(true); // 'true' tells it to clear silently
+                    } 
+                    // 3. Standard fields
+                    else {
+                        if (field.type === 'checkbox' || field.type === 'radio') {
+                            field.checked = false;
+                        }
+                        else if (field.tagName === 'SELECT') {
+                          field.selectedIndex = 0;
+                        }
+                        else {
+                            field.value = '';
+                        }
+                    }
+                });
+            
+              advancedDiv.style.display = 'none';
+              toggleLink.textContent = '+Advanced Filters';
+            }
+            
+          }
+        });
+    });
+</script>
+
+<script>
+
+  // Target the Sort Select element by the ID Django gives it
+  const sortSelect = document.getElementById('id_sort_order');
+  const filterForm = document.getElementById('search-filter-form'); 
+  if (sortSelect) {
+      sortSelect.onchange = function() {
+          // 1. Start our parameters with the new sort value
+        const params = new URLSearchParams();
+        params.append('sort_order', this.value);
+
+        // 2. Add everything from the filter form
+        const filterData = new FormData(filterForm);
+        for (const [key, value] of filterData.entries()) {
+            if (key!=='sort_order' && value.trim() !== "") {
+                params.append(key, value);
+            }
+        }
+
+        // 3. Manual redirect
+        window.location.href = window.location.pathname + '?' + params.toString();
+      };
+  }
+</script>
+{% endblock %}
+
+

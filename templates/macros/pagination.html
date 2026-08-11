@@ -7,7 +7,7 @@
 {# The paginator.current_page is the page object returned by the Paginator class #}
 
 {% load macros %}
-{% macro render_pagination page %}
+{% macro render_pagination page page_range_with_ellipsis="None" %}
 
 <!-- Pagination links -->
 {% if page.has_other_pages %}
@@ -16,19 +16,40 @@
     </div>
     <div class="pagination-list">
         {% if page.has_previous %}
-            <div><a href="?page={{ page.previous_page_number }}">Previous</a></div>
+            <div><a href="?{% if query_parameters %}{{ query_parameters }}&{% endif %}page={{ page.previous_page_number }}">Previous</a> </div>
         {% endif %}
 
-        {% for num in page.paginator.page_range %}
-            {% if num == page.number %}
-                <div class="current">{{ num }}</div>
-            {% else %}
-                <div><a href="?page={{ num }}">{{ num }}</a></div>
-            {% endif %}
-        {% endfor %}
+        {% if page_range_with_ellipsis != "None" %}
+
+            {% for placeholder in page_range_with_ellipsis %}
+                {% if placeholder == page.number %}
+                   <div class="current">{{ placeholder }}</div>
+                {% elif placeholder == page.paginator.ELIIPSIS %}
+                   <div class = "disabled"> {{ placeholder }} </div>
+                {% else %}
+                   <div><a href="?{% if query_parameters %}{{ query_parameters }}&{% endif %}page={{ placeholder }}">{{ placeholder }}</a> </div>
+                {% endif %}
+            {% endfor %}
+
+        {% else %}   
+            {% comment %} TODO: This "else" clause should  eventually be phased out.
+                          For now,  we must account for the fact that we don't have 
+                          the capability to use page ellipses set up 
+                          in every view of the project
+            {% endcomment %}  
+
+            {% for num in page.paginator.page_range %}
+                {% if num == page.number %}
+                    <div class="current">{{ num }}</div>
+                {% else %}
+                    <div><a href="?{% if query_parameters %}{{ query_parameters }}&{% endif %}page={{ num }}">{{ num }}</a> </div>
+                {% endif %}
+            {% endfor %}
+
+        {% endif %}
 
         {% if page.has_next %}
-            <div><a href="?page={{ page.next_page_number }}">Next</a></div>
+            <div><a href="?{% if query_parameters %}{{ query_parameters }}&{% endif %}page={{ page.next_page_number }}">Next</a> </div>
         {% endif %}
     </div>
 {% endif %}

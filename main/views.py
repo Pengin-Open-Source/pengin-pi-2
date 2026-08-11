@@ -1,13 +1,20 @@
 # views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.debug import sensitive_post_parameters
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib import messages
+from django.urls import reverse
+from util.security.group_access import get_all_direct_group_members, get_non_tree_accessor_groups, get_non_tree_accessed_groups, get_direct_children_of_group, get_direct_parent, get_users_with_extended_rbac_to_group
+from main.mixins import LoginAndValidationRequiredMixin
 from util.mail import send_mail
 from django.utils.decorators import method_decorator
+from django.core.paginator import Paginator
 from django.views import View
-from .forms import LoginForm, SignUpForm, PasswordResetForm, SetPasswordForm
-from .models.users import User
+from .forms import GroupForm, GroupManagerForm, LoginForm, SignUpForm, PasswordResetForm, SetPasswordForm
+from django.db.models.functions import Lower
+from .models.users import Group, GroupManager, User
 from datetime import datetime, timedelta
 import uuid
 from django_ratelimit.decorators import ratelimit
@@ -18,23 +25,50 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 
+def handler400(request,  exception):
+    return (render(request, "400.html", {'error_message': str(exception)}, status=400))
+
+
+@method_decorator(sensitive_post_parameters(), name='dispatch')
 class LoginView(View):
     def get(self, request):
         form = LoginForm()
-        return render(request, 'authentication/login.html', {'form': form, 'primary_title': 'Login'})
+        next_destination = request.GET.get('next', '')
+        if next_destination:
+            return render(request, 'authentication/login.html', {
+                'form': form,
+                'primary_title': 'Login',
+                'next': next_destination
+            })
+        return render(request, 'authentication/login.html',   {
+            'form': form,
+            'primary_title': 'Login'})
 
     # @ratelimit(key='ip', rate='3/minute', block=True)
     def post(self, request):
         form = LoginForm(request, data=request.POST)
+        next_url = request.POST.get('next') or request.GET.get('next') or ''
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            if next_url:
+                return redirect(next_url)
             return redirect('home_view')
+
         messages.error(
             request, 'Please check your login details and try again.')
-        return redirect('login')
+
+        if next_url:
+            return render(request, 'authentication/login.html', {
+                'form': form,
+                'primary_title': 'Login',
+                'next': next_url
+            })
+        else:
+            return redirect('login')
 
 
+@method_decorator(sensitive_post_parameters(), name='dispatch')
 class SignupView(View):
     def get(self, request):
         form = SignUpForm()
@@ -56,11 +90,13 @@ class SignupView(View):
 
 
 class LogoutView(View):
-    @method_decorator(login_required)
     def get(self, request):
-        logout(request)
+        if request.user.is_authenticated:
+            logout(request)
         return redirect('home_view')
-   
+
+
+@method_decorator(sensitive_post_parameters(), name='dispatch')
 class PasswordResetRequestView(View):
     def get(self, request):
         form = PasswordResetForm()
@@ -85,6 +121,7 @@ class PasswordResetRequestView(View):
         return redirect('generate_prt')
 
 
+@method_decorator(sensitive_post_parameters('password'), name='dispatch')
 class PasswordResetView(View):
     def get(self, request, token):
         user = User.objects.filter(prt=token).first()
@@ -112,3 +149,184 @@ class PasswordResetView(View):
             else:
                 messages.error(request, 'Passwords do not match.')
         return redirect('reset_password', token=token)
+
+
+# Group/Role Management
+
+class GroupListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/groups.html"
+
+    def get(self, request, *args, **kwargs):
+
+        # we may have peformance issues using Lower if
+        # we have THOUSANDS of groups, but for right
+        # now this approach should be fine
+        groups = Group.objects.all().order_by(Lower('name'))
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(groups, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['primary_title'] = "Groups (aka Roles)"
+
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/group_detail.html"
+
+    def get(self, request, *args, **kwargs):
+
+        group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        group_manager = GroupManager.objects.filter(
+            managed_group=group).first()
+
+        context = {}
+        if group_manager:
+            manager_form = GroupManagerForm(instance=group_manager)
+            context["has_group_manager"] = True
+        else:
+            manager_form = GroupManagerForm()
+            context["has_group_manager"] = False
+
+        for field in manager_form.fields:
+            manager_form.fields[field].widget.attrs['disabled'] = True
+        form = GroupForm(instance=group)
+
+        for field in form.fields:
+            form.fields[field].widget.attrs['disabled'] = True
+        parent = get_direct_parent(group)
+
+        context['parent_group'] = parent
+        context['group'] = group
+        context['group_manager'] = group_manager
+        context['manager_form'] = manager_form
+        context['form'] = form
+        context['is_admin'] = request.user.is_staff
+        context['primary_title'] = "Details For Group: " + group.name
+
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupChildListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/group_child_list.html"
+
+    def get(self, request, *args, **kwargs):
+
+        parent_group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        child_groups = get_direct_children_of_group(
+            parent_group).order_by(Lower('name'))
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(child_groups, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['parent_group'] = parent_group
+        context['primary_title'] = parent_group.name + "'s Direct Subgroups"
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupHasSpecialAccessToTheseGroupsListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/group_has_non_tree_access_to_groups.html"
+
+    def get(self, request, *args, **kwargs):
+
+        group_with_access = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        accessed_groups = get_non_tree_accessed_groups(
+            {group_with_access}).order_by(Lower('name'))
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(accessed_groups, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['group_with_access'] = group_with_access
+        context['primary_title'] = group_with_access.name + \
+            " Granted Special Access To Groups:"
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupMemberListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/group_member_list.html"
+
+    def get(self, request, *args, **kwargs):
+        member_filter = self.kwargs.get('member_filter')
+        if member_filter is None:
+            member_filter = 'all'
+        group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        # TODO If list of members gets in the 1000s
+        # and performance may suffer. In that case,
+        # consider replacing Lower() call with some
+        # other strategy,  like a lowercase name
+        # field in the database.
+        if member_filter == 'all':
+            users_in_group = get_users_with_extended_rbac_to_group(
+                group).order_by(Lower('name'))
+        else:
+            users_in_group = get_all_direct_group_members(
+                group).order_by(Lower('name'))
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(users_in_group, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['group'] = group
+        context['primary_title'] = "Members of " + group.name
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class GroupsWithSpecialAccessToThisGroupListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+
+    template_name = "management/groups_with_non_tree_access_to_this_group.html"
+
+    def get(self, request, *args, **kwargs):
+
+        accessed_group = get_object_or_404(Group, id=self.kwargs.get('pk'))
+        groups_accessing_me = get_non_tree_accessor_groups(
+            accessed_group).order_by(Lower('name'))
+
+        page_number = self.request.POST.get(
+            'page-number', 1) if self.request.method == "POST" else self.request.GET.get('page', 1)
+        paginator = Paginator(groups_accessing_me, 10)
+        page_obj = paginator.get_page(page_number)
+        context = {}
+        context['is_admin'] = request.user.is_staff
+        context['page_obj'] = page_obj
+        context['accessed_group'] = accessed_group
+        context['primary_title'] = "Special Access to " + \
+            accessed_group.name + " is Granted to These Groups:"
+        return render(request, self.template_name, context)
+
+    def test_func(self):
+        return self.request.user.is_staff

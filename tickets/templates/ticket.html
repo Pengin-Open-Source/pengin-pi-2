@@ -1,0 +1,86 @@
+{% extends "layout/alternating_color_table.html" %}
+{% load macros %}
+{% loadmacros "macros/forum_tickets/comments_render.html" %}
+{% loadmacros "macros/forum_tickets/comment_form.html"  %}
+{% loadmacros "macros/forum_tickets/reopen_ticket_form.html"  %}
+
+
+{% block tags %}
+  {% if ticket.tags %}
+    <meta name="keywords" content="{{ ticket.tags|escape }}">
+  {% endif %}
+{% endblock %}
+
+{% block pageDropDowns %}
+{% if is_admin or is_ticket_manager %}
+<form method="post" action="{% url 'delete_ticket' ticket.id %}">
+  {% csrf_token %}
+  <button type="submit" onclick="return confirm('Are you sure you want to delete this ticket?')">Delete</button>
+</form> 
+{% endif %}
+
+{% if can_approve_reopen_request %}
+  {% if has_pending_requests_for_me_to_approve %}
+    <a href="{% url 'view_pending_reopen_requests' ticket.id %}">View Pending Requests To Reopen</a>
+  {% endif %}
+  {% if ticket_has_resolved_requests %}
+    <a href="{% url 'view_all_resolved_reopen_requests' ticket.id 'all' %}">View Resolved Requests To Reopen</a>
+  {% endif %}
+{% endif %}
+
+
+{% if has_made_pending_requests %}
+  <a href="{% url 'view_my_pending_request' reopen_request.id %}">See My Pending Reopen Request</a>
+{% endif %}
+
+{% if user_has_resolved_requests %}
+  <a href="{% url 'view_resolved_reopen_requests_for_specific_user' ticket.id 'all' %}">See Resolved Reopen Requests</a>
+{% endif %}
+
+
+{% if can_edit_ticket  %}
+     <a href="{% url 'edit_ticket' ticket.id %}">Edit</a>
+{% endif %}
+
+{% if can_edit_ticket_status  %}
+  <a href="{% url 'edit_ticket_status' ticket.id %}">Change Resolution Status</a>
+{% endif %} 
+
+
+  <a href="{% url 'tickets' 'all' %}">Back To Tickets</a>
+{% endblock %}
+
+{% block beforeTableContent %}
+ <p> 
+  {% for field in form %}
+    <div class="fieldWrapper">
+        <p>{{ field.label_tag }}</p>
+        <p> {{ field }}</span> <p>
+    </div>
+  {% endfor %} </p>
+{% endblock %}
+
+{% block tableContent %}
+     {% use_macro render_comments page_obj user  %}  
+{% endblock %}
+
+
+{% block postTableContent %}
+
+{% url 'ticket' ticket.id as ticket_url %} 
+{% if can_comment %}
+  {% use_macro render_comment_form ticket ticket_url comment_form %}
+{% elif can_ask_to_reopen %}
+<p style="color:gray; text-transform:uppercase;"> <b><i> TICKET IS {{ ticket.resolution_status }}. NEW COMMENTS ARE DISABLED. </i> </b> </p> 
+   {% use_macro render_reopen_ticket_form ticket ticket_url reopen_request_form %} 
+{% endif %}
+
+{% if has_pending_requests_for_me_to_approve %}
+<br/>
+<p style="color:maroon;"><b><i> TICKET HAS OUTSTANDING REQUESTS TO REOPEN </i> </b> </p> 
+  <a class="text-button" style="color:purple;" href="{% url 'view_pending_reopen_requests' ticket.id %}"> See Pending Reopen Requests </a>
+</p>
+{% endif %}
+
+{% endblock %}
+
