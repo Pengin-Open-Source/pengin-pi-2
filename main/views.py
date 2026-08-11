@@ -306,7 +306,7 @@ class GroupMemberListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin,
         return self.request.user.is_staff
 
 
-class GroupsWithSpecialAccessToMeListDetailView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
+class GroupsWithSpecialAccessToThisGroupListView(LoginAndValidationRequiredMixin,  UserPassesTestMixin, View):
 
     template_name = "management/groups_with_non_tree_access_to_this_group.html"
 
