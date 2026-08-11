@@ -58,7 +58,7 @@ class HandlerOfPendingTicketReopenRequestsView(LoginAndValidationRequiredMixin, 
 
 
 class HandlerOfPendingTicketReopenRequestDetailView(LoginAndValidationRequiredMixin, UserPassesTestMixin, DetailView):
-    template_name = "reopen_request.html"
+    template_name = "handler_pending_reopen_request.html"
     model = TicketOpenRequest
     form_class = TicketPendingOpenRequestForm
 
