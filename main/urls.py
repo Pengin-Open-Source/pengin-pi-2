@@ -1,7 +1,10 @@
 # main/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from .views import LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
+from .views import GroupListView, GroupDetailView, GroupChildListView, GroupMemberListView, GroupHasSpecialAccessToTheseGroupsListView, GroupsWithSpecialAccessToThisGroupListView, LoginView, SignupView, LogoutView, PasswordResetRequestView, PasswordResetView
+
+handler400 = 'main.views.handler400'
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,11 +17,23 @@ urlpatterns = [
     path('customers/', include('orders.urls.customers')),
     path('contracts/', include('contracts.urls')),
     path('', include('jobs.urls')),
+    path('tickets/', include('tickets.urls')),
     path('forums/', include('forums.urls')),
     path('login/', LoginView.as_view(), name='login'),
     path('signup/', SignupView.as_view(), name='signup'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('groups/', GroupListView.as_view(), name='groups'),
+    path('group/<int:pk>',  GroupDetailView.as_view(), name="group"),
+    path('group/children/<int:pk>',
+         GroupChildListView.as_view(), name="child_groups"),
+    path('group/non-tree-access-to-groups/<int:pk>',
+         GroupHasSpecialAccessToTheseGroupsListView.as_view(), name="non_tree_accessed_groups"),
+    path('group/non-tree-access-to-me/<int:pk>',
+         GroupsWithSpecialAccessToThisGroupListView.as_view(), name="groups_with_non_tree_access_to_me"),
+    path('group/<int:pk>/members/<member_filter>',
+         GroupMemberListView.as_view(), name="display_group_members"),
     path('generate-prt/', PasswordResetRequestView.as_view(), name='generate_prt'),
-    path('reset-password/<str:token>/', PasswordResetView.as_view(), name='reset_password'),
-    path('profile/', include('profiles.urls')), 
+    path('reset-password/<str:token>/',
+         PasswordResetView.as_view(), name='reset_password'),
+    path('profile/', include('profiles.urls')),
 ]

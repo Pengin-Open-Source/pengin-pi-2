@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Redirect after 5 seconds to the 'home' named URL Credit to Gemini for the basic file template-->
+    <meta http-equiv="refresh" content="5;url={% url 'profiles:profile' %}">
+    <title>User Sign Up Validation is Complete </title>
+    <h1> User Sign Up Validation Is Successful! Admin will fully validate your User Profile soon </h1>
+</head>
+<body>
+    <p>You will be redirected to the Profile Page in 5 seconds. <a href="{% url 'profiles:profile' %}">Go There Now...</a>.</p>
+</body>
+</html>

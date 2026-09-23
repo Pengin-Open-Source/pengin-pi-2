@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 from dotenv import load_dotenv
 from decouple import config
-import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,9 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-14nmqptb91000ao@b&c-a1*%=8b)!f-g2=^gsxcbo+d7!h&onj'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Turn to false if you want to see "neater" 400 messages
+# Defaults to False,  but pulls value from the .env file if it can.
+DEBUG = config('DJANGO_DEBUG', default='False').lower() == 'true'
 
-ALLOWED_HOSTS = []
+LOGIN_URL = '/login/'
+ALLOWED_HOSTS = ['localhost',  '127.0.0.1']
 
 # Application definition
 
@@ -42,8 +44,9 @@ INSTALLED_APPS = [
     'django_redis',
     'markdownit',
     'macros',
+    "django_flatpickr",
     # Add your apps here
-    #'global_admin',
+    # 'global_admin',
     'main',
     'home',
     'about',
@@ -64,9 +67,9 @@ load_dotenv()
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('SES_HOST', default='email-smtp.us-west-2.amazonaws.com')
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_HOST = config('SES_HOST')
+EMAIL_PORT = config('SES_PORT')
+EMAIL_USE_TLS = config('SES_USE_TLS')
 EMAIL_HOST_USER = config('SES_USERNAME_SMTP')
 EMAIL_HOST_PASSWORD = config('SES_PASSWORD_SMTP')
 DEFAULT_FROM_EMAIL = f"{config('SES_SENDER_NAME')} <{config('SES_SENDER')}>"
@@ -139,6 +142,8 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'main.User'
 
 DEFAULT_USER_ID = 1
+
+ENABLE_USER_SELF_VALIDATION = False
 
 # Session
 

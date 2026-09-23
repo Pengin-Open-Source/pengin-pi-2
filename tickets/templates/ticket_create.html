@@ -1,0 +1,20 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %} 
+
+{% block pageContent %}
+   <input type="hidden" id="ticket-create-link" value='{% url 'create_ticket' %}'>
+    <form class="form" method="POST" action="{% url 'create_ticket' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button id = "submit-ticket-create" class="primary-button" type="submit"> Create Ticket </button>
+  
+
+
+<script src="{% static 'javascript/jquery/1.12.4/jquery.min.js' %}"></script>
+<script src="{% static 'javascript/scripts.js'                  %}"></script>
+<script src="{% static 'javascript/createTicketRoleChangeOwnerList.js' %}"></script> 
+
+
+</form>
+
+{% endblock %}

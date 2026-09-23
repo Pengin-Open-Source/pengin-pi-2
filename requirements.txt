@@ -1,13 +1,60 @@
-Django~=5.0.6
-django-markdown-it
-mysqlclient
-python-dotenv~=1.0.1
-django-macros
-boto3~=1.34.122
-werkzeug~=3.0.3
-django-ratelimit
-redis
-hiredis
-django-redis
-pillow
-botocore~=1.34.122
+# 4.13.2026 updated list in preparation for merge with main.
+# Description and grouping so we have an idea of what 
+# these packages are used for.
+# Credit to Gemini for assistance.
+
+## 1. Core Framework & Database ##
+
+# We might need it keep it on this version
+# until we can be confident it will "play nice"
+# with other packages at a higher package.
+Django~=5.0.6 
+# Default assumption is we need a MySQL database driver.
+# We can add more drivers in the future as needed.
+# (Like for PostgreSQL, for example)
+mysqlclient 
+# Required for ImageFields in your models
+pillow 
+
+
+## 2. Environment & Configuration ##
+# Used for our config variables
+python-decouple 
+# Used for load_dotenv to feed the system environment
+# load_dotenv parses "a .env file and then"
+# loads "all the variables found as environment variables."
+python-dotenv~=1.0.1 
+# Utility library for WSGI/debugging)
+werkzeug~=3.0.3 
+
+
+## 3. UI & Frontend Integration ##
+# Widget for selecting dates
+django-flatpickr==2.0.3 
+# UI for search/filters. 
+# "Safety Pinned" version to make sure it
+# plays nice with Django.
+django-filter<25.0 
+# Web Content rendering
+django-markdownit
+#Lets us use macros in Django
+django-macros 
+
+## 4. Infrastructure & External Services ##
+# AWS SDK
+boto3~=1.34.122 
+# Shared AWS core)
+botocore~=1.34.122 
+# For external API/data fetching calls)
+requests 
+
+## 5. Performance & Caching ##
+# Security/throttling. 
+# Stops,  for example,  too many login attempts in a short time.
+django-ratelimit 
+
+redis 
+django-redis 
+
+# C-extension for faster Redis parsing)
+hiredis 

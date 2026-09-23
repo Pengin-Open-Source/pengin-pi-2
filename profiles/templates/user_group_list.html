@@ -1,0 +1,29 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+
+{% block pageDropDowns %}
+S
+{% endblock %}
+
+
+{% block pageContent %}
+<div class="title-underline">
+  <a class="text-button" href="/profile/group_lists/member_of"> Groups User is Member of (Direct, Inherited, or Group-To-Group access) </a>|
+  <a class="text-button" href="/profile/group_lists/manager_of"> Groups User Manages </a>
+</div>
+<br/>
+<div class="content-section">
+
+  <div class="group-list">
+    <ul>
+      {% for group in page_obj %}
+          <li>{{ group.name }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% use_macro render_pagination page_obj %}
+</div>
+{% endblock %}

@@ -10,7 +10,7 @@ venv_312
 *.log
 instance
 .vscode
-.env
+*.env
 /env
 /resumes
 containers.json

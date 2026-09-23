@@ -1,0 +1,21 @@
+{% extends "layout/alternating_color_table.html" %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+
+
+{% block tableContent %}
+
+<b> Children of {{ parent_group.name }}
+{% for group in page_obj %}
+<tr><td class="post-container">
+  <a class="alternating-colors-table-links" href="{% url "group" group.id %}">{{ group.name |escape }}</a>
+  <div class="comment-title-underline"> 
+</td></tr>
+{% endfor %}
+{% use_macro render_pagination page_obj %}
+
+
+
+
+{% endblock %}

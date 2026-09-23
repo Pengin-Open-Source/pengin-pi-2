@@ -1,0 +1,21 @@
+{% extends "layout/alternating_color_table.html" %}
+{% load macros %}
+{% loadmacros "macros/pagination.html" %}
+
+
+
+{% block tableContent %}
+
+<p> Groups that members of Group <b><i> {{ group_with_access.name }} </i></b> can access directly without using ancestor/descendant relationships </p>
+{% for group in page_obj %}
+<tr><td class="post-container">
+  <a class="alternating-colors-table-links" href="{% url "group" group.id %}">{{ group.name |escape }}</a>
+  <div class="comment-title-underline"> 
+</td></tr>
+{% endfor %}
+{% use_macro render_pagination page_obj %}
+
+
+
+
+{% endblock %}

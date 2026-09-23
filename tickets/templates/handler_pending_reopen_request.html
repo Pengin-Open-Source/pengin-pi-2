@@ -1,0 +1,26 @@
+{% extends "layout/fullPageScroll.html" %}
+{% load static %}
+{% block pageDropDowns %}
+<a href="{% url 'view_pending_reopen_requests' ticket_id %}"> Back to Pending Reopen Requests </a>
+{% endblock %}
+
+{% block pageContent %}
+<p> 
+    {% for field in form %}
+      <div class="fieldWrapper">
+          <p>{{ field.label_tag }}</p>
+          <p> {{ field }}</span> <p>
+      </div>
+    {% endfor %} 
+    <div><b> Requested on  <span id="request-time"></span> </b> </div>
+    <script src="{% static 'javascript/dateTimeConversion.js'   %}"></script>
+    <script>
+        var utcTime = new Date('{{ reopen_request.request_date|date:"c" }}');
+        var localTime = convertUTCToLocal(utcTime);
+        document.getElementById('request-time').textContent = localTime;
+    </script>
+</p>
+<a class="text-button" style="color:purple;" href="{% url 'approve_reopen_request'  reopen_request.id %}"> Approve Reopen Request </a>  |
+<a class="text-button" style="color:purple;" href="{% url 'deny_reopen_request'  reopen_request.id %}"> Deny Reopen Request </a>
+
+{% endblock %}

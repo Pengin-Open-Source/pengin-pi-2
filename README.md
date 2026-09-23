@@ -22,3 +22,5 @@ Pengin Pi 2 is GPL3 licensed and is maintained and supported by Tobu Pengin and 
 - Workflows
 
 This software is available to the general public free of charge and is licensed under a GPL3 license.  You are free to copy and modify the source any way you see fit.  The Pengin Open Source project is non-profit, and not meant for resale.  If someone is selling you Pengin Open Source software, be sure that you are paying for professional services or licensable modules not included in the core Pengin Open Source release.  This project is meant to be both a training guide for students, and a baseline platform to drive the sale of professional services and ERP, CRM, or CMS software modules.
+
+Human contributers are still working on this project, however, LLMs' assistance has also been used in crafting the code - including Google Gemini and ChatGPT. 

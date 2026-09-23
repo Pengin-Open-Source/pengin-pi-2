@@ -1,0 +1,10 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageContent %}
+<form class="form" method="POST" action="{% url 'deny_reopen_request' reopen_request.id %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="primary-button" type="submit" name="action">Deny Request</button>
+</form>
+
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "layout/fullPageScroll.html" %}
+
+{% block pageDropDowns %}
+    <a href="{% url 'tickets' 'all' %}">Cancel</a>
+{% endblock %}
+
+{% block pageContent %}
+    <form class="form" method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="primary-button" type="submit">Set Ticket Owner Options</button>
+    </form>
+{% endblock %}
