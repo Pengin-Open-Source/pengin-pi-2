@@ -5,6 +5,7 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.db.models.functions import Lower
 from django.views.generic import UpdateView, DeleteView
 from main.mixins import LoginAndValidationRequiredMixin
 from main.models import User
@@ -171,6 +172,11 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
                     owner_options.append(
                         {'value': user_option.pk,  'label': str(user_option.name), 'selected': is_selected})
 
+            # If the option has a blank value,  assign it priority False, which ends up being priority 0.
+            # This puts it at the top. Nice little trick from Gemini
+            # Otherwise, just assign the option's place in the list based on case sensitive alphanumeric order.
+            owner_options = sorted(owner_options, key=lambda x: (
+                x['value'] != "", x['label'].lower()))
             data = {'message': f'Newly Selected Role: {selected_role}',
                     'status': 'success',  'options': owner_options}
             return JsonResponse(data)
@@ -292,7 +298,8 @@ class TicketEditView(LoginAndValidationRequiredMixin, UserPassesTestMixin, Updat
         # Note that can_set_owner_blank = True EITHER means: 1) The Ticket has no owner
         # or 2) The user is a Group Manager or Staff member,  who has permission
         # to make an assigned Ticket "Unassigned" again.  (or both)
-        role_options = role_options.order_by('name')
+        role_options = role_options.order_by(Lower('name'))
+        owner_options = owner_options.order_by(Lower('name'))
         form = TicketForm(can_set_ticket_owner_blank=can_set_ticket_owner_blank, role_options=role_options, owner_options=owner_options,
                           role_default=currently_saved_role, owner_default=ticket_owner, instance=ticket, current_user=current_user)
 

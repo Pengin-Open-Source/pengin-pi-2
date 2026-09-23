@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-
+from django.db.models.functions import Lower
 from main.mixins import LoginAndValidationRequiredMixin
 from main.models import User
 from tickets.forms import TicketForm
@@ -62,6 +62,9 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
                 owner_options.append(
                     {'value': user_option.pk,  'label': str(user_option.name)})
 
+            # "---------" option goes at the top, otherwise sorted by alphanumeric value.
+            owner_options = sorted(owner_options, key=lambda x: (
+                x['value'] != "", x['label'].lower()))
             data = {'message': f'Newly Selected Role: {selected_role}',
                     'status': 'success',  'options': owner_options}
             return JsonResponse(data)
@@ -120,7 +123,8 @@ class TicketCreateView(LoginAndValidationRequiredMixin, CreateView):
                 # to the correct role and owner later in the Edit Ticket page.
                 role_options = Group.objects.filter(pk=default_role.pk)
 
-        role_options = role_options.order_by('name')
+        role_options = role_options.order_by(Lower('name'))
+        owner_options = owner_options.order_by(Lower('name'))
         form = TicketForm(role_options=role_options,
                           owner_options=owner_options, role_default=default_role, current_user=current_user)
         context = {'form': form}
